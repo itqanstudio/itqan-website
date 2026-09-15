@@ -5,13 +5,14 @@ import { projects } from '@/data/projects';
 import { caseStudies } from '@/data/case-studies';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { workCollectionLd, breadcrumbLd } from '@/lib/seo';
+import { pageMetadata } from '@/lib/page-metadata';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'Our Work — Brand, Web, Product & Automation Case Studies',
   description:
     'Case studies from Itqan Studio, a Dubai design and AI agency — brand identity, websites, product UX, full-stack builds and AI automation delivered for founders in Dubai and beyond.',
-  alternates: { canonical: '/work' },
-};
+  path: '/work',
+});
 
 export default function WorkPage() {
   return (

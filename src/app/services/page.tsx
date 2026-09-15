@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
+import { pageMetadata } from '@/lib/page-metadata';
 import {
   CheckCircle,
   Compass,
@@ -20,12 +21,12 @@ import { ServiceFAQ, SERVICE_FAQ } from '@/components/services/ServiceFAQ';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { servicesGraphLd, breadcrumbLd, faqLd } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'Brand, Web, SEO & AI Visibility (GEO) Services — Dubai',
   description:
     'One Dubai agency for brand, websites that convert, content and social, SEO, AI visibility (GEO), hosting and agentic automation — designed, built and run by the same senior team.',
-  alternates: { canonical: '/services' },
-};
+  path: '/services',
+});
 
 /** Section badge — dark circle number + bordered pill label (Axion pattern from IntroPartner). */
 function SectionBadge({ n, label }: { n: number; label: string }) {

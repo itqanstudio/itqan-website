@@ -100,7 +100,12 @@ export function HeroAxion() {
 
         {/* CTA row */}
         <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
-          <RollButton href="/contact" label="Start a conversation" className="self-start" />
+          <RollButton
+            href="/contact"
+            label="Start a conversation"
+            className="self-start"
+            umamiEvent="cta_hero"
+          />
 
           {/* Proof badge */}
           <Link

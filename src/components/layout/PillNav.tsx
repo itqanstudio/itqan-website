@@ -286,7 +286,7 @@ export function PillNav() {
               {dubaiTime} in Dubai
             </span>
             <ThemeToggle />
-            <RollButton href="/contact" label="Start a conversation" />
+            <RollButton href="/contact" label="Start a conversation" umamiEvent="cta_nav" />
           </div>
 
           {/* Mobile: theme + menu */}
@@ -425,6 +425,7 @@ export function PillNav() {
                 href="/contact"
                 label="Start a conversation"
                 className="w-full justify-between"
+                umamiEvent="cta_nav_mobile"
                 onClick={() => setMenuOpen(false)}
               />
             </div>

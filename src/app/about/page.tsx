@@ -7,13 +7,14 @@ import { Languages } from '@/components/about/Languages';
 import { CTABanner } from '@/components/home/CTABanner';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { breadcrumbLd } from '@/lib/seo';
+import { pageMetadata } from '@/lib/page-metadata';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'About — A Dubai Design, AI Visibility & Web Agency',
   description:
     'Meet the team behind Itqan Studio — a Dubai design and AI agency covering brand, web, SEO, AI visibility (GEO) and automation, led by co-founders Ibrahim Shareef and Bisma Aslam.',
-  alternates: { canonical: '/about' },
-};
+  path: '/about',
+});
 
 export default function AboutPage() {
   return (

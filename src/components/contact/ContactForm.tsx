@@ -163,6 +163,8 @@ export function ContactForm({ intent }: ContactFormProps) {
 
       <motion.button
         type="submit"
+        data-umami-event="contact_submit"
+        data-umami-event-intent={intent ?? 'general'}
         disabled={isSubmitting}
         className="btn-gloss w-full inline-flex items-center justify-center gap-2 bg-brand-dark text-brand-cream dark:bg-brand-cream dark:text-brand-dark py-4 rounded-[10px] text-sm font-semibold hover:bg-[#241323] dark:hover:bg-brand-cream/90 transition-colors duration-200 disabled:opacity-60"
         whileHover={{ scale: 1.02 }}

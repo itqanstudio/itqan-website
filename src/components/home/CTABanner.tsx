@@ -59,7 +59,7 @@ export function CTABanner() {
         <motion.div {...fadeUp(0.24)}>
           <div className="mt-10 flex flex-col sm:flex-row items-start gap-4 sm:gap-5">
             {/* Single CTA — a private, senior conversation (no lead-funnel tripwire) */}
-            <RollButton href="/contact" label="Start a conversation" />
+            <RollButton href="/contact" label="Start a conversation" umamiEvent="cta_banner" />
           </div>
         </motion.div>
       </div>

@@ -9,13 +9,14 @@ import { testimonials } from '@/data/testimonials';
 import { ChatCircle } from '@phosphor-icons/react/dist/ssr';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { breadcrumbLd } from '@/lib/seo';
+import { pageMetadata } from '@/lib/page-metadata';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'Contact — Book a Call With Our Dubai Studio',
   description:
     'Book a discovery call with Itqan Studio — a Dubai design and AI agency covering brand, web, SEO, AI visibility (GEO), hosting and automation — or send a message. We respond within 24 hours.',
-  alternates: { canonical: '/contact' },
-};
+  path: '/contact',
+});
 
 interface IntentCopy {
   label: string;

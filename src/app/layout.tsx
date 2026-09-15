@@ -10,7 +10,7 @@ import { PostHogProvider } from '@/components/providers/PostHogProvider';
 import { UmamiAnalytics } from '@/components/providers/UmamiAnalytics';
 import { CookieBanner } from '@/components/CookieBanner';
 import { JsonLd } from '@/components/seo/JsonLd';
-import { SITE_URL, SITE_NAME, TARGET_KEYWORDS, siteGraphLd } from '@/lib/seo';
+import { SITE_URL, SITE_NAME, siteGraphLd } from '@/lib/seo';
 import { PORTAL_HEADER } from '@/lib/portal-chrome';
 import './globals.css';
 
@@ -41,7 +41,6 @@ export const metadata: Metadata = {
   },
   description:
     'Itqan Studio is a Dubai design and AI agency. One partner for brand, websites that convert, content, SEO, AI visibility (GEO), hosting and automation — built and run by the same senior team.',
-  keywords: [...TARGET_KEYWORDS],
   applicationName: SITE_NAME,
   authors: [{ name: SITE_NAME, url: SITE_URL }],
   creator: 'Itqan Studio FZ LLC',
@@ -49,7 +48,6 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_AE',
-    alternateLocale: ['ar_AE'],
     url: SITE_URL,
     siteName: SITE_NAME,
     title: 'Itqan Studio — Design, AI Visibility & Web Agency in Dubai',
@@ -143,8 +141,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     its consent gate because it does set cookies.
                     See UmamiAnalytics.tsx for the full reasoning. */}
                 <UmamiAnalytics />
+                <a
+                  href="#main"
+                  className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-full focus:bg-brand-dark focus:px-4 focus:py-2 focus:text-brand-cream"
+                >
+                  Skip to content
+                </a>
                 {!isPortal && <Navbar />}
-                <main>{children}</main>
+                <main id="main">{children}</main>
                 {!isPortal && <Footer />}
                 <CookieBanner />
               </PostHogProvider>

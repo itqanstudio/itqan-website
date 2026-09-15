@@ -15,6 +15,12 @@ interface RollButtonProps {
   className?: string;
   /** Optional side effect on activation — e.g. closing the sheet that holds it. */
   onClick?: () => void;
+  /**
+   * Umami event name for this CTA (rendered as data-umami-event). Umami's tracker
+   * counts the click with no extra JavaScript, so conversions can be read per
+   * placement in the analytics dashboard.
+   */
+  umamiEvent?: string;
 }
 
 /**
@@ -27,6 +33,7 @@ export function RollButton({
   variant = 'primary',
   className,
   onClick,
+  umamiEvent,
 }: RollButtonProps) {
   const isPrimary = variant === 'primary';
 
@@ -34,6 +41,7 @@ export function RollButton({
     <Link
       href={href}
       onClick={onClick}
+      data-umami-event={umamiEvent}
       className={`group press-scale inline-flex items-center gap-2.5 rounded-full pl-5 sm:pl-6 pr-2 py-2 text-[0.8125rem] sm:text-[0.875rem] font-semibold ${
         isPrimary
           ? 'bg-brand-dark text-brand-cream hover:bg-[#241323] dark:bg-brand-cream dark:text-brand-dark dark:hover:bg-brand-cream/90'

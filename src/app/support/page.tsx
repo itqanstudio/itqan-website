@@ -5,13 +5,14 @@ import { FadeUp } from '@/components/ui/FadeUp';
 import { LifebuoyIcon } from '@phosphor-icons/react/dist/ssr';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { breadcrumbLd } from '@/lib/seo';
+import { pageMetadata } from '@/lib/page-metadata';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'Support — Get Help From Itqan Studio',
   description:
     'Already working with Itqan Studio and something needs fixing? Send a support request and track it from a private link.',
-  alternates: { canonical: '/support' },
-};
+  path: '/support',
+});
 
 /**
  * /support — for EXISTING clients with a problem.
