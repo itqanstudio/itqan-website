@@ -71,7 +71,6 @@ export const caseStudies: CaseStudy[] = [
       '/images/portfolio/millow/website.webp',
       '/images/portfolio/millow/fs-hero.webp',
       '/images/portfolio/millow/fs-film.webp',
-      '/images/portfolio/millow/fs-burger.webp',
     ],
     brandShowcase: [
       '/images/portfolio/millow/brand-type.webp',
