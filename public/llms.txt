@@ -27,7 +27,7 @@ Note on honesty: Itqan does not promise a specific search ranking or a guarantee
 - [Contact](https://itqanstudio.com/contact): book a discovery call or send a message.
 
 ## Selected case studies
-- Millow (millow.co): Design partner for Sweden's fermented oat-protein platform. Design system, motion language, Food Service rebuild, bilingual, 113 e2e tests green per release. Case: https://itqanstudio.com/work/millow
+- [Millow](https://itqanstudio.com/work/millow): design partner for Sweden's fermented oat-protein platform (millow.co) — design system, motion language, Food Service rebuild, bilingual, 113 e2e tests green per release.
 - [Mutqin](https://itqanstudio.com/work/mutqin): Itqan's own live AI startup companion — brand, character, and full-stack product (mutqin.xyz).
 - [Nexilink](https://itqanstudio.com/work/nexilink): brand + investor-ready product UX delivered in 3 weeks; the client placed first at a 2024 investor competition.
 - [Shareefico](https://itqanstudio.com/work/shareefico): personal brand + custom CMS + content-automation engine, shipped in under 30 days; two brands now publish 4+ pieces per week from one CMS (shareefi.co).

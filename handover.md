@@ -1,6 +1,47 @@
 # Itqan Studio Website — Handover
 
 
+## 2026-09-01 (SHIPPED) — Millow + Sarmad's Lemon Garden testimonial LIVE (`5a058d3`); box OOM-wedged mid-deploy, rebooted
+
+Ibrahim's go: ship Millow + Lemon Garden, swap Lemon Garden's self-authored quote for
+the REAL testimonial from **Sarmad Alsadi** (Lemon Garden founder — Ibrahim first said
+"Murad", corrected to Sarmad). All live and verified on itqanstudio.com.
+
+### What shipped (main `5a058d3`)
+- `feat/millow-case-study` merged (`8bf7283`) — Millow case study + feedback docs.
+- Lemon Garden testimonial: Sarmad's exact words (pasted by Ibrahim in chat — the
+  feedback email exists ONLY in the studio inbox ibrahim@itqanstudio.com; no
+  connector, no DB, no payload logs), credited "Sarmad Alsadi · Founder, Lemon
+  Garden", avatar = the circular Lemon Garden badge (`logo.png` from
+  `~/Desktop/lemongarden-site/public/brand/` → `public/images/testimonials/
+  lemon-garden.png`; already circular, fits the rounded-full 176px avatar untouched).
+- Fixed a real `a905b14` leftover: it deleted `millow/fs-burger.webp` but left it in
+  the Millow `mockups` array ⇒ would 404 a gallery tile. Trimmed to three.
+- llms.txt Millow line normalized to the markdown-link pattern (review LOW).
+- jonny-olejak.png + taste-skill: already deleted upstream in `f971729` — confirmed.
+- Review: code-reviewer agent on the full push diff — 0 CRITICAL/HIGH/MEDIUM.
+- Verified live: /, /work, /work/millow, /work/lemon-garden, new PNG all 200;
+  Sarmad's quote + name in served HTML; no stale image refs; Millow on the grid.
+
+### ⚠️ INCIDENT — a single Coolify build wedged the ENTIRE box (new failure mode)
+The webhook deploy of `5a058d3` (c2a6navwyuxm0p3r40m0cd2b) drove the box into
+memory-thrash: ~15 min HARD outage — 443, 8000 AND 22 all timing out (SSH accepted
+TCP then died at banner exchange), while **EC2 status checks stayed "ok"**, so don't
+trust them. It did NOT self-recover. Fix: `aws ec2 reboot-instances` (safe —
+52.212.71.212 is an **Elastic IP**, survives reboot AND stop/start, verified via
+describe-addresses). Box came back in ~4 min (SSH), site 200 ~2 min later; deploy
+auto-marked `failed`; old build kept serving. Re-triggered via API on the fresh box
+(swap 0, ~4.4G available) → `finished` with the site 200 through the whole build.
+**Playbook for next time:** probe 443+22, ignore EC2 checks, give it ~10 min to
+self-recover, then reboot; re-trigger AFTER reboot while memory is clean.
+**Box facts (corrects older entries):** 16GB RAM now (was 8), root is 135G with ~85G
+free (disk pre-prune no longer critical), full stack = Coolify + FOUR Supabase
+stacks + Penpot + Umami(+oauth2-proxy) + Documenso + 3 app containers.
+
+`feat/millow-case-study` is fully merged — the Desktop clone
+(`~/Desktop/itqan-website`) can be fast-forwarded to main or deleted.
+Tracking: `agent-work/20260901092709_ship_millow_lemon_garden_case_studies.md`.
+
 ## 2026-09-01 (LATER) — Murad timeline verified: nothing was "fixed", his email is a NEW send
 
 Ibrahim received Murad's feedback right after the diagnostic and assumed a fix happened.
