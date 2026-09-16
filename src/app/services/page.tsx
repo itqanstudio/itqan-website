@@ -292,6 +292,7 @@ export default function ServicesPage() {
                         className="press-scale mt-4 inline-flex items-center gap-2 text-[0.875rem] font-semibold text-text-primary dark:text-brand-cream underline underline-offset-[6px] decoration-brand-accent-on-light/50 dark:decoration-brand-accent/50 hover:decoration-brand-accent-on-light dark:hover:decoration-brand-accent"
                       >
                         {step.cta}
+                        <span className="sr-only"> (opens in a new tab)</span>
                       </a>
                     )}
                   </div>

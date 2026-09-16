@@ -23,7 +23,7 @@ const gates = [
   },
 ];
 
-/** `badge` sets the numbered pill (default 5 = home order; /services passes 7). */
+/** `badge` sets the numbered pill (default 5, the home order). */
 export function Guarantee({ badge = 5 }: { badge?: number }) {
   return (
     <section

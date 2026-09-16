@@ -19,9 +19,14 @@ export const metadata: Metadata = {
  * Home, version 2 (16 Sep 2026). The page now sells the system an owner-led
  * business runs on, not a rebrand: problem, what we build, proof, the four rungs,
  * what happens after go-live, who it is for, verification, the two people, the ask.
- * Section badge numbers follow this order, so reordering means renumbering. The
- * industries strip was dropped (its claim is carried by "Who this is for"), and
- * FounderOS stays on /services.
+ * Section badge numbers follow this order, so reordering means renumbering.
+ *
+ * Three components were left unrendered by this rewrite and are now referenced
+ * nowhere: Industries (its claim is carried by "Who this is for"), AiVisibility
+ * (the simulated AI chat, dropped from the hero) and FounderOS (the old three
+ * phase model, dropped from /services when that page became the four steps).
+ * They are kept on disk deliberately, not because anything imports them. Delete
+ * them once the new positioning has been live long enough to be sure.
  */
 export default function HomePage() {
   return (

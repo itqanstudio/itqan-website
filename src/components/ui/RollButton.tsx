@@ -91,6 +91,9 @@ export function RollButton({
         className={classes}
       >
         {inner}
+        {/* Every primary CTA now leaves the site for Calendly. Screen-reader and
+            switch users get no other warning that the tab changes. */}
+        <span className="sr-only"> (opens in a new tab)</span>
       </a>
     );
   }
