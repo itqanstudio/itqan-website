@@ -36,11 +36,11 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Itqan Studio — Design, AI Visibility & Web Agency in Dubai',
+    default: 'Itqan Studio. The system your business runs on. Dubai and Sweden.',
     template: '%s | Itqan Studio',
   },
   description:
-    'Itqan Studio is a Dubai design and AI agency. One partner for brand, websites that convert, content, SEO, AI visibility (GEO), hosting and automation — built and run by the same senior team.',
+    'Booking, intake, customer records, invoicing and follow-up, with the website in front. Built by two senior people, live in weeks, owned by you, run with you after go-live.',
   applicationName: SITE_NAME,
   authors: [{ name: SITE_NAME, url: SITE_URL }],
   creator: 'Itqan Studio FZ LLC',
@@ -50,15 +50,15 @@ export const metadata: Metadata = {
     locale: 'en_AE',
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: 'Itqan Studio — Design, AI Visibility & Web Agency in Dubai',
+    title: 'Itqan Studio. The system your business runs on. Dubai and Sweden.',
     description:
-      'One Dubai partner for brand, websites that convert, content, SEO, AI visibility (GEO), hosting and automation — one senior team, start to live.',
+      'Bookings, intake, customer records, invoicing and follow-up, with the website in front. Live in weeks. Owned by you. Run with you after go-live.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Itqan Studio — Design, AI Visibility & Web Agency in Dubai',
+    title: 'Itqan Studio. The system your business runs on. Dubai and Sweden.',
     description:
-      'One Dubai partner for brand, sites that convert, content, SEO, AI visibility (GEO) and hosting — built and run by one senior team.',
+      'Bookings, intake, customer records, invoicing and follow-up, with the website in front. Live in weeks. Owned by you.',
   },
   robots: {
     index: true,

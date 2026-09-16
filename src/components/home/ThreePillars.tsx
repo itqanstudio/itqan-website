@@ -1,17 +1,16 @@
 'use client';
 
-import { Medal, TrendUp, Handshake } from '@phosphor-icons/react';
+import { Browser, Database, ArrowsLeftRight } from '@phosphor-icons/react';
 import { FadeUp } from '@/components/ui/FadeUp';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
 
 /**
- * The spine of the decision-maker narrative. Senior buyers weigh a rebrand on
- * three criteria; each pillar answers one. Kept honest — the Honesty pillar
- * repeats the guarantee's boundary (we build it, we don't promise revenue).
- * Light-first, dark-aware (badge 3).
+ * What we build: one system in three parts. The website is deliberately the
+ * first column, because it is the front of the system rather than a separate
+ * project. Light-first, dark-aware (badge 2).
  */
 interface Pillar {
-  Icon: typeof Medal;
+  Icon: typeof Browser;
   number: string;
   name: string;
   accent: string;
@@ -20,25 +19,25 @@ interface Pillar {
 
 const pillars: Pillar[] = [
   {
-    Icon: Medal,
+    Icon: Browser,
     number: '01',
-    name: 'Reputation',
-    accent: 'Your most valuable asset is also the most fragile.',
-    body: 'A brand compounds trust over years and can leak it in a week. We treat it like the balance-sheet item it is — every decision measured against what it protects, not how it looks in a deck.',
+    name: 'Front',
+    accent: 'The website and the booking or intake your customers use.',
+    body: 'Guests pick the branch. The form routes itself. Nothing lands in a shared inbox.',
   },
   {
-    Icon: TrendUp,
+    Icon: Database,
     number: '02',
-    name: 'Commercial impact',
-    accent: 'Brand is a lever on enterprise value.',
-    body: 'Valuation, deal-flow, pricing power, investor confidence, the talent you can hire. We build for the number.',
+    name: 'Back',
+    accent: 'Calendar, customers, quotes, contracts, invoices.',
+    body: 'Each location sees its own day. You see all of them.',
   },
   {
-    Icon: Handshake,
+    Icon: ArrowsLeftRight,
     number: '03',
-    name: 'Honesty',
-    accent: 'You see it before you commit.',
-    body: 'The work is phase-gated, so nothing is a leap of faith. We guarantee what we build. We never promise revenue, leads, or PR we do not control — and we say so out loud.',
+    name: 'Between',
+    accent: 'Confirmations, reminders, routing to the right person.',
+    body: 'And the follow-up that used to be you at 11 pm.',
   },
 ];
 
@@ -71,10 +70,10 @@ export function ThreePillars() {
         <FadeUp>
           <div className="flex items-center gap-3 mb-6 sm:mb-8">
             <span className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-brand-dark text-brand-cream dark:bg-brand-cream dark:text-brand-dark text-[0.6875rem] sm:text-[0.75rem] font-semibold">
-              3
+              2
             </span>
             <span className="text-[0.75rem] sm:text-[0.8125rem] font-medium text-text-primary dark:text-brand-cream border border-black/[0.12] dark:border-brand-cream/[0.18] rounded-full px-3 sm:px-4 py-1 sm:py-1.5">
-              How the decision gets made
+              What we build
             </span>
           </div>
         </FadeUp>
@@ -86,28 +85,13 @@ export function ThreePillars() {
             className="font-sans font-semibold text-text-primary dark:text-brand-cream leading-[1.05] tracking-[-0.02em]"
             style={{ fontSize: 'clamp(2.5rem, 5vw, 4.25rem)', maxWidth: '20ch' }}
           >
-            Three questions before you{' '}
-            <span className="accent-italic">commit</span>.
+            One system. Three parts.{' '}
+            <span className="accent-italic">Owned by you</span>.
           </h2>
         </FadeUp>
 
-        {/* Lead */}
-        <FadeUp delay={0.12}>
-          <p
-            className="mt-8 text-text-secondary dark:text-brand-cream/70 leading-[1.55]"
-            style={{
-              fontSize: 'clamp(1.0625rem, 1.35vw, 1.25rem)',
-              maxWidth: '62ch',
-            }}
-          >
-            A rebrand compounds enterprise value or quietly erodes it. Owners weigh it
-            on three things before they sign. {' '}
-            <span className="text-text-primary dark:text-brand-cream font-medium">So do we.</span>
-          </p>
-        </FadeUp>
-
         {/* Pillars */}
-        <div className="mt-20 md:mt-24 grid grid-cols-1 md:grid-cols-3 gap-px bg-black/[0.08] dark:bg-brand-cream/[0.08] rounded-[14px] overflow-hidden">
+        <div className="mt-14 md:mt-20 grid grid-cols-1 md:grid-cols-3 gap-px bg-black/[0.08] dark:bg-brand-cream/[0.08] rounded-[14px] overflow-hidden">
           {pillars.map((pillar, i) => (
             <ScrollReveal
               key={pillar.number}
@@ -120,18 +104,17 @@ export function ThreePillars() {
           ))}
         </div>
 
-        {/* Capability line — social/content marketing named as a first-class, full-loop
-            capability (kept off the enterprise-value pillar so that stays at altitude). */}
+        {/* The line that stops "website" being read as a separate project */}
         <FadeUp delay={0.1}>
           <p
             className="mt-14 md:mt-16 text-text-secondary dark:text-brand-cream/70 leading-[1.55]"
             style={{ fontSize: 'clamp(1rem, 1.2vw, 1.125rem)', maxWidth: '64ch' }}
           >
-            One team ships all of it &mdash;{' '}
+            The brand and the website are built as{' '}
             <span className="text-text-primary dark:text-brand-cream font-medium">
-              brand, product, web, and the social and content marketing
-            </span>{' '}
-            that keeps you in the market after launch.
+              the front of the system
+            </span>
+            , not as a separate project.
           </p>
         </FadeUp>
       </div>

@@ -3,55 +3,44 @@
 import { ArrowRight } from '@phosphor-icons/react';
 import { FadeUp } from '@/components/ui/FadeUp';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
+import { RollButton } from '@/components/ui/RollButton';
 
 /**
- * The most important section for a CEO. Names the real failure modes of a
- * high-stakes brand build (brand + site + system) and how Itqan removes each.
- * De-risking, not decorating — proof that we understand why the work is
- * dangerous in the first place. Light-first, dark-aware (badge 4).
+ * How it works: the four rungs, cheapest first. The point of the section is that
+ * a buyer can stop after step two and still walk away with something they own,
+ * so nothing here is framed as a commitment. Light-first, dark-aware (badge 4).
  */
-interface FailureMode {
+interface Step {
   number: string;
   name: string;
   failure: string;
   fix: string;
 }
 
-const modes: FailureMode[] = [
+const modes: Step[] = [
   {
     number: '01',
-    name: 'No strategy',
-    failure:
-      'New visuals bolted onto the same unanswered questions. It looks different and changes nothing.',
-    fix: 'We start with the commercial thesis — who you are for, why you win, what the brand has to move — then design to it.',
+    name: 'Intro call',
+    failure: 'Thirty minutes, free.',
+    fix: 'You tell us the one thing that is stuck. We tell you whether we can move it.',
   },
   {
     number: '02',
-    name: 'Design by committee',
-    failure:
-      'Ten stakeholders, ten opinions, averaged down to something no one hates and no one remembers.',
-    fix: 'One accountable team, one decision-maker. We run the room, but the direction stays sharp.',
+    name: 'The Session',
+    failure: 'Ninety minutes of questions about how the business actually runs.',
+    fix: 'Within five working days, a written map: what leaks, what to fix first, what each step should cost. You keep it whether or not we ever speak again.',
   },
   {
     number: '03',
-    name: 'Ego over evidence',
-    failure:
-      'The loudest taste in the building wins, and the market never gets a vote.',
-    fix: 'We test the direction with your actual buyers before anything ships. Evidence settles the argument.',
+    name: 'The build',
+    failure: 'One live system, fixed scope, fixed price quoted from the map.',
+    fix: 'Released in stages, so you use the first part while the rest is built.',
   },
   {
     number: '04',
-    name: 'No execution muscle',
-    failure:
-      'A beautiful strategy deck handed to a team that cannot build it. It dies in the gap between design and code.',
-    fix: 'We design and engineer in-house. What we draw is what ships — brand, product and site from one team.',
-  },
-  {
-    number: '05',
-    name: 'Cultural blind spots',
-    failure:
-      'Global gloss that misreads the room — tone-deaf in Arabic, off-key in the Gulf.',
-    fix: 'Regional fluency built in. Arabic and English, Khaleeji taste, a market moving on Vision 2030.',
+    name: 'We stay',
+    failure: 'Hosting, backups, monitoring and changes every month.',
+    fix: 'Or a weekly working partnership on the next bottleneck.',
   },
 ];
 
@@ -87,7 +76,7 @@ export function WhyRebrandsFail() {
               4
             </span>
             <span className="text-[0.75rem] sm:text-[0.8125rem] font-medium text-text-primary dark:text-brand-cream border border-black/[0.12] dark:border-brand-cream/[0.18] rounded-full px-3 sm:px-4 py-1 sm:py-1.5">
-              The real risk
+              How it works
             </span>
           </div>
         </FadeUp>
@@ -99,25 +88,13 @@ export function WhyRebrandsFail() {
             className="font-sans font-semibold text-text-primary dark:text-brand-cream leading-[1.05] tracking-[-0.02em]"
             style={{ fontSize: 'clamp(2.5rem, 5vw, 4.25rem)', maxWidth: '18ch' }}
           >
-            Most brand builds fail. Here&apos;s{' '}
-            <span className="accent-italic">where</span>.
+            Start small.{' '}
+            <span className="accent-italic">Keep the map either way</span>.
           </h2>
         </FadeUp>
 
-        {/* Lead */}
-        <FadeUp delay={0.12}>
-          <p
-            className="mt-8 text-text-secondary dark:text-brand-cream/70 leading-[1.55]"
-            style={{ fontSize: 'clamp(1.0625rem, 1.35vw, 1.25rem)', maxWidth: '60ch' }}
-          >
-            The most expensive project a company takes on fails in five predictable
-            places. {' '}
-            <span className="text-text-primary dark:text-brand-cream font-medium">We engineer each one out.</span>
-          </p>
-        </FadeUp>
-
-        {/* Failure-mode list */}
-        <div className="mt-16 md:mt-20 border-t border-black/[0.1] dark:border-brand-cream/[0.1]">
+        {/* The four rungs */}
+        <div className="mt-14 md:mt-20 border-t border-black/[0.1] dark:border-brand-cream/[0.1]">
           {modes.map((mode, i) => (
             <ScrollReveal key={mode.number} direction="up" distance={20} delay={i * 0.05}>
               <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] gap-6 md:gap-12 py-8 md:py-10 border-b border-black/[0.1] dark:border-brand-cream/[0.1]">
@@ -144,7 +121,7 @@ export function WhyRebrandsFail() {
                   <div className="flex items-center gap-2 mb-2.5">
                     <ArrowRight size={13} weight="bold" className="text-brand-accent-on-light dark:text-brand-accent" aria-hidden="true" />
                     <span className="text-[0.6875rem] font-bold tracking-[0.18em] uppercase text-brand-accent-on-light dark:text-brand-accent">
-                      How we remove it
+                      What you get
                     </span>
                   </div>
                   <p className="text-text-primary dark:text-brand-cream/85 text-[0.9375rem] md:text-[1.0625rem] leading-[1.6] max-w-[46ch]">
@@ -155,6 +132,13 @@ export function WhyRebrandsFail() {
             </ScrollReveal>
           ))}
         </div>
+
+        {/* Every rung above has a number attached to it on /services */}
+        <FadeUp delay={0.1}>
+          <div className="mt-12 md:mt-14">
+            <RollButton href="/services" label="Prices and what is included" />
+          </div>
+        </FadeUp>
       </div>
     </section>
   );

@@ -21,6 +21,12 @@ interface RollButtonProps {
    * placement in the analytics dashboard.
    */
   umamiEvent?: string;
+  /**
+   * Render a plain anchor that opens in a new tab. Required for off-site
+   * destinations such as the Calendly booking pages, which the view-transitions
+   * router cannot navigate to.
+   */
+  external?: boolean;
 }
 
 /**
@@ -34,20 +40,18 @@ export function RollButton({
   className,
   onClick,
   umamiEvent,
+  external = false,
 }: RollButtonProps) {
   const isPrimary = variant === 'primary';
 
-  return (
-    <Link
-      href={href}
-      onClick={onClick}
-      data-umami-event={umamiEvent}
-      className={`group press-scale inline-flex items-center gap-2.5 rounded-full pl-5 sm:pl-6 pr-2 py-2 text-[0.8125rem] sm:text-[0.875rem] font-semibold ${
-        isPrimary
-          ? 'bg-brand-dark text-brand-cream hover:bg-[#241323] dark:bg-brand-cream dark:text-brand-dark dark:hover:bg-brand-cream/90'
-          : 'bg-brand-cream text-brand-dark hover:bg-brand-cream/90'
-      } ${className ?? ''}`}
-    >
+  const classes = `group press-scale inline-flex items-center gap-2.5 rounded-full pl-5 sm:pl-6 pr-2 py-2 text-[0.8125rem] sm:text-[0.875rem] font-semibold ${
+    isPrimary
+      ? 'bg-brand-dark text-brand-cream hover:bg-[#241323] dark:bg-brand-cream dark:text-brand-dark dark:hover:bg-brand-cream/90'
+      : 'bg-brand-cream text-brand-dark hover:bg-brand-cream/90'
+  } ${className ?? ''}`;
+
+  const inner = (
+    <>
       {/* Text roll: duplicated label slides up 50% on hover */}
       <span className="overflow-hidden h-[20px]">
         <span
@@ -73,6 +77,27 @@ export function RollButton({
       >
         <ArrowRight size={14} weight="bold" />
       </span>
+    </>
+  );
+
+  if (external) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={onClick}
+        data-umami-event={umamiEvent}
+        className={classes}
+      >
+        {inner}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={href} onClick={onClick} data-umami-event={umamiEvent} className={classes}>
+      {inner}
     </Link>
   );
 }

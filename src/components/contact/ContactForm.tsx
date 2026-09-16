@@ -12,7 +12,6 @@ type FormValues = {
   email: string;
   company: string;
   website: string;
-  budget: string;
   phone: string;
   message: string;
 };
@@ -120,21 +119,10 @@ export function ContactForm({ intent }: ContactFormProps) {
         </div>
       </div>
 
+      {/* The budget dropdown was dropped on 16 Sep 2026: the Calendly booking form
+          already asks the question, and asking it twice cost us replies. The API
+          still accepts a `budget` field, so nothing breaks server-side. */}
       <div className="grid sm:grid-cols-2 gap-5">
-        <div>
-          <label htmlFor="budget" className={labelClass}>Budget</label>
-          <select
-            id="budget"
-            className={`${inputClass} appearance-none cursor-pointer bg-no-repeat pr-10 bg-[length:16px] bg-[right_0.9rem_center] bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%236b6b6b%22%20stroke-width=%222.2%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M6%209l6%206%206-6%22/%3E%3C/svg%3E')] dark:bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%23bfb2bb%22%20stroke-width=%222.2%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M6%209l6%206%206-6%22/%3E%3C/svg%3E')]`}
-            {...register('budget')}
-          >
-            <option value="">Select Budget...</option>
-            <option value="1k-5k">$1,000 – $5,000</option>
-            <option value="5k-10k">$5,000 – $10,000</option>
-            <option value="10k-25k">$10,000 – $25,000</option>
-            <option value="25k+">$25,000+</option>
-          </select>
-        </div>
         <div>
           <label htmlFor="phone" className={labelClass}>Phone</label>
           <input

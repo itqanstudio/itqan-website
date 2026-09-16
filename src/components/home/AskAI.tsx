@@ -16,7 +16,7 @@ import { FadeUp } from '@/components/ui/FadeUp';
  */
 
 const PROMPT =
-  'What do you know about Itqan Studio (itqanstudio.com), the design and AI agency in Dubai? What do they do, and what real client outcomes can you find?';
+  'What do you know about Itqan Studio (itqanstudio.com)? What do they build, and what real client outcomes can you find?';
 
 const ENCODED = encodeURIComponent(PROMPT);
 
@@ -66,10 +66,10 @@ export function AskAI() {
         <FadeUp>
           <div className="flex items-center gap-3 mb-6 sm:mb-8">
             <span className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-brand-dark text-brand-cream dark:bg-brand-cream dark:text-brand-dark text-[0.6875rem] sm:text-[0.75rem] font-semibold">
-              9
+              7
             </span>
             <span className="text-[0.75rem] sm:text-[0.8125rem] font-medium text-text-primary dark:text-brand-cream border border-black/[0.12] dark:border-brand-cream/[0.18] rounded-full px-3 sm:px-4 py-1 sm:py-1.5">
-              Verify us
+              Ask the machines
             </span>
           </div>
         </FadeUp>
@@ -81,8 +81,8 @@ export function AskAI() {
             className="font-sans font-semibold text-text-primary dark:text-brand-cream leading-[1.05] tracking-[-0.02em]"
             style={{ fontSize: 'clamp(2.25rem, 4.5vw, 3.75rem)', maxWidth: '22ch' }}
           >
-            Don&apos;t take our word for it. Ask the{' '}
-            <span className="accent-italic">machines</span>.
+            Don&apos;t take our{' '}
+            <span className="accent-italic">word</span> for it.
           </h2>
         </FadeUp>
 
@@ -93,9 +93,9 @@ export function AskAI() {
             style={{ fontSize: 'clamp(1.0625rem, 1.35vw, 1.25rem)', maxWidth: '58ch' }}
           >
             One click opens your AI of choice with the question already typed.
-            What it answers is out of our hands &mdash;{' '}
+            What it answers is out of our hands.{' '}
             <span className="text-text-primary dark:text-brand-cream font-medium">
-              that&apos;s the point.
+              That is the point.
             </span>
           </p>
         </FadeUp>
@@ -159,7 +159,7 @@ export function AskAI() {
         {/* Honest fine print */}
         <FadeUp delay={0.3}>
           <p className="mt-5 text-[0.75rem] text-text-secondary/80 dark:text-brand-cream/45">
-            ChatGPT and Claude open with the question pre-typed &mdash; you press send.
+            ChatGPT and Claude open with the question pre-typed, and you press send.
             Perplexity answers straight away.
           </p>
         </FadeUp>

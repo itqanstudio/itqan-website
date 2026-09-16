@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'next-view-transitions';
 import dynamic from 'next/dynamic';
 import { RollButton } from '@/components/ui/RollButton';
-import { AiVisibility } from '@/components/home/AiVisibility';
 import { PartnerStrip } from '@/components/home/PartnerStrip';
+import { INTRO_CALL_URL, INTRO_CALL_LABEL } from '@/lib/booking';
 
 // WebGPU shader is client-only; the section's CSS gradient is the fallback.
 const HeroShader = dynamic(() => import('@/components/home/HeroShader'), { ssr: false });
@@ -68,60 +68,60 @@ export function HeroAxion() {
       {/* Animated shader overlay — mounted post-idle, skipped for reduced motion */}
       {showShader && <HeroShader />}
 
-      {/* ── Middle zone: the AI-visibility panel ── */}
-      <div className="relative z-20 flex-1 flex items-center justify-center lg:justify-end max-w-[1440px] w-full mx-auto px-5 sm:px-8 lg:px-12 py-8">
-        <AiVisibility className="w-full max-w-[420px] lg:mr-4" />
-      </div>
+      {/* Spacer — the hero content is bottom-anchored, the art sits above it */}
+      <div className="relative z-20 flex-1" aria-hidden="true" />
 
       {/* ── Hero content — bottom-anchored ── */}
       <div className="relative z-20 max-w-[1440px] w-full mx-auto px-5 sm:px-8 lg:px-12 pb-12 sm:pb-16 lg:pb-20">
         <p className="text-[0.8125rem] sm:text-[0.875rem] font-medium tracking-wide text-text-primary dark:text-brand-cream mb-5 sm:mb-7">
-          Itqan Studio &mdash; Dubai
+          Itqan Studio. Dubai and Sweden.
         </p>
 
         <h1
           className="display-type font-sans font-semibold text-text-primary dark:text-brand-cream"
           style={{ fontSize: 'clamp(2.25rem, 6.5vw, 4.2rem)' }}
         >
-          Your next customer just{' '}
+          We build the system your business{' '}
           <span
             className="text-brand-accent-on-light dark:text-brand-accent"
             style={{ fontFamily: "var(--font-serif), serif", fontStyle: 'italic', fontWeight: 500 }}
           >
-            asked
-          </span>{' '}
-          ChatGPT.
+            runs on
+          </span>
+          . Then we stay to run it.
         </h1>
 
         <p className="mt-5 sm:mt-6 text-[0.9375rem] sm:text-[1.0625rem] leading-[1.55] text-[#4a4a4a] dark:text-brand-cream/70 max-w-[52ch]">
-          Did your name come up? That&apos;s the work &mdash; getting you into the answer,
-          and converting the buyers who land.
+          Bookings, intake, customer records, invoicing and follow-up, with the website
+          in front. Live in weeks. Owned by you.
         </p>
 
         {/* CTA row */}
         <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
           <RollButton
-            href="/contact"
-            label="Start a conversation"
+            href={INTRO_CALL_URL}
+            label={INTRO_CALL_LABEL}
+            external
             className="self-start"
             umamiEvent="cta_hero"
           />
 
-          {/* Proof badge */}
           <Link
             href="/work"
-            className="press-scale self-start inline-flex items-center gap-2.5 rounded-[6px] bg-white dark:bg-[#2a1a28] px-3.5 py-2.5 shadow-[0_2px_8px_rgba(47,28,44,0.08)] hover:shadow-[0_4px_16px_rgba(47,28,44,0.14)]"
+            className="press-scale self-start inline-flex items-center gap-2 text-[0.875rem] sm:text-[0.9375rem] font-semibold text-text-primary dark:text-brand-cream underline underline-offset-[6px] decoration-brand-accent-on-light/50 dark:decoration-brand-accent/50 hover:decoration-brand-accent-on-light dark:hover:decoration-brand-accent"
           >
-            <Starburst className="w-5 h-5 sm:w-6 sm:h-6 text-brand-accent-on-light dark:text-brand-accent" />
-            {/* Real outcome (Nexilink, src/data/case-studies.ts) — not a slogan */}
-            <span className="text-[0.8125rem] sm:text-[0.875rem] font-medium text-text-primary dark:text-brand-cream">
-              Client placed 1st &mdash; 2024
-            </span>
-            <span className="text-[0.625rem] sm:text-[0.6875rem] font-semibold bg-brand-dark text-brand-cream dark:bg-brand-cream dark:text-brand-dark px-2 py-0.5 rounded">
-              See work
-            </span>
+            See the work
           </Link>
         </div>
+
+        {/* Proof line — every claim here is a shipped fact, not a slogan */}
+        <p className="mt-6 sm:mt-7 flex items-start gap-2.5 text-[0.8125rem] sm:text-[0.875rem] leading-[1.5] text-text-primary/80 dark:text-brand-cream/60 max-w-[56ch]">
+          <Starburst className="mt-[0.15em] w-4 h-4 flex-shrink-0 text-brand-accent-on-light dark:text-brand-accent" />
+          <span>
+            Lemon Garden: seven restaurants, one booking system, live in a week.
+            PMP certified. Dubai and Sweden.
+          </span>
+        </p>
 
         {/* Partner credibility — registered AWS + Shopify partner programs */}
         <PartnerStrip />

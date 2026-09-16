@@ -5,14 +5,13 @@ import { Palette, Lightning, PencilSimpleLine } from '@phosphor-icons/react';
 import { FadeUp } from '@/components/ui/FadeUp';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
 import { SpringCard } from '@/components/ui/SpringCard';
-import { StaggerContainer, StaggerItem } from '@/components/ui/StaggerContainer';
 
 const values = [
   {
     Icon: Palette,
     title: 'Excellence in Craftsmanship',
     description:
-      'The brand still looks deliberate at 200 touchpoints and two years out. We build identities that compound instead of dating — a system, not a logo.',
+      'The system still works at three locations and at ten. Built once, properly, so it compounds instead of decaying.',
     image: '/images/founder-render.png',
     alt: 'Itqan Studio brand craft',
   },
@@ -20,7 +19,7 @@ const values = [
     Icon: Lightning,
     title: 'Excellence in Precision',
     description:
-      'Automation, workflows and platforms that take manual work off your plate. From CRM to content operations, the business runs without you holding it together.',
+      'Documented, traceable, tested. You can see what was decided, when, and why, and a future hire can run it from the handover doc.',
     image: '/images/portfolio/project-you/today.webp',
     alt: 'Project You — a calm life dashboard built by Itqan Studio',
   },
@@ -28,19 +27,13 @@ const values = [
     Icon: PencilSimpleLine,
     title: 'Excellence in Function',
     description:
-      'Every screen earns its place through research and testing, not taste. We design for how people actually behave, then prove it before we build.',
+      'Built for how your staff actually work, and shown working before the build starts.',
     image: '/images/portfolio/oud-closet/cover.png',
     alt: 'Oud Closet — luxury modest-fashion storefront designed by Itqan Studio',
   },
 ];
 
 const directions: Array<'left' | 'up' | 'right'> = ['left', 'up', 'right'];
-
-const tags = [
-  'Web Development', 'Integrations', 'Prototyping', 'Design System',
-  'UI & UX Strategy', 'Copywriting', 'Branding', 'SEO',
-  'Content Creation Strategy', 'Funnel Architecture', 'Automation',
-];
 
 export function Values() {
   return (
@@ -99,15 +92,6 @@ export function Values() {
           ))}
         </div>
 
-        <StaggerContainer stagger={0.03} delay={0.1} className="mt-12 flex flex-wrap gap-2.5">
-          {tags.map((tag) => (
-            <StaggerItem key={tag}>
-              <span className="inline-flex px-4 py-2 rounded-full text-[11px] font-medium tracking-wide text-text-primary dark:text-brand-cream border border-black/[0.1] bg-white dark:border-brand-cream/[0.15] dark:bg-brand-cream/[0.06] transition-colors duration-200">
-                {tag}
-              </span>
-            </StaggerItem>
-          ))}
-        </StaggerContainer>
       </div>
     </section>
   );

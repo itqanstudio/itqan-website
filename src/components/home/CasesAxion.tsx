@@ -18,24 +18,26 @@ interface CaseCard {
 
 const cards: CaseCard[] = [
   {
-    href: '/work/millow',
-    title: 'Millow',
-    outcome: '56 tracked design rounds, every release behind a green 113-test gate.',
+    href: '/work/lemon-garden',
+    title: 'Lemon Garden',
+    outcome:
+      'Seven Swedish restaurants ran out of one shared inbox. Now guests pick their branch, bookings route themselves, and each restaurant sees its own day. Working demo on day one. Live within a week.',
     media: {
-      image: '/images/portfolio/millow/cover-collage.webp',
-      alt: "Millow, Sweden's fermented oat protein platform, website designed with Itqan Studio",
+      image: '/images/portfolio/lemon-garden/cover-collage.webp',
+      alt: 'Lemon Garden, a seven-restaurant booking system built and hosted by Itqan Studio',
     },
     aspect: 'aspect-[329/246]',
     chip: 'light',
     chipWidth: 'group-hover:w-[168px]',
   },
   {
-    href: '/work/mutqin',
-    title: 'Mutqin',
-    outcome: 'Brand, product and AI shipped as one. Live.',
+    href: '/work/millow',
+    title: 'Millow',
+    outcome:
+      'Off a locked Wix setup, onto a website and CMS they own. 56 tracked design rounds. Every release behind a 113-test gate. In their words: they captured the essence of the brand.',
     media: {
-      image: '/images/portfolio/mutqin/hero-landing.webp',
-      alt: 'Mutqin — AI startup companion built end to end by Itqan Studio',
+      image: '/images/portfolio/millow/cover-collage.webp',
+      alt: "Millow, Sweden's fermented oat protein platform, website designed with Itqan Studio",
     },
     aspect: 'aspect-square md:aspect-[329/246]',
     chip: 'dark',
@@ -79,7 +81,7 @@ export function CasesAxion() {
         <FadeUp>
           <div className="px-5 sm:px-8 lg:px-12 flex items-center gap-3 mb-6 sm:mb-8">
             <span className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-brand-dark text-brand-cream dark:bg-brand-cream dark:text-brand-dark text-[0.6875rem] sm:text-[0.75rem] font-semibold">
-              2
+              3
             </span>
             <span className="text-[0.75rem] sm:text-[0.8125rem] font-medium text-text-primary dark:text-brand-cream border border-black/[0.15] dark:border-brand-cream/[0.18] rounded-full px-3 sm:px-4 py-1 sm:py-1.5">
               Selected work

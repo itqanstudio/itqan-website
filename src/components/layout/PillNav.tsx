@@ -19,10 +19,12 @@ import { RollButton } from '@/components/ui/RollButton';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { projectMomentum, SPRING_SHEET, SPRING_MOMENTUM } from '@/lib/motion';
 import { pauseSmoothScroll, resumeSmoothScroll } from '@/lib/smooth-scroll';
+import { INTRO_CALL_URL, INTRO_CALL_LABEL } from '@/lib/booking';
 
 const NAV_LINKS = [
   { href: '/work', label: 'Work' },
-  { href: '/services', label: 'Services' },
+  // URL kept for search; the label is what changed (decided 8 Sep 2026).
+  { href: '/services', label: 'How we work' },
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
 ];
@@ -286,7 +288,12 @@ export function PillNav() {
               {dubaiTime} in Dubai
             </span>
             <ThemeToggle />
-            <RollButton href="/contact" label="Start a conversation" umamiEvent="cta_nav" />
+            <RollButton
+              href={INTRO_CALL_URL}
+              label={INTRO_CALL_LABEL}
+              external
+              umamiEvent="cta_nav"
+            />
           </div>
 
           {/* Mobile: theme + menu */}
@@ -422,8 +429,9 @@ export function PillNav() {
                 page you are already on: without this the sheet just sat there. */}
             <div className="flex-shrink-0">
               <RollButton
-                href="/contact"
-                label="Start a conversation"
+                href={INTRO_CALL_URL}
+                label={INTRO_CALL_LABEL}
+                external
                 className="w-full justify-between"
                 umamiEvent="cta_nav_mobile"
                 onClick={() => setMenuOpen(false)}

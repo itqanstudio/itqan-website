@@ -37,7 +37,7 @@ export function Portrait() {
               8
             </span>
             <span className="text-[0.75rem] sm:text-[0.8125rem] font-medium text-text-primary dark:text-brand-cream border border-black/[0.12] dark:border-brand-cream/[0.18] rounded-full px-3 sm:px-4 py-1 sm:py-1.5">
-              The team in the room
+              The two people
             </span>
           </div>
         </FadeUp>
@@ -105,17 +105,10 @@ export function Portrait() {
               }}
               {...fadeUpStatement(0.18)}
             >
-              Ibrahim Shareef, CEO and co-founder &mdash; engineer, designer and storyteller
-              in one. With co-founder Bisma Aslam leading design, the people who pitch your
-              work are the people who build it. No juniors. No relay race.
-            </motion.p>
-
-            <motion.p
-              className="mt-7 font-sans font-medium text-[0.8125rem] text-text-secondary/80 dark:text-brand-cream/45"
-              style={{ letterSpacing: '0.02em' }}
-              {...fadeUpStatement(0.26)}
-            >
-              &mdash; Ibrahim Shareef, CEO &amp; Co-founder
+              Ibrahim Shareef builds and runs the system: engineering and delivery, PMP
+              certified, more than ten years in fintech and e-invoicing. Bisma Aslam leads
+              design: the brand, the interface, the website in front. The people you talk
+              to are the people who build it.
             </motion.p>
           </div>
 

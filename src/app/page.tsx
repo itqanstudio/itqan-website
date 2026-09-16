@@ -5,7 +5,6 @@ import { CasesAxion } from '@/components/home/CasesAxion';
 import { ThreePillars } from '@/components/home/ThreePillars';
 import { WhyRebrandsFail } from '@/components/home/WhyRebrandsFail';
 import { Guarantee } from '@/components/home/Guarantee';
-import { Industries } from '@/components/home/Industries';
 import { WhoFor } from '@/components/home/WhoFor';
 import { Portrait } from '@/components/home/Portrait';
 import { AskAI } from '@/components/home/AskAI';
@@ -17,36 +16,37 @@ export const metadata: Metadata = {
 };
 
 /**
- * Axion-style structure (light-first, dark-aware) up top; the kept decision-maker
- * beats (dark sections) follow — dark/light alternation is the brand rhythm.
- * FounderOS is parked off the homepage (Ibrahim: revisit at the very end; still on /services).
+ * Home, version 2 (16 Sep 2026). The page now sells the system an owner-led
+ * business runs on, not a rebrand: problem, what we build, proof, the four rungs,
+ * what happens after go-live, who it is for, verification, the two people, the ask.
+ * Section badge numbers follow this order, so reordering means renumbering. The
+ * industries strip was dropped (its claim is carried by "Who this is for"), and
+ * FounderOS stays on /services.
  */
 export default function HomePage() {
   return (
     <>
-      {/* 0 — Stakes + AI-visibility demo (light, shader) */}
+      {/* The offer, in one sentence */}
       <HeroAxion />
-      {/* 1 — One partner: every piece that turns traffic into buyers (light) */}
+      {/* 1 — If this sounds like your Monday: the problem in the owner's words */}
       <IntroPartner />
-      {/* 2 — Selected work, expanding-chip cases (light) */}
-      <CasesAxion />
-      {/* The spine — the three criteria senior buyers decide on (dark) */}
+      {/* 2 — What we build: one system, three parts */}
       <ThreePillars />
-      {/* Why rebrands fail — the CEO de-risking section (dark) */}
+      {/* 3 — Proof, not promises: Lemon Garden, then Millow */}
+      <CasesAxion />
+      {/* 4 — How it works: the four rungs, cheapest first */}
       <WhyRebrandsFail />
-      {/* Certainty + honesty — phase-gated, we guarantee what we build (dark) */}
+      {/* 5 — After go-live: Care or Partner, and the date guarantee */}
       <Guarantee />
-      {/* World-class thinking, regional fluency (dark) */}
-      <Industries />
-      {/* Who this is for (dark) */}
+      {/* 6 — Who this is for, and who it is not */}
       <WhoFor />
-      {/* The team in the room */}
-      <Portrait />
-      {/* Verify us — one click opens the visitor's AI with the question pre-typed */}
+      {/* 7 — Verify us in a tool we do not control */}
       <AskAI />
+      {/* 8 — The two people who do the work */}
+      <Portrait />
       {/* Gated named-partner halo slot — renders nothing until NEXT_PUBLIC_PARTNER_HALO=1 */}
       <PartnerHalo />
-      {/* A private, senior conversation (dark) */}
+      {/* The ask: tell us the one thing that is stuck */}
       <CTABanner />
     </>
   );

@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { TestimonialCarousel } from '@/components/ui/TestimonialCarousel';
 import { ContactForm } from '@/components/contact/ContactForm';
+import { RollButton } from '@/components/ui/RollButton';
+import { INTRO_CALL_URL, INTRO_CALL_LABEL } from '@/lib/booking';
 import { FadeUp } from '@/components/ui/FadeUp';
 import { TextReveal } from '@/components/ui/TextReveal';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
@@ -12,9 +14,9 @@ import { breadcrumbLd } from '@/lib/seo';
 import { pageMetadata } from '@/lib/page-metadata';
 
 export const metadata: Metadata = pageMetadata({
-  title: 'Contact — Book a Call With Our Dubai Studio',
+  title: 'Book an intro call with Itqan Studio',
   description:
-    'Book a discovery call with Itqan Studio — a Dubai design and AI agency covering brand, web, SEO, AI visibility (GEO), hosting and automation — or send a message. We respond within 24 hours.',
+    'Thirty minutes with the two people who would do the work. Tell us the one thing that is stuck and leave knowing whether we can move it, and what it would cost.',
   path: '/contact',
 });
 
@@ -59,10 +61,10 @@ const INTENT_COPY: Record<string, IntentCopy> = {
 };
 
 const DEFAULT_COPY: IntentCopy = {
-  label: 'Start a conversation',
-  heading: 'Start a conversation.',
-  subheading: 'Private. Senior. No sales team.',
-  body: "Tell us what you're deciding. You'll hear back from a principal — not a bot, not a junior — within 24 hours.",
+  label: 'Book an intro call',
+  heading: 'Book an intro call.',
+  subheading: 'Thirty minutes with the two people who would do the work.',
+  body: 'Pick a time below and tell us the one thing that is stuck. If you would rather write first, the form does the same job. You hear back within twenty-four hours, from a person.',
 };
 
 interface Props {
@@ -105,17 +107,16 @@ export default function ContactPage({ searchParams }: Props) {
               </p>
             </FadeUp>
 
-            {/* AI-moment — buyers now ask AI who to hire (in-voice, honest) */}
             <FadeUp delay={0.2}>
               <p className="mt-6 text-[0.9375rem] sm:text-base leading-relaxed max-w-[46ch] text-text-primary dark:text-brand-cream/85">
-                You found us.{' '}
+                We work in{' '}
                 <span
                   className="text-brand-accent-on-light dark:text-brand-accent"
                   style={{ fontFamily: "var(--font-serif), serif", fontStyle: 'italic', fontWeight: 500 }}
                 >
-                  Your buyers
-                </span>{' '}
-                should find you the same way.
+                  English, Swedish and Arabic
+                </span>
+                , from Dubai.
               </p>
             </FadeUp>
 
@@ -124,10 +125,31 @@ export default function ContactPage({ searchParams }: Props) {
             </ScrollReveal>
           </div>
 
-          {/* Right column — form */}
-          <ScrollReveal direction="right" distance={28} delay={0.14} className="lg:pt-2">
+          {/* Right column — booking first, then the form (decided 8 Sep 2026) */}
+          <ScrollReveal direction="right" distance={28} delay={0.14} className="lg:pt-2 space-y-6">
+            {/* Calendly is linked, not embedded: an iframe would pull a third-party
+                script in ahead of the consent banner and slow the page for the
+                majority who scroll straight to the form. */}
             <div className="rounded-2xl bg-white dark:bg-[#241626] border border-black/[0.08] dark:border-brand-cream/[0.12] shadow-[0_2px_12px_rgba(47,28,44,0.06)] dark:shadow-none p-8">
-              <p className="font-semibold text-text-primary dark:text-brand-cream text-lg mb-6">Send us a message</p>
+              <p className="font-semibold text-text-primary dark:text-brand-cream text-lg">
+                Pick a time
+              </p>
+              <p className="mt-2.5 text-[0.9375rem] text-text-secondary dark:text-brand-cream/65 leading-relaxed max-w-[44ch]">
+                Thirty minutes, free, on Google Meet. You leave knowing whether we can
+                move the thing that is stuck, and what it would cost.
+              </p>
+              <div className="mt-6">
+                <RollButton
+                  href={INTRO_CALL_URL}
+                  label={INTRO_CALL_LABEL}
+                  external
+                  umamiEvent="cta_contact_calendly"
+                />
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-white dark:bg-[#241626] border border-black/[0.08] dark:border-brand-cream/[0.12] shadow-[0_2px_12px_rgba(47,28,44,0.06)] dark:shadow-none p-8">
+              <p className="font-semibold text-text-primary dark:text-brand-cream text-lg mb-6">Or send us a message</p>
               <ContactForm intent={intent} />
               {/* Existing clients land here first when something breaks. This
                   form emails an inbox; /support opens a tracked ticket with a
@@ -140,7 +162,7 @@ export default function ContactPage({ searchParams }: Props) {
                 >
                   Open a support request
                 </a>{' '}
-                — you&apos;ll get a private link to track it.
+                and you get a private link to track it.
               </p>
             </div>
           </ScrollReveal>

@@ -2,11 +2,12 @@
 
 import { motion } from 'framer-motion';
 import { RollButton } from '@/components/ui/RollButton';
+import { INTRO_CALL_URL, INTRO_CALL_LABEL } from '@/lib/booking';
 
 /**
- * The closer — a private, senior conversation. No badge (it ends the page).
- * Carries the page's single AI-moment: an honest, in-voice line that the
- * machines are already answering, echoing the hero. Light-first, dark-aware.
+ * The closer. No badge (it ends the page). It asks for the one thing that is
+ * stuck rather than for a project, because that is the question the intro call
+ * is built to answer. Light-first, dark-aware.
  */
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -30,8 +31,8 @@ export function CTABanner() {
           }}
           {...fadeUp(0)}
         >
-          Make the call you can&apos;t afford to get{' '}
-          <span className="accent-italic">wrong</span>.
+          Tell us the one thing that is{' '}
+          <span className="accent-italic">stuck</span>.
         </motion.h2>
 
         <motion.p
@@ -42,24 +43,18 @@ export function CTABanner() {
           }}
           {...fadeUp(0.1)}
         >
-          A private conversation with the people who will do the work. No funnel.
-          No junior on the other end.
-        </motion.p>
-
-        {/* AI-moment — honest, in-voice; the machines are already answering. */}
-        <motion.p
-          className="mt-6 font-sans text-[0.9375rem] md:text-[1rem] text-text-secondary/80 dark:text-brand-cream/50 leading-[1.5]"
-          style={{ maxWidth: 'min(100%, 52ch)' }}
-          {...fadeUp(0.16)}
-        >
-          The machines are already answering. The work is making sure your name is
-          in the reply.
+          A thirty-minute call with the two people who would do the work. You leave
+          knowing whether we can move it and what it would cost.
         </motion.p>
 
         <motion.div {...fadeUp(0.24)}>
           <div className="mt-10 flex flex-col sm:flex-row items-start gap-4 sm:gap-5">
-            {/* Single CTA — a private, senior conversation (no lead-funnel tripwire) */}
-            <RollButton href="/contact" label="Start a conversation" umamiEvent="cta_banner" />
+            <RollButton
+              href={INTRO_CALL_URL}
+              label={INTRO_CALL_LABEL}
+              external
+              umamiEvent="cta_banner"
+            />
           </div>
         </motion.div>
       </div>

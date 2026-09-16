@@ -13,57 +13,32 @@ export const SERVICE_FAQ: readonly FaqItem[] = [
   {
     question: 'What does Itqan Studio do?',
     answer:
-      'Itqan Studio is a Dubai-based design and AI agency, and one partner for the whole growth stack: brand identity and creative direction, websites that convert, content and social media marketing, SEO, AI visibility (GEO), web hosting and infrastructure, and agentic AI automation. Everything is designed, built and run by the same senior team, so the parts fit and the outcome compounds.',
+      'We build the system an owner-led business runs on: booking or intake, the admin side, the automation between them, and the website in front. Then we host it and keep building with you.',
   },
   {
-    question: 'Do you do SEO and AI visibility (GEO)?',
+    question: 'Who owns the code and the data?',
     answer:
-      'Yes. We do both traditional SEO — the structure, content and technical signals that help buyers find you in search — and AI visibility, also called generative engine optimization (GEO), which works to get your brand named when buyers ask ChatGPT, Claude and Gemini who to hire. We can’t promise a specific ranking or an AI citation — no honest partner can — but we build for it and track how often you show up.',
+      'You do. It is written into the proposal. You can leave with both at any time.',
   },
   {
-    question: 'Do you host and run websites after launch?',
+    question: 'How fast?',
     answer:
-      'Yes. Web hosting and infrastructure is one of our services. Because we design and build the site, one team can host it, keep it live and stable, and maintain it after launch — so you never hand a finished site to a separate hosting company that didn’t build it.',
+      'A working version before you commit. Starter scope live in three weeks, core in six. Lemon Garden went from a shared inbox to a live booking system in a week.',
   },
   {
-    question: 'Do you run content and social media?',
+    question: 'Do you do SEO and AI visibility?',
     answer:
-      'Yes. We offer content and social media marketing as a content engine that ships every week in your voice — planned, produced and posted across the channels your buyers use. We built the same kind of system for Shareefico, where two brands ship 4+ pieces per week from one custom CMS.',
+      'Yes, after go-live, inside Care or Partner. We cannot promise a ranking or a citation, and we say so.',
   },
   {
-    question: 'Is Itqan Studio a Dubai agency, and do you work with clients outside the UAE?',
+    question: 'Do you run ads or social media?',
     answer:
-      'Yes. Itqan Studio operates from Dubai, United Arab Emirates, and works with founders across the UAE, the wider GCC, and globally. Most work is delivered remotely, so location is rarely a constraint. The team works in both English and Arabic.',
+      'No ads. Content and social are scoped only inside a Partner engagement.',
   },
   {
-    question: 'What makes Itqan different from a typical design or marketing agency in Dubai?',
+    question: 'Where are you?',
     answer:
-      'Most companies hand off disconnected deliverables — a logo from one agency, a website from another, SEO and content from a third, hosting from a fourth. Itqan is one partner for the whole stack: brand, web, content, SEO, AI visibility, hosting and automation, designed, built and run in-house. We build our own products, like Mutqin and Project You, the same way — so the method is proven before we sell it.',
-  },
-  {
-    question: 'How does an Itqan engagement work?',
-    answer:
-      'Itqan works in three connected phases. Identity builds the brand, positioning and voice. System assembles the tooling, workflows and content engine. Automation adds an agentic layer that runs the operation with a human in control. Each phase ships working assets, not slide decks — and one senior team stays to keep it running.',
-  },
-  {
-    question: 'Do you build AI automation and agentic systems?',
-    answer:
-      'Yes. We design and build agentic AI automation — lead capture and qualification, content distribution, and reporting — that runs your operations with a human in control. Recent builds include the AI product Mutqin and a Claude-powered coach inside Project You.',
-  },
-  {
-    question: 'How fast can you deliver a brand and website?',
-    answer:
-      'Fast. Itqan delivered a full brand and investor-ready product in 3 weeks for Nexilink, and a brand plus custom CMS in under 30 days for Shareefico — against industry averages of 8 to 24 weeks for comparable scope.',
-  },
-  {
-    question: 'How much does it cost to work with Itqan Studio?',
-    answer:
-      'Every engagement can start with a free AI Visibility Check — we show you where your brand stands when buyers ask AI, with three fixes. From there, pricing depends on scope, from a single capability to the full brand-to-automation build. The fastest way to a quote is to start a conversation.',
-  },
-  {
-    question: 'How do I start a project with Itqan Studio?',
-    answer:
-      'Book a discovery call or send a message from the contact page. Itqan responds within 24 hours and confirms fit before any engagement begins.',
+      'Itqan Studio FZ-LLC is a UAE company in Dubai. We serve clients in the UAE and Sweden, work in English, Swedish and Arabic, and invoice in USD.',
   },
 ];
 

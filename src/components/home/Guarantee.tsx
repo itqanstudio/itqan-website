@@ -6,22 +6,20 @@ import { FadeUp } from '@/components/ui/FadeUp';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
 
 /**
- * Certainty + honesty — phase-gated deliverables, we guarantee what we build.
- * The honest caveat (no revenue/leads/PR promises) is kept verbatim.
- * Light-first, dark-aware (badge 5).
+ * After go-live. The section that separates us from an agency that hands over
+ * and leaves, so it names both continuity options and the date guarantee. Prices
+ * live on /services, deliberately not here. Light-first, dark-aware (badge 5).
  */
 const gates = [
   {
-    day: 'Day 30',
-    delivers: 'Identity complete — brand, visuals, voice.',
+    name: 'Care',
+    delivers:
+      'Hosting, backups, monitoring, and up to four hours of changes or advice a month. Three-month minimum, then month to month.',
   },
   {
-    day: 'Day 60',
-    delivers: 'System complete — tools, workflows, content engine.',
-  },
-  {
-    day: 'Day 90',
-    delivers: 'Automation complete — the agentic layer running your operation.',
+    name: 'Partner',
+    delivers:
+      'A fixed weekly working call, three engineering days a month, a monthly written review, and the next bottleneck each quarter. Month to month, thirty days notice.',
   },
 ];
 
@@ -59,7 +57,7 @@ export function Guarantee({ badge = 5 }: { badge?: number }) {
             </span>
             <span className="inline-flex items-center gap-2 text-[0.75rem] sm:text-[0.8125rem] font-medium text-text-primary dark:text-brand-cream border border-black/[0.12] dark:border-brand-cream/[0.18] rounded-full px-3 sm:px-4 py-1 sm:py-1.5">
               <ShieldCheck size={14} weight="bold" className="text-brand-accent-on-light dark:text-brand-accent" />
-              Guarantee
+              After go-live
             </span>
           </div>
         </FadeUp>
@@ -73,8 +71,8 @@ export function Guarantee({ badge = 5 }: { badge?: number }) {
                 className="font-sans font-semibold text-text-primary dark:text-brand-cream leading-[1.05] tracking-[-0.02em]"
                 style={{ fontSize: 'clamp(2.25rem, 4.2vw, 3.5rem)' }}
               >
-                Phase-gated outputs.{' '}
-                <span className="accent-italic">No surprises.</span>
+                Most agencies hand over and leave.{' '}
+                <span className="accent-italic">We stay.</span>
               </h2>
             </FadeUp>
 
@@ -83,27 +81,15 @@ export function Guarantee({ badge = 5 }: { badge?: number }) {
                 className="mt-7 text-text-secondary dark:text-brand-cream/75 leading-[1.6]"
                 style={{ fontSize: 'clamp(1rem, 1.25vw, 1.125rem)', maxWidth: '46ch' }}
               >
-                At Day 30, Day 60, and Day 90, defined deliverables are checked. If any
-                pillar isn&apos;t complete on time,{' '}
+                The team that built your system hosts it, watches it, backs it up every
+                day, and keeps building.{' '}
                 <span className="text-text-primary dark:text-brand-cream font-medium">
-                  we extend free until it is.
+                  Two ways.
                 </span>
               </p>
             </FadeUp>
 
-            <FadeUp delay={0.18}>
-              <p
-                className="mt-5 text-text-secondary dark:text-brand-cream/75 leading-[1.6]"
-                style={{ fontSize: 'clamp(1rem, 1.25vw, 1.125rem)', maxWidth: '46ch' }}
-              >
-                If at Day 30 it&apos;s not working for either side,{' '}
-                <span className="text-text-primary dark:text-brand-cream font-medium">
-                  you keep the identity, we keep the deposit, we part as friends.
-                </span>
-              </p>
-            </FadeUp>
-
-            {/* Honest caveat — muted (kept verbatim) */}
+            {/* The guarantee, and the boundary on it, in one breath */}
             <FadeUp delay={0.26}>
               <p
                 className="mt-9 italic text-text-secondary/70 dark:text-brand-cream/45 leading-[1.55]"
@@ -113,8 +99,9 @@ export function Guarantee({ badge = 5 }: { badge?: number }) {
                   maxWidth: '46ch',
                 }}
               >
-                We don&apos;t guarantee your revenue, your leads, or your PR &mdash; those
-                depend on factors outside our hands. We guarantee what we build.
+                Every deliverable has a date. Miss a date and the work extends at no
+                charge until it ships. We never guarantee your revenue or your leads. We
+                guarantee what we build, and when.
               </p>
             </FadeUp>
           </div>
@@ -123,7 +110,7 @@ export function Guarantee({ badge = 5 }: { badge?: number }) {
           <div className="grid gap-3 md:gap-4">
             {gates.map((gate, i) => (
               <ScrollReveal
-                key={gate.day}
+                key={gate.name}
                 direction="up"
                 distance={20}
                 delay={i * 0.08}
@@ -133,19 +120,19 @@ export function Guarantee({ badge = 5 }: { badge?: number }) {
                   transition={{ duration: 0.25, ease: 'easeOut' }}
                   className="relative flex items-start gap-5 md:gap-6 p-6 md:p-7 rounded-[12px] border border-black/[0.08] dark:border-brand-cream/[0.08] bg-white dark:bg-[#2a1a28] shadow-[0_2px_12px_rgba(47,28,44,0.06)]"
                 >
-                  {/* Gate marker */}
+                  {/* Option marker */}
                   <div
                     className="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center font-sans font-semibold text-brand-accent-on-light border border-brand-accent-on-light/35 bg-brand-accent-on-light/[0.08] dark:text-brand-accent dark:border-brand-accent/35 dark:bg-brand-accent/[0.08] tabular-nums"
                     style={{ fontSize: '0.875rem' }}
                   >
-                    {gate.day.split(' ')[1]}
+                    {String(i + 1).padStart(2, '0')}
                   </div>
 
                   <div className="flex-1 pt-1">
-                    <p className="text-[0.6875rem] font-bold tracking-[0.18em] uppercase text-text-secondary/70 dark:text-brand-cream/45">
-                      {gate.day} checkpoint
-                    </p>
-                    <p className="mt-2 text-text-primary dark:text-brand-cream/85 text-[1rem] md:text-[1.0625rem] leading-[1.5]">
+                    <h3 className="font-sans font-semibold text-text-primary dark:text-brand-cream text-[1.125rem] md:text-[1.25rem] leading-[1.2]">
+                      {gate.name}
+                    </h3>
+                    <p className="mt-2 text-text-secondary dark:text-brand-cream/75 text-[0.9375rem] md:text-[1rem] leading-[1.55]">
                       {gate.delivers}
                     </p>
                   </div>
