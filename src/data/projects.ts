@@ -15,7 +15,26 @@ export interface Project {
   coverHasTitle?: boolean;
 }
 
+// Array order is the order the cards appear on /work. Lemon Garden leads and
+// Millow follows, so the system story is the first thing a visitor sees
+// (site copy v2, section 7).
 export const projects: Project[] = [
+  {
+    id: 'lemon-garden',
+    title: 'Lemon Garden',
+    subtitle: 'A booking platform for a seven-city restaurant chain',
+    category: 'Application Development',
+    coverImage: '/images/portfolio/lemon-garden/cover-collage.webp',
+    mockups: [
+      '/images/portfolio/lemon-garden/mobile.webp',
+      '/images/portfolio/lemon-garden/console.webp',
+      '/images/portfolio/lemon-garden/website.webp',
+    ],
+    description:
+      'A self-hosted booking platform for a Swedish brunch chain with seven locations: live availability per seating, a two-factor staff console, an owner-run form builder, and a full email layer. Demo on day one, production within the week, live at boka.lemongarden.se.',
+    tags: ['Application Development', 'Hospitality', 'Booking'],
+    filters: ['Application Development', 'UI/UX Design'],
+  },
   {
     id: 'millow',
     title: 'Millow',
@@ -47,22 +66,6 @@ export const projects: Project[] = [
       'An AI startup companion that turns one onboarding chat into a living company portal — coaching, investor-grade documents, and a readiness score. Designed, branded and engineered end to end at Itqan on React, TypeScript, Supabase and Claude. Live at mutqin.xyz.',
     tags: ['Application Development', 'Product Design', 'AI'],
     filters: ['Application Development', 'Brand & Identity', 'UI/UX Design'],
-  },
-  {
-    id: 'lemon-garden',
-    title: 'Lemon Garden',
-    subtitle: 'A booking platform for a seven-city restaurant chain',
-    category: 'Application Development',
-    coverImage: '/images/portfolio/lemon-garden/cover-collage.webp',
-    mockups: [
-      '/images/portfolio/lemon-garden/mobile.webp',
-      '/images/portfolio/lemon-garden/console.webp',
-      '/images/portfolio/lemon-garden/website.webp',
-    ],
-    description:
-      'A self-hosted booking platform for a Swedish brunch chain with seven locations: live availability per seating, a two-factor staff console, an owner-run form builder, and a full email layer — demo on day one, production within the week, live at boka.lemongarden.se.',
-    tags: ['Application Development', 'Hospitality', 'Booking'],
-    filters: ['Application Development', 'UI/UX Design'],
   },
   {
     id: 'shareefico',

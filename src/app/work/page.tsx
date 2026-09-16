@@ -8,9 +8,9 @@ import { workCollectionLd, breadcrumbLd } from '@/lib/seo';
 import { pageMetadata } from '@/lib/page-metadata';
 
 export const metadata: Metadata = pageMetadata({
-  title: 'Our Work — Brand, Web, Product & Automation Case Studies',
+  title: 'Our work. The systems, and what they replaced',
   description:
-    'Case studies from Itqan Studio, a Dubai design and AI agency — brand identity, websites, product UX, full-stack builds and AI automation delivered for founders in Dubai and beyond.',
+    'Case studies from Itqan Studio in Dubai. Booking and intake systems, the admin side behind them, and the websites in front. Lemon Garden replaced a shared inbox for seven restaurants in a week.',
   path: '/work',
 });
 

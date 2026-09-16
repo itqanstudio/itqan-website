@@ -13,6 +13,8 @@ type FormValues = {
   company: string;
   website: string;
   phone: string;
+  /** Honeypot. Always empty for a real person. */
+  referralCode: string;
   message: string;
 };
 
@@ -68,6 +70,20 @@ export function ContactForm({ intent }: ContactFormProps) {
       className="space-y-5"
       noValidate
     >
+      {/* Honeypot. Hidden from people and from assistive tech, so anything in it
+          came from a bot; /api/contact then returns ok and sends nothing. Not
+          named "website", because this form has a real website field. */}
+      <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
+        <label htmlFor="referralCode">Referral code</label>
+        <input
+          id="referralCode"
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+          {...register('referralCode')}
+        />
+      </div>
+
       <div className="grid sm:grid-cols-2 gap-5">
         <div>
           <label htmlFor="name" className={labelClass}>Name</label>
