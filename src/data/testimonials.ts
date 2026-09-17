@@ -10,7 +10,7 @@ export const testimonials: Testimonial[] = [
     quote:
       'Itqan transformed our complex systems into clean, intuitive designs that finally make sense. Fast, clear and genuinely impressive work.',
     name: 'Adel Habib',
-    company: 'Medac & ShadowFly',
+    company: 'Medacs & ShadowFly',
     image: '/images/testimonials/adel-habib.jpeg',
   },
   {
