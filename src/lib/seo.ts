@@ -76,10 +76,12 @@ export const BUSINESS = {
     jobTitle: 'Head of Design & Co-founder',
   },
   /**
-   * Dubai-based; the footer, hero and FAQ name the UAE and Sweden. Expressed as
-   * areaServed, which must agree with that visible copy.
+   * Dubai-based; the footer, hero and FAQ name the UAE and Sweden ("We serve
+   * clients in the UAE and Sweden"). Expressed as areaServed, which must agree
+   * with that visible copy. 'GCC' and 'Worldwide' were dropped because no
+   * visible copy says either; add the copy first if the owner wants them back.
    */
-  areaServed: ['Dubai', 'United Arab Emirates', 'Sweden', 'GCC', 'Worldwide'],
+  areaServed: ['Dubai', 'United Arab Emirates', 'Sweden'],
 } as const;
 
 /** Topics the org demonstrably knows about — feeds Organization.knowsAbout (entity understanding for Google + LLMs). */

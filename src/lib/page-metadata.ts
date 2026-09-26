@@ -16,6 +16,12 @@ interface PageMetadataInput {
   image?: string;
   /** og:type. Case studies are articles; everything else is a website page. */
   ogType?: 'website' | 'article';
+  /**
+   * Use `title` as the whole title, with no " | Itqan Studio" suffix. For a
+   * title that already names the brand (the "Itqan Studio CRM" case study), so
+   * the tab does not read "Itqan Studio ... | Itqan Studio".
+   */
+  absoluteTitle?: boolean;
 }
 
 /** The dynamic OG image rendered by src/app/opengraph-image.tsx (1200x630). */
@@ -93,13 +99,14 @@ export function pageMetadata({
   path,
   image,
   ogType,
+  absoluteTitle = false,
 }: PageMetadataInput): Metadata {
   return {
-    title,
+    title: absoluteTitle ? { absolute: title } : title,
     description,
     ...shareMetadata({
       path,
-      fullTitle: `${title} | ${SITE_NAME}`,
+      fullTitle: absoluteTitle ? title : `${title} | ${SITE_NAME}`,
       description,
       image,
       ogType,

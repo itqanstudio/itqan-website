@@ -13,7 +13,7 @@ import { FadeUp } from '@/components/ui/FadeUp';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
 import { CoverMedia } from '@/components/ui/CoverMedia';
 import { JsonLd } from '@/components/seo/JsonLd';
-import { caseStudyLd, breadcrumbLd } from '@/lib/seo';
+import { caseStudyLd, breadcrumbLd, SITE_NAME } from '@/lib/seo';
 import { pageMetadata } from '@/lib/page-metadata';
 import {
   caseStudies,
@@ -51,6 +51,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     path: `/work/${cs.id}`,
     image: cs.coverImage,
     ogType: 'article',
+    // "Itqan Studio CRM" already names the brand; skip the " | Itqan Studio" suffix.
+    absoluteTitle: cs.title.includes(SITE_NAME),
   });
 }
 

@@ -17,17 +17,26 @@ layout change, so CLS is untouched.
   cutting words (home, about, work, services); /about title is `Ibrahim Shareef & Bisma Aslam, co-founders`.
   SEO-PERF-AUDIT.md bullet marked done.
 - Copy: case-study testimonials credit Ibrahim as `CEO & Co-founder, Itqan Studio` (were "Founder");
-  press page names both co-founders; legal name is `FZ LLC` everywhere (footer and FAQ said `FZ-LLC`).
+  press page names both co-founders; legal name is `FZ LLC` in all rendered copy and metadata (footer and
+  FAQ said `FZ-LLC`; the historical HOMEPAGE-REDESIGN-BRIEF.md still says `FZ-LLC · RAKEZ, UAE`).
 - llms.txt: UAE and Sweden, English/Swedish/Arabic, the four-step offer, "free intro call", co-founders
-  sentence, Lemon Garden case study.
+  sentence, Lemon Garden case study. Dropped ", and globally" and "Most work is delivered remotely..."
+  (no visible copy says either).
+- Review follow-up: Organization/ContactPoint/Service `areaServed` is now Dubai, United Arab Emirates,
+  Sweden. `GCC` and `Worldwide` were removed because no visible copy says either (the FAQ says "We serve
+  clients in the UAE and Sweden"). /work/itqan-crm title is `Itqan Studio CRM case study` with no
+  `| Itqan Studio` suffix (`pageMetadata({ absoluteTitle })`); the other case-study titles are unchanged.
 - Verified: typecheck, `npm test` (16/16, 7/7, 40/40), build; served locally, rendered tags checked on
   /, /about, /services, /work, /work/millow, /privacy, /brand, /brand/logo and on Host brand.itqanstudio.com.
 - STILL OPEN, owner decisions: /about hero frames one founder (AboutHero H1 and lede); Bisma's sameAs needs
   her profile URLs; the seven-service JSON-LD taxonomy vs the four-step /services page; the home title
   (65 characters) was left as is; confirm the trade licence reads `FZ LLC` (if it reads `FZ-LLC`, invert
-  the spelling everywhere, including seo.ts LEGAL_NAME). Other repo, not touched here: a comment in
-  shareefico-website `src/lib/seo/schema.ts` still says `FZ-LLC`. Owner action: submit the sitemap in
-  Search Console and Bing.
+  the spelling everywhere, including seo.ts LEGAL_NAME), and confirm the licensing free zone (RAKEZ, per
+  HOMEPAGE-REDESIGN-BRIEF.md, vs a Dubai free zone) before the "UAE company in Dubai" wording in the FAQ,
+  llms.txt and JSON-LD is treated as final; confirm whether to serve `GCC` / `Worldwide` (if so, add
+  visible copy first, then restore them in seo.ts areaServed and llms.txt). Other repo, not touched here:
+  a comment in shareefico-website `src/lib/seo/schema.ts` still says `FZ-LLC`. Owner action: submit the
+  sitemap in Search Console and Bing.
 
 ## 2026-09-26 — Founder entity joined to shareefi.co (merged to main 2026-09-26)
 
