@@ -1,14 +1,15 @@
 import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/page-metadata';
 import { LegalPageLayout } from '@/components/legal/LegalPageLayout';
 
 // TODO: Review with legal counsel before going live
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'Cookie Policy',
   description:
     'What cookies Itqan Studio uses, why we use them, and how you can control or opt out of non-essential cookies.',
-  alternates: { canonical: '/cookies' },
-};
+  path: '/cookies',
+});
 
 export default function CookiesPage() {
   return (

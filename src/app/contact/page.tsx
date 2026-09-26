@@ -14,7 +14,7 @@ import { breadcrumbLd } from '@/lib/seo';
 import { pageMetadata } from '@/lib/page-metadata';
 
 export const metadata: Metadata = pageMetadata({
-  title: 'Book an intro call with Itqan Studio',
+  title: 'Book an intro call',
   description:
     'Thirty minutes with the two people who would do the work. Tell us the one thing that is stuck and leave knowing whether we can move it, and what it would cost.',
   path: '/contact',

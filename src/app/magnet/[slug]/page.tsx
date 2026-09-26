@@ -39,12 +39,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const magnet = await resolveMagnet(slug);
   if (!magnet) {
     return {
-      title: "Guide not found · Itqan Studio",
+      title: "Guide not found",
       robots: { index: false, follow: false },
     };
   }
   return {
-    title: `${magnet.title} · Free Guide by Itqan Studio`,
+    title: `${magnet.title} · Free guide`,
     description: magnet.landingTeaser
       .slice(0, 160)
       .replace(/[#*\n]+/g, " ")

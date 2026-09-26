@@ -14,6 +14,7 @@ import { ScrollReveal } from '@/components/ui/ScrollReveal';
 import { CoverMedia } from '@/components/ui/CoverMedia';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { caseStudyLd, breadcrumbLd } from '@/lib/seo';
+import { pageMetadata } from '@/lib/page-metadata';
 import {
   caseStudies,
   getCaseStudy,
@@ -36,21 +37,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!cs) {
     return { title: 'Project Not Found', robots: { index: false, follow: false } };
   }
-  const title = `${cs.title} — ${cs.scope ?? cs.subtitle}`;
-  const description = cs.outcomeMetric ?? cs.result.slice(0, 155);
-  const path = `/work/${cs.id}`;
-  return {
+  /*
+   * Short title, subtitle-plus-outcome description, and a twitter block of its
+   * own. The old title appended the whole scope line (82 to 99 characters), the
+   * description was the bare metric, and with no twitter block the page
+   * inherited the HOME page's twitter:title and twitter:description.
+   */
+  const title = `${cs.title} case study`;
+  const metric = (cs.outcomeMetric ?? cs.result).trim().replace(/\.\s*$/, '');
+  return pageMetadata({
     title,
-    description,
-    alternates: { canonical: path },
-    openGraph: {
-      type: 'article',
-      url: path,
-      title: `${title} | Itqan Studio`,
-      description,
-      images: [{ url: cs.coverImage, alt: `${cs.title} — ${cs.subtitle}` }],
-    },
-  };
+    description: clampDescription(`${cs.subtitle}. ${metric}.`),
+    path: `/work/${cs.id}`,
+    image: cs.coverImage,
+    ogType: 'article',
+  });
+}
+
+/** Cut at a word boundary so a snippet never ends mid-word. */
+function clampDescription(text: string, max = 160): string {
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max - 1);
+  return `${cut.slice(0, cut.lastIndexOf(' ')).replace(/[\s,.;:]+$/, '')}…`;
 }
 
 const PILLAR_META: Record<

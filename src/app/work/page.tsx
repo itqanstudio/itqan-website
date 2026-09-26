@@ -10,7 +10,7 @@ import { pageMetadata } from '@/lib/page-metadata';
 export const metadata: Metadata = pageMetadata({
   title: 'Our work. The systems, and what they replaced',
   description:
-    'Case studies from Itqan Studio in Dubai. Booking and intake systems, the admin side behind them, and the websites in front. Lemon Garden replaced a shared inbox for seven restaurants in a week.',
+    'Case studies from Itqan Studio. Booking and intake systems, the admin side behind them, the websites in front. Lemon Garden replaced a shared inbox in a week.',
   path: '/work',
 });
 

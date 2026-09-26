@@ -1,14 +1,15 @@
 import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/page-metadata';
 import { LegalPageLayout } from '@/components/legal/LegalPageLayout';
 
 // TODO: Review with legal counsel before going live
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'Terms & Conditions',
   description:
     'The terms that govern your use of itqanstudio.com and any services provided by Itqan Studio FZ LLC.',
-  alternates: { canonical: '/terms' },
-};
+  path: '/terms',
+});
 
 export default function TermsPage() {
   return (

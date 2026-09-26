@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     template: '%s | Itqan Studio',
   },
   description:
-    'Booking, intake, customer records, invoicing and follow-up, with the website in front. Built by two senior people, live in weeks, owned by you, run with you after go-live.',
+    'Booking, intake, customer records, invoicing and follow-up, with the website in front. Built by two senior people, live in weeks, owned by you.',
   applicationName: SITE_NAME,
   authors: [{ name: SITE_NAME, url: SITE_URL }],
   creator: 'Itqan Studio FZ LLC',

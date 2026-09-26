@@ -11,9 +11,9 @@ import { servicesGraphLd, breadcrumbLd, faqLd } from '@/lib/seo';
 import { INTRO_CALL_URL, INTRO_CALL_LABEL, SESSION_URL } from '@/lib/booking';
 
 export const metadata: Metadata = pageMetadata({
-  title: 'How we work. Four steps, and the price of each',
+  title: 'How we work. Four steps and the price of each',
   description:
-    'Intro call free, the Session $750 with a written map you keep, a build quoted from that map, then Care or Partner after go-live. Prices said out loud before anything is booked.',
+    'Intro call free, the Session $750 with a written map you keep, a build quoted from that map, then Care or Partner after go-live.',
   path: '/services',
 });
 

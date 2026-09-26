@@ -1,14 +1,15 @@
 import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/page-metadata';
 import { LegalPageLayout } from '@/components/legal/LegalPageLayout';
 
 // TODO: Review with legal counsel before going live
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'Privacy Policy',
   description:
     'How Itqan Studio FZ LLC collects, uses, stores, and protects your personal data. Read our commitments to data privacy and your rights under UAE law.',
-  alternates: { canonical: '/privacy' },
-};
+  path: '/privacy',
+});
 
 export default function PrivacyPage() {
   return (

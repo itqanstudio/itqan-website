@@ -10,9 +10,9 @@ import { breadcrumbLd } from '@/lib/seo';
 import { pageMetadata } from '@/lib/page-metadata';
 
 export const metadata: Metadata = pageMetadata({
-  title: 'About — A Dubai Design, AI Visibility & Web Agency',
+  title: 'Ibrahim Shareef & Bisma Aslam, co-founders',
   description:
-    'Meet the team behind Itqan Studio — a Dubai design and AI agency covering brand, web, SEO, AI visibility (GEO) and automation, led by co-founders Ibrahim Shareef and Bisma Aslam.',
+    'Meet the team behind Itqan Studio, a Dubai agency covering brand, web, SEO, AI visibility and automation, led by co-founders Ibrahim Shareef and Bisma Aslam.',
   path: '/about',
 });
 
