@@ -1,7 +1,7 @@
 # Itqan Studio Website — Handover
 
 
-## 2026-09-26 — Founder entity joined to shareefi.co (branch `claude/personal-seo-visibility-tve19v`)
+## 2026-09-26 — Founder entity joined to shareefi.co (merged to main 2026-09-26)
 
 Part of a cross-site pass on why Googling "Ibrahim Shareef" returns only namesakes.
 - `seo.ts` founder Person had its own `@id` (`/#founder`) and NO sameAs, so it was a second, unlinked
