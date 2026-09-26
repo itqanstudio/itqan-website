@@ -96,7 +96,7 @@ export const caseStudies: CaseStudy[] = [
     testimonialQuote:
       'Millow is the best thing I have been part of. Every pixel got argued about, tested, and earned its place.',
     testimonialName: 'Ibrahim Shareef',
-    testimonialCompany: "Founder & CEO, ITQAN Studio. The studio's own verdict; the client's testimonial is in collection.",
+    testimonialCompany: "CEO & Co-founder, Itqan Studio. The studio's own verdict; the client's testimonial is in collection.",
     testimonialImage: '/images/testimonials/ibrahim-shareef.png',
     duration: 'weekly releases since July 2026',
     outcomeMetric:
@@ -171,7 +171,7 @@ export const caseStudies: CaseStudy[] = [
     testimonialQuote:
       'Every founder we coached hit the same wall — a real idea, but no story an investor would back. So we built the companion we wished they had, and gave it a face. Mutqin is the sharpest example of how we work: brand, system and product shipped as one thing.',
     testimonialName: 'Ibrahim Shareef',
-    testimonialCompany: 'Founder, Itqan Studio',
+    testimonialCompany: 'CEO & Co-founder, Itqan Studio',
     testimonialImage: '/images/testimonials/ibrahim-shareef.png',
     outcomeMetric:
       'Live AI product — one onboarding chat becomes an investor-ready portal',
@@ -451,7 +451,7 @@ export const caseStudies: CaseStudy[] = [
     testimonialQuote:
       "Our first build was 'Aurora' — premium, executive, and a little cold. Exactly the wrong feeling for an app you open at 6am on the day you've fallen behind. So we kept the engineering and swapped the soul: Noor — نور, light. Same code, warmer heart, framed around the moment the day begins at first light.",
     testimonialName: 'Ibrahim Shareef',
-    testimonialCompany: 'Founder, Itqan Studio',
+    testimonialCompany: 'CEO & Co-founder, Itqan Studio',
     testimonialImage: '/images/testimonials/ibrahim-shareef.png',
     outcomeMetric:
       "Live product — a whole life in one calm place, with the Qur'an beside your goals",
@@ -636,7 +636,7 @@ export const caseStudies: CaseStudy[] = [
     testimonialQuote:
       "We didn't adapt our workflow to fit a tool. We built the tool to fit how we actually work. The difference is felt every single day.",
     testimonialName: 'Ibrahim Shareef',
-    testimonialCompany: 'Founder, Itqan Studio',
+    testimonialCompany: 'CEO & Co-founder, Itqan Studio',
     duration: '6 weeks',
     industryAverage: '4-6 months',
     outcomeMetric: 'Replaced 5 tools. Friday P&L: 8h → 15 min.',

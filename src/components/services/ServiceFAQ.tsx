@@ -38,7 +38,7 @@ export const SERVICE_FAQ: readonly FaqItem[] = [
   {
     question: 'Where are you?',
     answer:
-      'Itqan Studio FZ-LLC is a UAE company in Dubai. We serve clients in the UAE and Sweden, work in English, Swedish and Arabic, and invoice in USD.',
+      'Itqan Studio FZ LLC is a UAE company in Dubai. We serve clients in the UAE and Sweden, work in English, Swedish and Arabic, and invoice in USD.',
   },
 ];
 

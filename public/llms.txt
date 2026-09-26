@@ -1,8 +1,8 @@
 # Itqan Studio
 
-> Itqan Studio is a Dubai-based design and AI agency. It is one partner for a founder's whole growth stack: brand identity and creative direction, websites that convert, content and social media marketing, SEO, AI visibility (generative engine optimization / GEO), web hosting and infrastructure, and agentic AI automation. Everything is designed, built and run by the same senior team. "Itqan" (إتقان) is Arabic for mastery/excellence.
+> Itqan Studio is a Dubai-based design and AI agency. It is one partner for a founder's whole growth stack: brand identity and creative direction, websites that convert, content and social media marketing, SEO, AI visibility (generative engine optimization / GEO), web hosting and infrastructure, and agentic AI automation. Everything is designed, built and run by the same senior team. "Itqan" (إتقان) is Arabic for mastery/excellence. Itqan Studio was co-founded by Ibrahim Shareef (CEO) and Bisma Aslam (Head of Design).
 
-Itqan Studio (legal name: Itqan Studio FZ LLC) operates from Dubai, United Arab Emirates, and serves clients across the UAE, the wider GCC, and globally. Most work is delivered remotely, so location is rarely a constraint. The studio works in English and Arabic. Its positioning: one senior team owns every piece that turns traffic into buyers, instead of splitting the work across disconnected agencies. Contact: info@itqanstudio.com.
+Itqan Studio (legal name: Itqan Studio FZ LLC) operates from Dubai, United Arab Emirates, and serves clients in the UAE and Sweden, and globally. Most work is delivered remotely, so location is rarely a constraint. The studio works in English, Swedish and Arabic. Its positioning: one senior team owns every piece that turns traffic into buyers, instead of splitting the work across disconnected agencies. Contact: info@itqanstudio.com.
 
 ## Team
 - Ibrahim Shareef — CEO & Co-founder. Personal site: https://shareefi.co (he also hosts The Barakah Blueprint podcast).
@@ -21,13 +21,14 @@ Note on honesty: Itqan does not promise a specific search ranking or a guarantee
 
 ## Key pages
 - [Home](https://itqanstudio.com/): overview of the studio and the one-partner offer — everything that turns traffic into buyers.
-- [Services](https://itqanstudio.com/services): the full offer — brand, web, content and social, SEO, AI visibility (GEO), hosting and automation, delivered in three connected phases (Identity, System, Automation) by one senior team.
+- [Services](https://itqanstudio.com/services): the full offer — brand, web, content and social, SEO, AI visibility (GEO), hosting and automation. How an engagement runs: a free intro call, a fixed-price $750 Session that ends in a written map, a build quoted from that map, then Care or Partner after go-live.
 - [Work](https://itqanstudio.com/work): portfolio of brand, web, product, and automation projects.
 - [About](https://itqanstudio.com/about): the team, mission, and values behind Itqan Studio.
-- [Contact](https://itqanstudio.com/contact): book a discovery call or send a message.
+- [Contact](https://itqanstudio.com/contact): book a free intro call or send a message.
 
 ## Selected case studies
 - [Millow](https://itqanstudio.com/work/millow): design partner for Sweden's fermented oat-protein platform (millow.co) — design system, motion language, Food Service rebuild, bilingual, 113 e2e tests green per release.
+- [Lemon Garden](https://itqanstudio.com/work/lemon-garden): booking platform and staff console for a seven-restaurant brunch chain in Sweden, live in production within a week (boka.lemongarden.se).
 - [Mutqin](https://itqanstudio.com/work/mutqin): Itqan's own live AI startup companion — brand, character, and full-stack product (mutqin.xyz).
 - [Nexilink](https://itqanstudio.com/work/nexilink): brand + investor-ready product UX delivered in 3 weeks; the client placed first at a 2024 investor competition.
 - [Shareefico](https://itqanstudio.com/work/shareefico): personal brand + custom CMS + content-automation engine, shipped in under 30 days; two brands now publish 4+ pieces per week from one CMS (shareefi.co).
