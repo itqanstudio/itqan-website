@@ -58,7 +58,7 @@ export function TeamSection() {
           delay={0.18}
           className="mt-12 lg:mt-16 grid sm:grid-cols-2 gap-6 md:gap-8 max-w-[760px]"
         >
-          {team.map(({ id, name, role, image, objectPosition }) => (
+          {team.map(({ id, name, role, image, objectPosition, website }) => (
             <StaggerItem key={id}>
               <SpringCard>
                 <div className="group overflow-hidden rounded-2xl border border-black/[0.08] bg-white dark:border-brand-cream/[0.12] dark:bg-[#2a1a28] shadow-[0_2px_12px_rgba(47,28,44,0.06)]">
@@ -74,7 +74,18 @@ export function TeamSection() {
                   </div>
                   <div className="px-6 py-5 border-t border-black/[0.08] dark:border-brand-cream/[0.12]">
                     <p className="font-sans font-semibold text-text-primary dark:text-brand-cream text-base">
-                      {name}
+                      {website ? (
+                        <a
+                          href={website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline decoration-black/20 underline-offset-4 transition-colors hover:decoration-current dark:decoration-brand-cream/30"
+                        >
+                          {name}
+                        </a>
+                      ) : (
+                        name
+                      )}
                     </p>
                     <p className="text-text-secondary dark:text-brand-cream/55 text-sm mt-0.5">
                       {role}

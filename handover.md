@@ -1,6 +1,23 @@
 # Itqan Studio Website — Handover
 
 
+## 2026-09-26 — Founder entity joined to shareefi.co (branch `claude/personal-seo-visibility-tve19v`)
+
+Part of a cross-site pass on why Googling "Ibrahim Shareef" returns only namesakes.
+- `seo.ts` founder Person had its own `@id` (`/#founder`) and NO sameAs, so it was a second, unlinked
+  "Ibrahim Shareef" beside the one shareefi.co defines (`https://shareefi.co/#person`). It now carries sameAs:
+  shareefi.co, shareefi.co/about, LinkedIn, GitHub, YouTube.
+- About team card: the name links to https://shareefi.co when `website` is set (`team.ts`). The name itself
+  is the link, so no extra line: both founder cards keep equal height, no layout shift.
+- `llms.txt` team line carries his personal site. IndexNow key file `public/6bd42839add7a68fecb11bc425290ad5.txt`.
+- sitemap lastmod was `new Date()` (every URL "changed" every deploy, which Google learns to ignore); now a
+  stable `CONTENT_UPDATED` in `src/app/sitemap.ts`. Bump it with material content changes.
+- Verified: typecheck, `npm test` (63/63), build; served locally the founder node has the sameAs, the team
+  card link renders, the key file is 200 text/plain.
+- STILL OPEN (from DIRECTORY-ONBOARDING-KIT / GEO-ACTION-KIT): submit sitemap.xml in Search Console (verified,
+  never submitted), verify Bing (BingSiteAuth.xml is live) + submit the sitemap there.
+- NOTE: shareefi.co still calls Ibrahim the "solo founder" of Itqan; this site says co-founders. Flagged to him.
+
 ## 2026-09-01 (SHIPPED) — Millow + Sarmad's Lemon Garden testimonial LIVE (`5a058d3`); box OOM-wedged mid-deploy, rebooted
 
 Ibrahim's go: ship Millow + Lemon Garden, swap Lemon Garden's self-authored quote for

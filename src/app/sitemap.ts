@@ -8,8 +8,16 @@ import { SITE_URL } from '@/lib/seo';
  * (the same source generateStaticParams uses for /work/[id]) so the sitemap can
  * never drift out of sync again when a project is added or removed.
  */
+/**
+ * Last meaningful content change, bumped by hand with the content. It used to
+ * be `new Date()`, which stamped every URL as changed on every deploy; Google
+ * only honours lastmod when it is consistently accurate, so it learned to
+ * ignore this site's.
+ */
+const CONTENT_UPDATED = '2026-09-26';
+
 export default function sitemap(): MetadataRoute.Sitemap {
-  const lastModified = new Date();
+  const lastModified = CONTENT_UPDATED;
 
   const staticPages: Array<{
     path: string;

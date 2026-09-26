@@ -58,6 +58,18 @@ export const BUSINESS = {
   founder: {
     name: 'Ibrahim Shareef',
     jobTitle: 'CEO & Co-founder',
+    /**
+     * His own site and profiles. Without these, this Person node was a second,
+     * unlinked "Ibrahim Shareef" beside the one shareefi.co defines
+     * (https://shareefi.co/#person), and engines had nothing joining the two.
+     */
+    sameAs: [
+      'https://shareefi.co',
+      'https://shareefi.co/about',
+      'https://www.linkedin.com/in/shareefibrahim/',
+      'https://github.com/ibrahimshareef96-sys',
+      'https://www.youtube.com/@shareefico',
+    ],
   },
   cofounder: {
     name: 'Bisma Aslam',
@@ -226,6 +238,7 @@ export function founderNode(): JsonLd {
     jobTitle: BUSINESS.founder.jobTitle,
     worksFor: { '@id': ORG_ID },
     url: `${SITE_URL}/about`,
+    sameAs: BUSINESS.founder.sameAs,
   };
 }
 

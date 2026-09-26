@@ -9,6 +9,12 @@ export interface TeamMember {
    * to 'center' when omitted.
    */
   objectPosition?: string;
+  /**
+   * The founder's own site. When set, the name on the card links to it: the
+   * cross-site link (with the name as its anchor text) that tells search
+   * engines this co-founder and that personal site are one person.
+   */
+  website?: string;
 }
 
 export const team: TeamMember[] = [
@@ -17,6 +23,7 @@ export const team: TeamMember[] = [
     name: 'Ibrahim Shareef',
     role: 'CEO & Co-Founder',
     image: '/images/team/ibrahim-shareef.png',
+    website: 'https://shareefi.co',
   },
   {
     id: 'bisma',
