@@ -1,6 +1,34 @@
 # Itqan Studio Website — Handover
 
 
+## 2026-09-26 (committed locally, NOT pushed) SEO audit fixes: founder @id, portal canonicals, snippets
+
+Follow-up to the entry below, from an audit of the live site. Metadata, JSON-LD and short copy only: no
+layout change, so CLS is untouched.
+- Founder Person `@id` is now `https://shareefi.co/#person` (the node his own site defines, which already
+  names this Organization), with `url: https://shareefi.co` and `image` = `/images/team/ibrahim-shareef.png`.
+  Bisma keeps `/#cofounder` and gains `image` = `/images/team/bisma-aslam.png`. Organization: areaServed adds
+  Sweden, availableLanguage adds Swedish, description names both co-founders.
+- Brand portal: all 21 `/brand` pages use the new `portalMetadata()` (`src/lib/page-metadata.ts`): apex
+  canonical (also when served on brand.itqanstudio.com), own og:url/og:title/twitter tags.
+- Case studies: title `<name> case study`, description `<subtitle>. <outcome metric>.`, own twitter block.
+  /privacy, /terms, /cookies now use `pageMetadata()` (they inherited the homepage's og:url and og:title).
+- Titles no longer double the brand (contact, support, feedback, magnet). Long descriptions trimmed by
+  cutting words (home, about, work, services); /about title is `Ibrahim Shareef & Bisma Aslam, co-founders`.
+  SEO-PERF-AUDIT.md bullet marked done.
+- Copy: case-study testimonials credit Ibrahim as `CEO & Co-founder, Itqan Studio` (were "Founder");
+  press page names both co-founders; legal name is `FZ LLC` everywhere (footer and FAQ said `FZ-LLC`).
+- llms.txt: UAE and Sweden, English/Swedish/Arabic, the four-step offer, "free intro call", co-founders
+  sentence, Lemon Garden case study.
+- Verified: typecheck, `npm test` (16/16, 7/7, 40/40), build; served locally, rendered tags checked on
+  /, /about, /services, /work, /work/millow, /privacy, /brand, /brand/logo and on Host brand.itqanstudio.com.
+- STILL OPEN, owner decisions: /about hero frames one founder (AboutHero H1 and lede); Bisma's sameAs needs
+  her profile URLs; the seven-service JSON-LD taxonomy vs the four-step /services page; the home title
+  (65 characters) was left as is; confirm the trade licence reads `FZ LLC` (if it reads `FZ-LLC`, invert
+  the spelling everywhere, including seo.ts LEGAL_NAME). Other repo, not touched here: a comment in
+  shareefico-website `src/lib/seo/schema.ts` still says `FZ-LLC`. Owner action: submit the sitemap in
+  Search Console and Bing.
+
 ## 2026-09-26 — Founder entity joined to shareefi.co (merged to main 2026-09-26)
 
 Part of a cross-site pass on why Googling "Ibrahim Shareef" returns only namesakes.
