@@ -1,13 +1,15 @@
 import type { Metadata } from 'next';
+import { portalMetadata } from '@/lib/page-metadata';
 import { AssetLibrary } from '@/components/brand/AssetLibrary';
 import { assetsFor, bundlesFor, categoriesFor } from '@/data/brand-library';
 import { Callout, PortalPageBody, Section } from '@/components/brand/primitives';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = portalMetadata({
   title: 'Asset library',
   description:
     'Every downloadable Itqan Studio asset — logos, stickers, signatures and call backgrounds — filterable by type and format.',
-};
+  path: '/brand/assets',
+});
 
 const assets = assetsFor('itqan-studio');
 const bundles = bundlesFor('itqan-studio');

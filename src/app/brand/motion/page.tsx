@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
+import { portalMetadata } from '@/lib/page-metadata';
 import { MOTION_TOKENS } from '@/data/brand-spec';
 import { Callout, PortalPageBody, RuleGrid, Section, SpecTable } from '@/components/brand/primitives';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = portalMetadata({
   title: 'Motion',
   description: 'How Itqan Studio moves: under 400ms, settle rather than bounce, interruptible throughout.',
-};
+  path: '/brand/motion',
+});
 
 export default function MotionPage() {
   return (

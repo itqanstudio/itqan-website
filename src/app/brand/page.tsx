@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { portalMetadata } from '@/lib/page-metadata';
 import { PORTAL_NAV } from '@/data/brand-portal';
 import { EntryCards } from '@/components/brand/EntryCards';
 import { ALL_ASSETS, assetBySlug } from '@/data/brand-library';
@@ -15,16 +16,18 @@ import {
   Wide,
 } from '@/components/brand/primitives';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = portalMetadata({
   /*
    * Absolute, not 'Overview'. A layout's title.template applies to CHILD
    * segments, not to the page in its own segment, so a bare title here would
    * fall through to the site-wide template.
    */
-  title: { absolute: 'Itqan Studio Brand Portal' },
+  title: 'Itqan Studio Brand Portal',
+  absoluteTitle: true,
   description:
     'The Itqan Studio brand portal: logo, colour, typography, motion, voice and every downloadable asset.',
-};
+  path: '/brand',
+});
 
 const shippable = ALL_ASSETS.filter((a) => a.src).length;
 const mark = assetBySlug('itqan-studio', 'white-logo');

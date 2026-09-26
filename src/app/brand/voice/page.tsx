@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { portalMetadata } from '@/lib/page-metadata';
 import { Callout, PortalPageBody, RuleGrid, Section } from '@/components/brand/primitives';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = portalMetadata({
   title: 'Voice',
   description: 'How Itqan Studio writes: professional, confident, premium — never corporate or stiff.',
-};
+  path: '/brand/voice',
+});
 
 const CONTRASTS = [
   {

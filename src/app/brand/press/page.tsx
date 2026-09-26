@@ -1,13 +1,15 @@
 import type { Metadata } from 'next';
+import { portalMetadata } from '@/lib/page-metadata';
 import { AssetLibrary } from '@/components/brand/AssetLibrary';
 import { assetsFor, bundlesFor } from '@/data/brand-library';
 import { CopyBlock } from '@/components/brand/CopyBlock';
 import { Callout, PortalPageBody, Section, SpecTable } from '@/components/brand/primitives';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = portalMetadata({
   title: 'Press & media',
   description: 'Everything a journalist, client or partner needs: boilerplate, logos and how to get in touch.',
-};
+  path: '/brand/press',
+});
 
 const logos = assetsFor('itqan-studio', ['logo']);
 const logoBundles = bundlesFor('itqan-studio', ['logo']);

@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
+import { portalMetadata } from '@/lib/page-metadata';
 import { Callout, PortalPageBody, Section } from '@/components/brand/primitives';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = portalMetadata({
   title: 'Story & principles',
   description: 'What itqan means, and the four principles the brand protects.',
-};
+  path: '/brand/story',
+});
 
 const PRINCIPLES = [
   {

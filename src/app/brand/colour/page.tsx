@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { portalMetadata } from '@/lib/page-metadata';
 import { CORE_COLOURS, TEXT_COLOURS } from '@/data/brand-spec';
 import { ColourBands } from '@/components/brand/ColourBands';
 import {
@@ -11,11 +12,12 @@ import {
   Section,
 } from '@/components/brand/primitives';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = portalMetadata({
   title: 'Colour',
   description:
     'The Itqan Studio palette: a plum ground, warm cream, and an accent that changes cut depending on what it sits on.',
-};
+  path: '/brand/colour',
+});
 
 export default function ColourPage() {
   return (

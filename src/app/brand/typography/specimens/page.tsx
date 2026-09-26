@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
+import { portalMetadata } from '@/lib/page-metadata';
 import { Callout, PortalPageBody, Section } from '@/components/brand/primitives';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = portalMetadata({
   title: 'Specimens',
   description: 'Live specimens of every role in the Itqan Studio type scale, rendered in the real faces.',
-};
+  path: '/brand/typography/specimens',
+});
 
 /**
  * Rendered live rather than as images: a specimen that is a screenshot cannot

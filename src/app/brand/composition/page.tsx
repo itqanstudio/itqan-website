@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
+import { portalMetadata } from '@/lib/page-metadata';
 import { RADII } from '@/data/brand-spec';
 import { Callout, PortalPageBody, RuleGrid, Section, SpecTable } from '@/components/brand/primitives';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = portalMetadata({
   title: 'Composition',
   description: 'How an Itqan Studio page is built: alternating grounds, generous space, one idea per section.',
-};
+  path: '/brand/composition',
+});
 
 export default function CompositionPage() {
   return (
