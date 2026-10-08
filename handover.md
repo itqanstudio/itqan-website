@@ -27,6 +27,21 @@ advanced, copy with zero AI slop, and where every brand artifact lives for Insta
 - Verified locally: build, 37 unit tests, EN/AR/mobile screenshots, a full booking, double booking
   refused (409), honeypot, origin checks, admin sign-in, hours edit, day off, guest cancel.
 
+### Shipped
+- LIVE since 8 Oct 2026 18:55 (Dubai): main at `5ced08a` (merged with the other session's SEO pass,
+  8 commits). Coolify persistent storage `itqanstudio-booking-data` mounted at `/app/.data`
+  (created via API); `/app/.data/itqan.db` exists in the container. Verified live: /, /ar, /book,
+  /ar/book, case pages, legacy pages, feedback + brand subdomains, redirects, admin CSP, slots API.
+- Reviews: code-reviewer 0 critical / 2 high (both fixed: agent-run SSR opacity, email-failed
+  message); security-reviewer 0 critical / 1 high (fixed: caps of 1 upcoming booking per email and
+  2 per connection, no visitor text in guest mail or guest .ics). Mediums fixed: Umami off cancel and
+  admin pages, streamed 16 KB body cap, login throttle instead of lockout, admin CSP. 62 vitest tests,
+  92% coverage on `src/lib/scheduling`.
+- ⚠️ The deploy wedged the box again: 443 unreachable 18:39 to 18:52 (Dubai), swap full beforehand
+  (1.8 GB available). It self-recovered and the deploy finished. Every push risks this until the box
+  gets more memory or builds move off the box (build the image in CI, Coolify pulls it).
+- Not pushed on purpose: this handover edit (docs only; it rides with the next code push).
+
 ### Next steps
 1. Admin: Ibrahim signs in at https://itqanstudio.com/admin with ibrahim@itqanstudio.com and sets
    real hours (default: Mon to Thu 10 to 12 and 14 to 17, Fri 10 to 12, Dubai time, 24 h notice).
