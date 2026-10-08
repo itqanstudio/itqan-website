@@ -41,8 +41,10 @@ The problems were all **performance + a few hygiene items**, now largely fixed.
 
 ## Remaining / recommended (not blocking)
 
-- **Meta descriptions slightly long** (LOW): home/about/work ~180–192 chars (truncate
-  ~160). Titles on /work (77c) and /about (71c) truncate ~60 — trim for full SERP text.
+- **Meta descriptions slightly long** (LOW). DONE 2026-09-26: descriptions are now home
+  143, /about 157, /work 158, /services 128 characters; titles with the " | Itqan Studio"
+  suffix are /work 60, /about 57, /services 60. Was: home/about/work ~180–192 chars
+  (truncate ~160), titles on /work (77c) and /about (71c) truncating at ~60.
 - **Unused JS ~295 KiB** (LOW): framer-motion / shader / posthog. TBT is already
   30ms so it's not blocking; consider lazy-loading more of framer-motion if perf is
   chased further.

@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
+import { portalMetadata } from '@/lib/page-metadata';
 import { Callout, PortalPageBody, Section, SpecTable } from '@/components/brand/primitives';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = portalMetadata({
   title: 'Positioning',
   description: 'Who Itqan Studio is for, what it does, and the things it deliberately refuses to be.',
-};
+  path: '/brand/positioning',
+});
 
 export default function PositioningPage() {
   return (

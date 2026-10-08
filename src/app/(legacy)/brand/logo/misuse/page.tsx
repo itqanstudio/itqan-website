@@ -1,12 +1,14 @@
 import Image from 'next/image';
 import type { Metadata } from 'next';
+import { portalMetadata } from '@/lib/page-metadata';
 import { assetBySlug } from '@/data/brand-library';
 import { Callout, PortalPageBody, Section } from '@/components/brand/primitives';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = portalMetadata({
   title: 'Misuse',
   description: 'The eight things never to do to the Itqan Studio mark, shown rather than described.',
-};
+  path: '/brand/logo/misuse',
+});
 
 const MARK = assetBySlug('itqan-studio', 'white-logo');
 

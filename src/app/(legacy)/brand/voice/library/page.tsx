@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
+import { portalMetadata } from '@/lib/page-metadata';
 import { CopyBlock } from '@/components/brand/CopyBlock';
 import { Callout, PortalPageBody, Section } from '@/components/brand/primitives';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = portalMetadata({
   title: 'Copy library',
   description: 'Approved Itqan Studio boilerplate, taglines and service descriptions. Copy and paste rather than rewrite.',
-};
+  path: '/brand/voice/library',
+});
 
 const TAGLINES = [
   { label: 'Primary', meta: 'Use this one by default', text: 'Your brand has potential. We give it direction.' },

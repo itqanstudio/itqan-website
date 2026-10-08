@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
+import { portalMetadata } from '@/lib/page-metadata';
 import { AssetLibrary } from '@/components/brand/AssetLibrary';
 import { assetsFor, bundlesFor } from '@/data/brand-library';
 import { Callout, PortalPageBody, RuleGrid, Section, SpecTable } from '@/components/brand/primitives';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = portalMetadata({
   title: 'Email signatures',
   description: 'Hosted Itqan Studio email signature assets, with the specs mail clients actually respect.',
-};
+  path: '/brand/assets/signatures',
+});
 
 const assets = assetsFor('itqan-studio', ['signature']);
 const bundles = bundlesFor('itqan-studio', ['signature']);

@@ -5,8 +5,15 @@ import { CASE_SLUGS } from '@/components/v3/CasePage';
 
 type Entry = MetadataRoute.Sitemap[number];
 
+/**
+ * Last meaningful content change, bumped by hand with the content. It used to
+ * be `new Date()`, which stamped every URL as changed on every deploy; Google
+ * only honours lastmod when it is consistently accurate.
+ */
+const CONTENT_UPDATED = '2026-10-08';
+
 /** A page that exists in English and Arabic, listed once per language with hreflang alternates. */
-function bilingual(enPath: string, priority: number, changeFrequency: Entry['changeFrequency'], lastModified: Date): Entry[] {
+function bilingual(enPath: string, priority: number, changeFrequency: Entry['changeFrequency'], lastModified: string): Entry[] {
   const arPath = enPath === '/' ? '/ar' : `/ar${enPath}`;
   const languages = { en: `${SITE_URL}${enPath === '/' ? '' : enPath}`, ar: `${SITE_URL}${arPath}` };
   return [
@@ -16,7 +23,7 @@ function bilingual(enPath: string, priority: number, changeFrequency: Entry['cha
 }
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const lastModified = new Date();
+  const lastModified = CONTENT_UPDATED;
   return [
     ...bilingual('/', 1.0, 'weekly', lastModified),
     ...bilingual('/book', 0.9, 'monthly', lastModified),

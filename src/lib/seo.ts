@@ -58,13 +58,30 @@ export const BUSINESS = {
   founder: {
     name: 'Ibrahim Shareef',
     jobTitle: 'CEO & Co-founder',
+    /**
+     * His own site and profiles. Without these, this Person node was a second,
+     * unlinked "Ibrahim Shareef" beside the one shareefi.co defines
+     * (https://shareefi.co/#person), and engines had nothing joining the two.
+     */
+    sameAs: [
+      'https://shareefi.co',
+      'https://shareefi.co/about',
+      'https://www.linkedin.com/in/shareefibrahim/',
+      'https://github.com/ibrahimshareef96-sys',
+      'https://www.youtube.com/@shareefico',
+    ],
   },
   cofounder: {
     name: 'Bisma Aslam',
     jobTitle: 'Head of Design & Co-founder',
   },
-  /** Dubai-based, serves UAE → GCC → globally. Expressed as areaServed. */
-  areaServed: ['Dubai', 'United Arab Emirates', 'GCC', 'Worldwide'],
+  /**
+   * Dubai-based; the footer, hero and FAQ name the UAE and Sweden ("We serve
+   * clients in the UAE and Sweden"). Expressed as areaServed, which must agree
+   * with that visible copy. 'GCC' and 'Worldwide' were dropped because no
+   * visible copy says either; add the copy first if the owner wants them back.
+   */
+  areaServed: ['Dubai', 'United Arab Emirates', 'Sweden'],
 } as const;
 
 /** Topics the org demonstrably knows about — feeds Organization.knowsAbout (entity understanding for Google + LLMs). */
@@ -149,7 +166,13 @@ export function absoluteUrl(path = '/'): string {
 
 const ORG_ID = `${SITE_URL}/#organization`;
 const WEBSITE_ID = `${SITE_URL}/#website`;
-const FOUNDER_ID = `${SITE_URL}/#founder`;
+/**
+ * Ibrahim's canonical Person node is the one his own site defines. Reusing that
+ * @id (instead of a separate /#founder node joined only by sameAs) means both
+ * sites describe ONE Ibrahim Shareef, and shareefi.co already names this same
+ * @id as founder of this Organization.
+ */
+const FOUNDER_ID = 'https://shareefi.co/#person';
 const COFOUNDER_ID = `${SITE_URL}/#cofounder`;
 
 type JsonLd = Record<string, unknown>;
@@ -168,7 +191,7 @@ export function organizationNode(): JsonLd {
     },
     image: `${SITE_URL}/v3/og-en.png`,
     description:
-      'Itqan Studio is a Dubai-based design and AI agency. One partner for brand, websites that convert, content and social media, SEO, AI visibility (GEO), hosting and agentic automation — built and run by the same senior team.',
+      'Itqan Studio is a Dubai-based design and AI agency. One partner for brand, websites that convert, content and social media, SEO, AI visibility (GEO), hosting and agentic automation — built and run by the same senior team. Co-founded by Ibrahim Shareef (CEO) and Bisma Aslam (Head of Design).',
     slogan: SITE_TAGLINE,
     email: BUSINESS.email,
     foundingLocation: {
@@ -190,7 +213,8 @@ export function organizationNode(): JsonLd {
       email: BUSINESS.email,
       contactType: 'sales',
       areaServed: BUSINESS.areaServed,
-      availableLanguage: ['English', 'Arabic'],
+      // Matches the visible copy: "work in English, Swedish and Arabic" (ServiceFAQ, WhoFor, contact).
+      availableLanguage: ['English', 'Arabic', 'Swedish'],
     },
     makesOffer: SERVICES.map((s) => ({
       '@type': 'Offer',
@@ -217,7 +241,10 @@ export function websiteNode(): JsonLd {
   };
 }
 
-/** The founder Person node — E-E-A-T signal, referenced by Organization.founder. */
+/**
+ * The founder Person node — E-E-A-T signal, referenced by Organization.founder.
+ * Its @id and url are shareefi.co's, so one @id carries one url on both sites.
+ */
 export function founderNode(): JsonLd {
   return {
     '@type': 'Person',
@@ -225,7 +252,9 @@ export function founderNode(): JsonLd {
     name: BUSINESS.founder.name,
     jobTitle: BUSINESS.founder.jobTitle,
     worksFor: { '@id': ORG_ID },
-    url: `${SITE_URL}/about`,
+    url: 'https://shareefi.co',
+    image: absoluteUrl('/images/team/ibrahim-shareef.png'),
+    sameAs: BUSINESS.founder.sameAs,
   };
 }
 
@@ -237,7 +266,9 @@ export function cofounderNode(): JsonLd {
     name: BUSINESS.cofounder.name,
     jobTitle: BUSINESS.cofounder.jobTitle,
     worksFor: { '@id': ORG_ID },
-    url: `${SITE_URL}/about`,
+    // The old /about page is now the Company section of the home page (8 Oct 2026).
+    url: `${SITE_URL}/#company`,
+    image: absoluteUrl('/images/team/bisma-aslam.png'),
   };
 }
 

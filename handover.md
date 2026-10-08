@@ -141,6 +141,60 @@ models, workflows and agents). Rebrand allowed; the name Itqan stays. This overr
 - Run notes and eval scores become monthly LinkedIn proof once the first Sprint ships.
 
 
+## 2026-09-26 (committed locally, NOT pushed) SEO audit fixes: founder @id, portal canonicals, snippets
+
+Follow-up to the entry below, from an audit of the live site. Metadata, JSON-LD and short copy only: no
+layout change, so CLS is untouched.
+- Founder Person `@id` is now `https://shareefi.co/#person` (the node his own site defines, which already
+  names this Organization), with `url: https://shareefi.co` and `image` = `/images/team/ibrahim-shareef.png`.
+  Bisma keeps `/#cofounder` and gains `image` = `/images/team/bisma-aslam.png`. Organization: areaServed adds
+  Sweden, availableLanguage adds Swedish, description names both co-founders.
+- Brand portal: all 21 `/brand` pages use the new `portalMetadata()` (`src/lib/page-metadata.ts`): apex
+  canonical (also when served on brand.itqanstudio.com), own og:url/og:title/twitter tags.
+- Case studies: title `<name> case study`, description `<subtitle>. <outcome metric>.`, own twitter block.
+  /privacy, /terms, /cookies now use `pageMetadata()` (they inherited the homepage's og:url and og:title).
+- Titles no longer double the brand (contact, support, feedback, magnet). Long descriptions trimmed by
+  cutting words (home, about, work, services); /about title is `Ibrahim Shareef & Bisma Aslam, co-founders`.
+  SEO-PERF-AUDIT.md bullet marked done.
+- Copy: case-study testimonials credit Ibrahim as `CEO & Co-founder, Itqan Studio` (were "Founder");
+  press page names both co-founders; legal name is `FZ LLC` in all rendered copy and metadata (footer and
+  FAQ said `FZ-LLC`; the historical HOMEPAGE-REDESIGN-BRIEF.md still says `FZ-LLC · RAKEZ, UAE`).
+- llms.txt: UAE and Sweden, English/Swedish/Arabic, the four-step offer, "free intro call", co-founders
+  sentence, Lemon Garden case study. Dropped ", and globally" and "Most work is delivered remotely..."
+  (no visible copy says either).
+- Review follow-up: Organization/ContactPoint/Service `areaServed` is now Dubai, United Arab Emirates,
+  Sweden. `GCC` and `Worldwide` were removed because no visible copy says either (the FAQ says "We serve
+  clients in the UAE and Sweden"). /work/itqan-crm title is `Itqan Studio CRM case study` with no
+  `| Itqan Studio` suffix (`pageMetadata({ absoluteTitle })`); the other case-study titles are unchanged.
+- Verified: typecheck, `npm test` (16/16, 7/7, 40/40), build; served locally, rendered tags checked on
+  /, /about, /services, /work, /work/millow, /privacy, /brand, /brand/logo and on Host brand.itqanstudio.com.
+- STILL OPEN, owner decisions: /about hero frames one founder (AboutHero H1 and lede); Bisma's sameAs needs
+  her profile URLs; the seven-service JSON-LD taxonomy vs the four-step /services page; the home title
+  (65 characters) was left as is; confirm the trade licence reads `FZ LLC` (if it reads `FZ-LLC`, invert
+  the spelling everywhere, including seo.ts LEGAL_NAME), and confirm the licensing free zone (RAKEZ, per
+  HOMEPAGE-REDESIGN-BRIEF.md, vs a Dubai free zone) before the "UAE company in Dubai" wording in the FAQ,
+  llms.txt and JSON-LD is treated as final; confirm whether to serve `GCC` / `Worldwide` (if so, add
+  visible copy first, then restore them in seo.ts areaServed and llms.txt). Other repo, not touched here:
+  a comment in shareefico-website `src/lib/seo/schema.ts` still says `FZ-LLC`. Owner action: submit the
+  sitemap in Search Console and Bing.
+
+## 2026-09-26 — Founder entity joined to shareefi.co (merged to main 2026-09-26)
+
+Part of a cross-site pass on why Googling "Ibrahim Shareef" returns only namesakes.
+- `seo.ts` founder Person had its own `@id` (`/#founder`) and NO sameAs, so it was a second, unlinked
+  "Ibrahim Shareef" beside the one shareefi.co defines (`https://shareefi.co/#person`). It now carries sameAs:
+  shareefi.co, shareefi.co/about, LinkedIn, GitHub, YouTube.
+- About team card: the name links to https://shareefi.co when `website` is set (`team.ts`). The name itself
+  is the link, so no extra line: both founder cards keep equal height, no layout shift.
+- `llms.txt` team line carries his personal site. IndexNow key file `public/6bd42839add7a68fecb11bc425290ad5.txt`.
+- sitemap lastmod was `new Date()` (every URL "changed" every deploy, which Google learns to ignore); now a
+  stable `CONTENT_UPDATED` in `src/app/sitemap.ts`. Bump it with material content changes.
+- Verified: typecheck, `npm test` (63/63), build; served locally the founder node has the sameAs, the team
+  card link renders, the key file is 200 text/plain.
+- STILL OPEN (from DIRECTORY-ONBOARDING-KIT / GEO-ACTION-KIT): submit sitemap.xml in Search Console (verified,
+  never submitted), verify Bing (BingSiteAuth.xml is live) + submit the sitemap there.
+- NOTE: shareefi.co still calls Ibrahim the "solo founder" of Itqan; this site says co-founders. Flagged to him.
+
 ## 2026-09-01 (SHIPPED) — Millow + Sarmad's Lemon Garden testimonial LIVE (`5a058d3`); box OOM-wedged mid-deploy, rebooted
 
 Ibrahim's go: ship Millow + Lemon Garden, swap Lemon Garden's self-authored quote for

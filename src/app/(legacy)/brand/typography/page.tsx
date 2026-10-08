@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
+import { portalMetadata } from '@/lib/page-metadata';
 import { TYPE_ROLES } from '@/data/brand-spec';
 import { Callout, PortalPageBody, RuleGrid, Section, SpecTable } from '@/components/brand/primitives';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = portalMetadata({
   title: 'Typography',
   description: 'Manrope carries everything. Playfair Display italic marks one phrase.',
-};
+  path: '/brand/typography',
+});
 
 const FACES = [
   {

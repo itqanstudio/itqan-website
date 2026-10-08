@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
+import { portalMetadata } from '@/lib/page-metadata';
 import { Callout, PortalPageBody, RuleGrid, Section } from '@/components/brand/primitives';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = portalMetadata({
   title: 'Imagery',
   description: 'The three kinds of picture Itqan Studio uses — the work, the process, and the people — and what each is for.',
-};
+  path: '/brand/imagery',
+});
 
 const KINDS = [
   {

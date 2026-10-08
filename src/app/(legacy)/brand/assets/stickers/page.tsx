@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
+import { portalMetadata } from '@/lib/page-metadata';
 import { AssetLibrary } from '@/components/brand/AssetLibrary';
 import { assetsFor, bundlesFor } from '@/data/brand-library';
 import { Callout, PortalPageBody, RuleGrid, Section, SpecTable } from '@/components/brand/primitives';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = portalMetadata({
   title: 'Stickers & merch',
   description: 'The Itqan Studio sticker programme: marks, badges, contour cuts and print-ready specs.',
-};
+  path: '/brand/assets/stickers',
+});
 
 const assets = assetsFor('itqan-studio', ['sticker']);
 const bundles = bundlesFor('itqan-studio', ['sticker']);

@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
+import { portalMetadata } from '@/lib/page-metadata';
 import { PAIRINGS } from '@/data/brand-spec';
 import { Callout, PortalPageBody, Section } from '@/components/brand/primitives';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = portalMetadata({
   title: 'Pairings & contrast',
   description:
     'Approved Itqan Studio colour combinations with measured WCAG contrast ratios, and the two that are banned.',
-};
+  path: '/brand/colour/pairings',
+});
 
 const VERDICT = {
   aaa: { label: 'AAA', colour: '#d1c2a5' },

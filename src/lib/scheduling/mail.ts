@@ -83,14 +83,19 @@ export function meetingUrl(): string | undefined {
   return url && /^https:\/\//.test(url) ? url : undefined;
 }
 
-export function bookingIcs(b: Booking, method: 'PUBLISH' | 'CANCEL'): string {
+/**
+ * The calendar file. The guest's copy carries only static copy, never a field
+ * the visitor typed (their address is unverified); the studio's copy names the
+ * company so the event reads well in Ibrahim's calendar.
+ */
+export function bookingIcs(b: Booking, method: 'PUBLISH' | 'CANCEL', audience: 'guest' | 'studio'): string {
   const t = bookingCopy[b.locale];
   const link = meetingUrl();
   return buildIcs({
     uid: `${b.id}@itqanstudio.com`,
     start: new Date(b.startUtc),
     end: new Date(b.endUtc),
-    summary: `${t.email.subject} · ${b.company}`,
+    summary: audience === 'studio' ? `Itqan briefing · ${b.company}` : t.email.subject,
     description: [t.email.confirmed, link ? `${t.email.link}: ${link}` : t.email.linkPending].join('\n'),
     location: link,
     organizerEmail: STUDIO_EMAIL,
@@ -124,7 +129,7 @@ export async function sendGuestConfirmation(b: Booking, cancelToken: string): Pr
     '',
     t.signoff,
   ].join('\n');
-  return sendMail({ to: b.email, replyTo: STUDIO_EMAIL, subject: t.subject, text, ics: { method: 'PUBLISH', content: bookingIcs(b, 'PUBLISH') } });
+  return sendMail({ to: b.email, replyTo: STUDIO_EMAIL, subject: t.subject, text, ics: { method: 'PUBLISH', content: bookingIcs(b, 'PUBLISH', 'guest') } });
 }
 
 export async function sendStudioNotice(b: Booking): Promise<MailResult> {
@@ -150,7 +155,7 @@ export async function sendStudioNotice(b: Booking): Promise<MailResult> {
     replyTo: b.email,
     subject: `[briefing] ${b.company} · ${b.name}`,
     text,
-    ics: { method: 'PUBLISH', content: bookingIcs(b, 'PUBLISH') },
+    ics: { method: 'PUBLISH', content: bookingIcs(b, 'PUBLISH', 'studio') },
   });
 }
 
@@ -170,14 +175,19 @@ export async function sendCancellation(b: Booking, by: 'guest' | 'admin'): Promi
     '',
     t.signoff,
   ].join('\n');
-  const ics = { method: 'CANCEL' as const, content: bookingIcs(b, 'CANCEL') };
   return Promise.all([
-    sendMail({ to: b.email, replyTo: STUDIO_EMAIL, subject: t.cancelSubject, text: guestText, ics }),
+    sendMail({
+      to: b.email,
+      replyTo: STUDIO_EMAIL,
+      subject: t.cancelSubject,
+      text: guestText,
+      ics: { method: 'CANCEL', content: bookingIcs(b, 'CANCEL', 'guest') },
+    }),
     sendMail({
       to: studioInbox(),
       subject: `[briefing cancelled by ${by}] ${b.company} · ${b.name}`,
       text: `Cancelled: ${formatWhen(b.startUtc, 'Asia/Dubai', 'en')}\n${b.name} <${b.email}>, ${b.company}`,
-      ics,
+      ics: { method: 'CANCEL', content: bookingIcs(b, 'CANCEL', 'studio') },
     }),
   ]);
 }

@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
+import { portalMetadata } from '@/lib/page-metadata';
 import { ALL_ASSETS } from '@/data/brand-library';
 import { PORTAL_PAGES } from '@/data/brand-portal';
 import { Callout, PortalPageBody, Section } from '@/components/brand/primitives';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = portalMetadata({
   title: 'Brand updates',
   description: 'What changed in the Itqan Studio brand system, and when.',
-};
+  path: '/brand/updates',
+});
 
 interface Entry {
   date: string;

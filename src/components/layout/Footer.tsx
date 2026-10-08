@@ -80,7 +80,7 @@ export function Footer() {
               className="mt-4 font-serif italic text-brand-accent-on-light dark:text-brand-accent leading-[1.4]"
               style={{ fontSize: '0.875rem' }}
             >
-              Itqan Studio FZ-LLC, Dubai.
+              Itqan Studio FZ LLC, Dubai.
             </p>
             <p className="mt-3 font-sans font-normal text-[0.875rem] text-text-secondary dark:text-[rgba(255,251,245,0.55)] leading-[1.6] max-w-[32ch]">
               Systems for businesses in the UAE and Sweden.

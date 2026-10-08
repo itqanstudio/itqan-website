@@ -1,13 +1,15 @@
 import type { Metadata } from 'next';
+import { portalMetadata } from '@/lib/page-metadata';
 import { AssetLibrary } from '@/components/brand/AssetLibrary';
 import { assetsFor, bundlesFor } from '@/data/brand-library';
 import { CopyBlock } from '@/components/brand/CopyBlock';
 import { Callout, PortalPageBody, Section, SpecTable } from '@/components/brand/primitives';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = portalMetadata({
   title: 'Press & media',
   description: 'Everything a journalist, client or partner needs: boilerplate, logos and how to get in touch.',
-};
+  path: '/brand/press',
+});
 
 const logos = assetsFor('itqan-studio', ['logo']);
 const logoBundles = bundlesFor('itqan-studio', ['logo']);
@@ -16,7 +18,7 @@ export default function PressPage() {
   return (
     <PortalPageBody href="/brand/press"
       heroImage="/images/team/ibrahim-shareef.png"
-      heroAlt="Ibrahim Shareef, founder"
+      heroAlt="Ibrahim Shareef, CEO and co-founder of Itqan Studio"
     >
       <Section>
         <p className="text-[1.0625rem] leading-relaxed text-[var(--color-text-secondary)]">
@@ -54,6 +56,11 @@ export default function PressPage() {
             label="Boilerplate"
             meta="End of a press release"
             text="Itqan Studio is a brand and design studio named after the Arabic word for excellence. It works with founder-led companies to decide what a brand is for, then builds the identity, the system and the site that carry that decision into the market."
+          />
+          <CopyBlock
+            label="Founders"
+            meta="Who runs the studio"
+            text="Itqan Studio was co-founded by Ibrahim Shareef (CEO) and Bisma Aslam (Head of Design)."
           />
         </div>
         <p className="mt-4 text-[0.875rem] text-[var(--color-text-secondary)]">

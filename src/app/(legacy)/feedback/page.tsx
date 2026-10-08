@@ -12,7 +12,7 @@ import { FeedbackThemer } from '@/components/feedback/FeedbackThemer';
  * noindex: this page is for clients holding a link, not for search.
  */
 export const metadata: Metadata = {
-  title: 'How was it? — Itqan Studio',
+  title: 'How was it?',
   description: 'Two minutes of your experience working with Itqan Studio.',
   robots: { index: false, follow: false },
 };

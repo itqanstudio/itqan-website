@@ -1,13 +1,15 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { portalMetadata } from '@/lib/page-metadata';
 import { assetBySlug } from '@/data/brand-library';
 import { Callout, PortalPageBody, RuleGrid, Section } from '@/components/brand/primitives';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = portalMetadata({
   title: 'Logo',
   description: 'The Itqan Studio mark and wordmark: which version to use where, and the rules that keep it recognisable.',
-};
+  path: '/brand/logo',
+});
 
 /*
  * Named from the ARTWORK, not from the filename.

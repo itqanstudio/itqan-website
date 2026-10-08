@@ -97,10 +97,15 @@ describe('settings', () => {
     expect(meetingUrl()).toBeUndefined();
     vi.stubEnv('BOOKING_MEETING_URL', 'https://meet.google.com/abc-defg-hij');
     expect(meetingUrl()).toBe('https://meet.google.com/abc-defg-hij');
-    expect(bookingIcs(booking, 'PUBLISH')).toContain('LOCATION:https://meet.google.com/abc-defg-hij');
+    expect(bookingIcs(booking, 'PUBLISH', 'guest')).toContain('LOCATION:https://meet.google.com/abc-defg-hij');
+  });
+  it('keeps the company out of the guest invite and in the studio invite', () => {
+    const evil = { ...booking, company: 'Pay now at http://phish.example' };
+    expect(bookingIcs(evil, 'PUBLISH', 'guest')).not.toContain('phish');
+    expect(bookingIcs(evil, 'PUBLISH', 'studio')).toContain('phish');
   });
   it('builds a cancel invite with the booking UID', () => {
-    const ics = bookingIcs(booking, 'CANCEL');
+    const ics = bookingIcs(booking, 'CANCEL', 'guest');
     expect(ics).toContain(`UID:${booking.id}@itqanstudio.com`);
     expect(ics).toContain('METHOD:CANCEL');
   });

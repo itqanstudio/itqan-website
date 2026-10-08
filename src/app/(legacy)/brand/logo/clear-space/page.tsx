@@ -1,12 +1,14 @@
 import Image from 'next/image';
 import type { Metadata } from 'next';
+import { portalMetadata } from '@/lib/page-metadata';
 import { assetBySlug } from '@/data/brand-library';
 import { Callout, PortalPageBody, Section, SpecTable } from '@/components/brand/primitives';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = portalMetadata({
   title: 'Clear space & sizing',
   description: 'The exclusion zone around the Itqan Studio mark, and the minimum size it stays legible at.',
-};
+  path: '/brand/logo/clear-space',
+});
 
 const MARK = assetBySlug('itqan-studio', 'light-icon');
 

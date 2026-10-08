@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { PortalShell } from '@/components/brand/PortalShell';
+import { PORTAL_TITLE_SUFFIX } from '@/lib/page-metadata';
 
 /**
  * Brand portal layout.
@@ -12,7 +13,8 @@ import { PortalShell } from '@/components/brand/PortalShell';
 export const metadata: Metadata = {
   title: {
     default: 'Brand — Itqan Studio',
-    template: '%s — Itqan Studio Brand',
+    // Shared with portalMetadata() so og:title always equals the rendered title.
+    template: `%s${PORTAL_TITLE_SUFFIX}`,
   },
   description:
     'The Itqan Studio brand system: logo, colour, typography, motion, voice and downloadable assets.',
