@@ -56,6 +56,10 @@ export function UmamiAnalytics() {
       nav.globalPrivacyControl === true;
     if (dnt) return;
 
+    // Never on pages whose URL is a credential (booking cancel links) or private (admin):
+    // the tracker stores the path, which would put the cancel token in analytics.
+    if (/\/book\/cancel\/|^\/admin/.test(window.location.pathname)) return;
+
     // Idempotent: React 18 StrictMode double-invokes effects in development,
     // and a second <script> tag would double-count every page view.
     if (document.getElementById(SCRIPT_ID)) return;

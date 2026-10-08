@@ -46,3 +46,6 @@ behance/
 # Brand download packs — regenerated at build time (npm run prebuild)
 # from the committed assets in public/brand/. 100% derivable.
 public/brand/bundles/
+
+# Booking database (SQLite). Production mounts a volume here.
+.data/

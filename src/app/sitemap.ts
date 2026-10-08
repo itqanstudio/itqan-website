@@ -1,55 +1,37 @@
 import type { MetadataRoute } from 'next';
-import { caseStudies } from '@/data/case-studies';
 import { PORTAL_PAGES } from '@/data/brand-portal';
-import { SITE_URL } from '@/lib/seo';
+import { SITE_URL } from '@/lib/v3/seo';
+import { CASE_SLUGS } from '@/components/v3/CasePage';
 
-/**
- * Data-driven sitemap. Case-study URLs are derived from src/data/case-studies.ts
- * (the same source generateStaticParams uses for /work/[id]) so the sitemap can
- * never drift out of sync again when a project is added or removed.
- */
+type Entry = MetadataRoute.Sitemap[number];
+
+/** A page that exists in English and Arabic, listed once per language with hreflang alternates. */
+function bilingual(enPath: string, priority: number, changeFrequency: Entry['changeFrequency'], lastModified: Date): Entry[] {
+  const arPath = enPath === '/' ? '/ar' : `/ar${enPath}`;
+  const languages = { en: `${SITE_URL}${enPath === '/' ? '' : enPath}`, ar: `${SITE_URL}${arPath}` };
+  return [
+    { url: languages.en, lastModified, changeFrequency, priority, alternates: { languages } },
+    { url: languages.ar, lastModified, changeFrequency, priority, alternates: { languages } },
+  ];
+}
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date();
-
-  const staticPages: Array<{
-    path: string;
-    priority: number;
-    changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'];
-  }> = [
-    { path: '', priority: 1.0, changeFrequency: 'weekly' },
-    { path: '/services', priority: 0.9, changeFrequency: 'monthly' },
-    { path: '/work', priority: 0.8, changeFrequency: 'weekly' },
-    { path: '/about', priority: 0.7, changeFrequency: 'monthly' },
-    { path: '/contact', priority: 0.7, changeFrequency: 'monthly' },
-    { path: '/support', priority: 0.4, changeFrequency: 'yearly' },
-    { path: '/privacy', priority: 0.2, changeFrequency: 'yearly' },
-    { path: '/terms', priority: 0.2, changeFrequency: 'yearly' },
-    { path: '/cookies', priority: 0.2, changeFrequency: 'yearly' },
-  ];
-
   return [
-    ...staticPages.map(({ path, priority, changeFrequency }) => ({
-      url: `${SITE_URL}${path}`,
-      lastModified,
-      changeFrequency,
-      priority,
-    })),
-    ...caseStudies.map((cs) => ({
-      url: `${SITE_URL}/work/${cs.id}`,
-      lastModified,
-      changeFrequency: 'monthly' as const,
-      priority: 0.6,
-    })),
+    ...bilingual('/', 1.0, 'weekly', lastModified),
+    ...bilingual('/book', 0.9, 'monthly', lastModified),
+    ...CASE_SLUGS.flatMap((slug) => bilingual(`/work/${slug}`, 0.7, 'monthly', lastModified)),
+    ...['/privacy', '/terms', '/cookies'].map((p) => ({ url: `${SITE_URL}${p}`, lastModified, changeFrequency: 'yearly' as const, priority: 0.2 })),
+    { url: `${SITE_URL}/support`, lastModified, changeFrequency: 'yearly', priority: 0.3 },
     /*
-     * Brand portal. Derived from PORTAL_PAGES — the same tree the sidebar and
-     * search render from — so a page can never exist in the nav but be missing
-     * from the sitemap. The old /brands hub is gone; middleware 308s it here.
+     * Brand portal (legacy pages, still served at /brand and brand.itqanstudio.com).
+     * Derived from PORTAL_PAGES, the same tree the portal sidebar renders from.
      */
     ...PORTAL_PAGES.map((p) => ({
       url: `${SITE_URL}${p.href}`,
       lastModified,
       changeFrequency: 'monthly' as const,
-      priority: p.href === '/brand' ? 0.6 : 0.4,
+      priority: p.href === '/brand' ? 0.4 : 0.3,
     })),
   ];
 }

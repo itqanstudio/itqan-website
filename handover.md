@@ -1,5 +1,145 @@
 # Itqan Studio Website — Handover
 
+## 2026-10-08 — Brand v3 site built, booking platform + admin, shipping to production
+
+Ibrahim signed off the brand kit and said: build the site and push it to main and production. Same
+message: Nexilink is a product we helped build (nexilink.se: onboarding and training for Swedish
+welfare services), Bisma is in Gothenburg, a much better founder quote, no giant footer wordmark, an
+own booking platform with an admin for availability, an assessment that makes the site more
+advanced, copy with zero AI slop, and where every brand artifact lives for Instagram and LinkedIn.
+
+**Tracked work:** `agent-work/20261008134247_brand_v3_site_booking_launch.md` (branch `feat/brand-v3-site`).
+
+### What was just done
+- New site in `src/app/(en)` + `src/app/ar` (separate root layouts, real `lang`/`dir`), copy in
+  `src/content/v3/`, components in `src/components/v3/`, CSS in `src/styles/v3/`. Home: hero pixel
+  field, works-with strip, industries, NEW agent-run demo (3 industries, plays step by step, ends with
+  a person deciding), what we build, security, how we work, work (Millow + Nexilink with case pages
+  `/work/millow`, `/work/nexilink`, EN + AR), NEW FAQ (+ FAQPage JSON-LD), company, CTA, footer
+  without the giant wordmark. Mobile menu is a draggable sheet (the open review item from 7 Oct).
+- Booking: `/book` and `/ar/book` (pick day, time, details; visitor time zone; ics download),
+  emails via SES with ics, cancel links. Admin `/admin` with emailed one-time sign-in link.
+  SQLite at `/app/.data/itqan.db` (needs the Coolify persistent volume, see below).
+- Retired routes redirect: /about, /services, /contact, /work, /work/<other>. Legacy pages
+  (feedback, support, magnet, thank-you, brand portal) moved to `src/app/(legacy)` unchanged.
+- 29 components that only the retired pages used were deleted. Privacy policy covers bookings
+  (12-month retention, purge runs on every booking and admin load).
+- Verified locally: build, 37 unit tests, EN/AR/mobile screenshots, a full booking, double booking
+  refused (409), honeypot, origin checks, admin sign-in, hours edit, day off, guest cancel.
+
+### Next steps
+1. Admin: Ibrahim signs in at https://itqanstudio.com/admin with ibrahim@itqanstudio.com and sets
+   real hours (default: Mon to Thu 10 to 12 and 14 to 17, Fri 10 to 12, Dubai time, 24 h notice).
+2. Optional env in Coolify: `BOOKING_MEETING_URL` (a fixed Google Meet link for every briefing),
+   `ADMIN_EMAILS` to add Bisma.
+3. Not built (by choice): sync with Google Calendar busy times. Until then, block days in the admin.
+
+### Rules introduced
+- Copy: no em or en dashes, no banned words, a fact per sentence, no invented numbers; the agent-run
+  demo is labelled as an illustration.
+- Never set an admin password; sign-in is by emailed link only.
+
+## 2026-10-07 (EVENING) — Brand v3 "signal i"; brand work moved to the PRIVATE repo itqan-brand
+
+Ibrahim picked Resolve and asked for a more memorable symbol, more gradients, new icons, his portrait
+in the brand light, an EN + AR site for manufacturing/retail/F&B decision makers (Millow and Nexilink
+featured), the brand changed everywhere, and the work kept privately on GitHub.
+
+- **This repo is PUBLIC.** All brand work (kit, site concept, deck source, proposal, images, assets)
+  moved OUT of `docs/ai-pivot/` into `~/Workspace/Projects/Internal/Itqan-Studio/itqan-brand`
+  (private GitHub `itqanstudio/itqan-brand`). `docs/ai-pivot/` no longer exists here.
+- Symbol v3: stem + square rose dot (the i, alef in إتقان) + the arc in a dusk radial gradient,
+  10×12 grid. Spec and migration checklist in the itqan-brand README.
+- Artifacts updated in place: kit 8XN198xUnEXrQfRd2VxKTb, site QgiHDa7uWJJKbsyzAJmw5M (EN + AR),
+  proposal WWircx7JQcgN1anJ44rzrc (v3 notice + symbol), deck Me9626whwKdgoh1VeTFLjC (update slide).
+- Pointers added (UNCOMMITTED, not pushed): `Claude.md` top section "Brand v3", `BRAND.md` retired
+  banner. The live site still runs the old brand; migrating it needs Ibrahim's go (push = deploy).
+- itqan-brain skill updated with an "Update 7 October 2026" section that wins over older sections.
+
+## 2026-10-07 — Resolve v2: brand kit, concept site, social look and strategy
+
+Ibrahim: push the pixel branding closer to the Behance board, then a concept site, a branding kit,
+the social look and an Instagram + LinkedIn strategy. Website, documents and ICP/ladder stay later.
+
+- Brand kit (private): https://claude.ai/artifact/8XN198xUnEXrQfRd2VxKTb
+- Concept site (private): https://claude.ai/artifact/QgiHDa7uWJJKbsyzAJmw5M
+- Files: `docs/ai-pivot/kit/` (brand-kit.html, site.html, img/ 13 JPGs, assets/ 4 SVGs). Untracked.
+- v2 system: 10×10 solid mark (RECTS list lives in both pages' JS and the SVGs), Itqan Rose #EF3A78 +
+  ink #0B0A0D + bone #F5F1EA, ramp rose→coral→apricot→sand, Geist 600 −0.055em, Geist Mono,
+  Readex Pro for Arabic; wordmark "itqan" with a CSS-drawn stem and square rose tittle (`.wm .ii`).
+- Site uses motion.dev 14.0.0 from jsdelivr with SRI; hero is a spring-physics pixel field (pointer
+  pushes with velocity, springs from current position, reduced motion shows the resolved mark).
+- Verified by headless Chrome full-page screenshots (the in-app pane was hidden); fixed card overlay
+  position, dark-on-dark borders, construction arcs, the motion field's resting state.
+- The 6 Oct deck still shows Resolve v1; update its Resolve slides if v2 is picked.
+- Open: final wordmark drawing (Bisma), follower counts and AI Map slot number are placeholders.
+
+## 2026-10-06 (EVENING) — Brand directions pitch deck: Resolve / Mirage / Mosaic
+
+Ibrahim: the pixel art is good but "not quite there yet"; sent seven Behance references
+(Draxon, Nexivo, Kortex, Sovrix, Qentra, Savant, Mobidata) and asked for a senior-designer pitch
+of three brand directions as a slide deck for the 7 Oct call with Bisma.
+
+- Deck (Slides artifact, private, exports PDF/PPTX): https://claude.ai/artifact/Me9626whwKdgoh1VeTFLjC
+  30 slides: brief, the category, presentation moves taken from the board, constants (name, arc,
+  line), then per direction: idea, live animated mark (x-embed canvas), colour + type, photography,
+  two mockup scenes, the case. Close: comparison table, recommendation (01 Resolve with two grafts),
+  next phases and three questions for Bisma.
+- Source files: scratchpad `deck/project/` (deck.json + slides/*.html). Not in the repo.
+- 9 mood/mockup images generated on Higgsfield (gpt_image_2_5, ~2.25 credits), uploaded as deck
+  assets, every one labelled "AI-generated, replaced by a real shoot". Logos are HTML/SVG overlays,
+  never baked into the generated images.
+- Not visually verified: the browser pane is not signed in to claude.ai. Overlay positions came from
+  a measured grid laid over each image. Ibrahim should glance at r-street, m-metro, o-street.
+- Earlier directions A Signal / B Majlis / C Datum are superseded by this deck (vault note updated).
+
+**Next after the pick:** design system, guidelines, iconography, mockups, photography (real shoot
+list), animations. **Later:** website, documents, ICP and the ladder.
+
+## 2026-10-06 — AI PIVOT: Itqan goes AI only; rebrand + site concept proposal drafted (nothing built, nothing deployed)
+
+Ibrahim and Bisma decided Itqan focuses on AI only (implementing AI in companies, building
+models, workflows and agents). Rebrand allowed; the name Itqan stays. This overrides the
+2026-09-08 pivot rule by the founders' decision.
+
+### What was just done
+- Studied mistral.ai in the browser (computed styles: ground #101013, text #FAFAF4, heat run
+  #FFAF01 to #E51300, ALTMistral 500 + Space Mono + Inter; "We make X. You keep Y." pillars).
+- Wrote the proposal page: pivot brief, ladder (low/mid/high), ICP per tier, three brand
+  directions (A Signal recommended, B Majlis, C Datum extended), Signal guidelines, design
+  system tokens + components, five website concept frames, phone frame, sitemap, decisions
+  for tomorrow, risks, sources.
+  - File: `docs/ai-pivot/itqan-ai-pivot.html` (untracked, not committed)
+  - Published (private): https://claude.ai/artifact/WWircx7JQcgN1anJ44rzrc
+- Facts checked on primary pages: EU AI Act deployer transparency from 2 Aug 2026, Annex III
+  moved to 2 Dec 2027 (Hogan Lovells 7 May 2026); OpenAI inference residency EU/US/UAE only.
+  Grok research lane failed (402 balance exhausted); WebSearch used instead.
+- Vault: `00 Second Brain/Business/Itqan AI Pivot Proposal 2026-10-06.md` (+ Current State
+  bullet, Evolution row), mirrored to Notion, sb-status 0 behind.
+- Work file: `agent-work/completed/20261006131126_itqan_ai_pivot_rebrand_proposal.md`.
+
+### Handover prompt (next session)
+- **Left:** the 2026-10-07 moodboard session with Bisma decides: brand name (Itqan / Itqan AI
+  / Itqan Labs), direction (A/B/C), who draws the mark, the five new prices (Team AI Setup
+  $1,500, Agent Sprint $4,500, Agent System $12,000, Private Model $28,000, AI Partner $6,000
+  a month), domain, first corridor, closing the pivot rule in writing.
+- **Next steps once decided:** (1) update the artifact with the decisions; (2) update the vault
+  note + brain skill (`~/.claude/skills/itqan-brain/SKILL.md` still describes the pre-AI
+  ladder); (3) only then plan the site rebuild in this repo (read
+  `~/.claude/references/website-build-resources.md` first; componentry/motion.dev).
+- **Rules introduced:** every price one number in USD; high tier gated until two Agent Sprints
+  ship; no invented proof (case-study slots stay labelled); dusk palette always stepped, never
+  a smooth gradient; agents always shown with a human approval step.
+- **Avoid:** publishing any of the new prices or lines on itqanstudio.com before Bisma signs off;
+  claiming UAE PDPL executive-regulation details (sources disagree); stock AI imagery.
+- **Open checks:** RAKEZ licence activities cover AI consultancy/software (licences media
+  17006556, services 47025061); domain availability not checked.
+
+### Monetization angles
+- Team AI Setup ($1,500) doubles as a Swedish-language workshop product Bisma can sell alone.
+- A packaged "AI usage policy + EU AI Act disclosure kit" could be a low-ticket digital product.
+- Run notes and eval scores become monthly LinkedIn proof once the first Sprint ships.
+
 
 ## 2026-09-01 (SHIPPED) — Millow + Sarmad's Lemon Garden testimonial LIVE (`5a058d3`); box OOM-wedged mid-deploy, rebooted
 
@@ -13,7 +153,7 @@ the REAL testimonial from **Sarmad Alsadi** (Lemon Garden founder — Ibrahim fi
   feedback email exists ONLY in the studio inbox ibrahim@itqanstudio.com; no
   connector, no DB, no payload logs), credited "Sarmad Alsadi · Founder, Lemon
   Garden", avatar = the circular Lemon Garden badge (`logo.png` from
-  `~/Desktop/lemongarden-site/public/brand/` → `public/images/testimonials/
+  `~/Workspace/Projects/Clients/lemongarden-site/public/brand/` → `public/images/testimonials/
   lemon-garden.png`; already circular, fits the rounded-full 176px avatar untouched).
 - Fixed a real `a905b14` leftover: it deleted `millow/fs-burger.webp` but left it in
   the Millow `mockups` array ⇒ would 404 a gallery tile. Trimmed to three.
@@ -39,7 +179,7 @@ free (disk pre-prune no longer critical), full stack = Coolify + FOUR Supabase
 stacks + Penpot + Umami(+oauth2-proxy) + Documenso + 3 app containers.
 
 `feat/millow-case-study` is fully merged — the Desktop clone
-(`~/Desktop/itqan-website`) can be fast-forwarded to main or deleted.
+(`~/Workspace/Projects/Internal/Itqan-Studio/itqan-website`) can be fast-forwarded to main or deleted.
 Tracking: `agent-work/20260901092709_ship_millow_lemon_garden_case_studies.md`.
 
 ## 2026-09-01 (LATER) — Murad timeline verified: nothing was "fixed", his email is a NEW send
@@ -153,9 +293,9 @@ Commit `6a5cc6e`, deployment `lvm5ok71uceykm7l7fon9hgs`. All verified live.
   Rename-on-change is now the house rule for replacing a same-named public image.
 - **Behance boards all 1400×1750 (4:5)** after "same aspect ratio please" — b2 gained a
   console strip at its base, b6 bookends with the v2 collage. Direction unchanged
-  (approved). Boards in `~/Desktop/behance-lemon-garden/boards/`.
+  (approved). Boards in `~/Workspace/Archive/Clients-and-Pitches/behance-lemon-garden/boards/`.
 - **Testimonial: DRAFTED, NOT PUBLISHED.** No real Sarmad quote exists, and none was
-  invented into the site. `~/Desktop/behance-lemon-garden/TESTIMONIAL-DRAFT.md` holds a
+  invented into the site. `~/Workspace/Archive/Clients-and-Pitches/behance-lemon-garden/TESTIMONIAL-DRAFT.md` holds a
   fact-true draft (sv + en) + a WhatsApp approval message + the form link. The site keeps
   the founder-voice quote until Sarmad signs off. NEVER publish the draft unapproved.
 - Routing tests 39/39 (was 34). Panel verdict on the endpoint: see final message /
@@ -177,7 +317,7 @@ service pills only, no stat clutter.
   inputs to fit, so bleed = compose big, crop after). The website ALSO now leads the top
   mockups gallery (4 items; the gallery handles up to 6 — Project You ships 6).
 - **Behance case study is now DESIGNED BOARDS**, not raw assets:
-  `~/Desktop/behance-lemon-garden/boards/01…06.png` (2800px wide, HTML→CDP-rendered,
+  `~/Workspace/Archive/Clients-and-Pitches/behance-lemon-garden/boards/01…06.png` (2800px wide, HTML→CDP-rendered,
   Poppins + Source Sans 3, pine/lemon palette). Upload guide in COPY.md — Ibrahim
   uploads in filename order, pastes one short description, done.
 - ⚠️ **OPERATIONAL GOTCHA — local port 8000 is now oMLX.** The Coolify SSM tunnel on
@@ -214,10 +354,10 @@ images 200, listed on /work). Work file:
 - **Panel: skipped** per the skill's own skip rule (content/data entry, no
   logic beyond an optional prop with a default). tsc + 34/34 site tests +
   build green; page visually verified at three scroll depths.
-- **Behance package for Ibrahim:** `~/Desktop/behance-lemon-garden/` — six
+- **Behance package for Ibrahim:** `~/Workspace/Archive/Clients-and-Pitches/behance-lemon-garden/` — six
   ordered boards, a ratio-correct cover, and COPY.md with paste-ready text
   (including a do-not-mention list).
-- **Productization plan:** `~/Desktop/lemongarden-booking-demo/PRODUCTIZE.md`
+- **Productization plan:** `~/Workspace/Projects/Clients/lemongarden-booking-demo/PRODUCTIZE.md`
   — subscription tiers in AED, the multi-tenant gap list (tenant timezone is
   item #1: lib/time pins Europe/Stockholm), and the Dubai first-ten motion.
 
@@ -357,7 +497,7 @@ news.airbnb.com" then "do all".
 **Each brand's portal now ships from the repo that already loads that brand's
 fonts and tokens.**
 - Itqan Studio  -> `/brand` in THIS repo (Manrope + Playfair, plum tokens)
-- Shareefico + Barakah Blueprint -> `/brand` in `~/Desktop/shareefico-website`
+- Shareefico + Barakah Blueprint -> `/brand` in `~/Workspace/Projects/Internal/Personal-Brand/shareefico-website`
 
 Why: the old portal rendered Shareefico's type specimens using Itqan's fonts.
 Clash Display, Poppins and JetBrains Mono are not loaded in this app at all, so
@@ -476,7 +616,7 @@ shareefi.co's theme tokens + voice-guide.md. Chapters: Logo → Colour
 (copy-to-clipboard swatches, dual-accent rule) → Type (live specimens) → Voice →
 Barakah Blueprint (Shareefico only) → Assets. Zip packs live at
 `/brands/downloads/*` (logos + colors.json + voice one-pager). Screenshots:
-`~/Desktop/brands-hub-review/`.
+`~/Workspace/Archive/Internal/brands-hub-review/`.
 
 **Traps hit:** arbitrary Tailwind classes composed in a DATA file are not
 reliably compiled — tile backgrounds are inline hexes now; scroll-reveal +
@@ -611,18 +751,18 @@ box risks regressing the site's worst-ever CWV for a cosmetic gain.
 **Cascade note:** `.press-scale` / `.display-type` are UNLAYERED so they beat Tailwind's layered
 utilities — intentional, the press transform must win over `hover:-translate-y-*`.
 
-**(2026-08-07, part 1): the audit that produced the above. Artefacts in `~/Desktop/apple-design-review/`.**
+**(2026-08-07, part 1): the audit that produced the above. Artefacts in `~/Workspace/Archive/Internal/apple-design-review/`.**
 Tracked in `agent-work/20260807183807_apple_design_audit_both_sites.md` (read it first — it holds the full
 findings index, the chosen approach + rejected alternatives, and the verified prototype output).
 Ibrahim asked for an Apple-design pass over **itqanstudio.com AND shareefi.co** (repo:
-`~/Desktop/shareefico-website`, branch `main`) using the newly installed `apple-design` skill
+`~/Workspace/Projects/Internal/Personal-Brand/shareefico-website`, branch `main`) using the newly installed `apple-design` skill
 (`~/.agents/skills/apple-design/SKILL.md`), with **screenshots of what the changes would look like**, then a
 redesign only **if he approves**.
 - **Method (reusable):** visual proposals were produced by **injecting the proposed CSS/JS onto the LIVE pages
   via Playwright** and shooting matched before/after crops — identical content, only the change differs. Motion
   proposals (which stills can't show) went into an **interactive prototype**. Both approaches beat rebuilding
   mockups from scratch, which would have made the comparison unfair.
-- **Artefacts — CANONICAL COPY IS `~/Desktop/apple-design-review/`** (NOT in any repo; originally built in
+- **Artefacts — CANONICAL COPY IS `~/Workspace/Archive/Internal/apple-design-review/`** (NOT in any repo; originally built in
   `/tmp/apple-audit/`, which Finder hides and Spotlight does not index — Ibrahim couldn't find the PNGs, so
   the whole tree was copied to the Desktop. Use the Desktop path from now on; /tmp will not survive a reboot).
   Contents: `index.html` (open this first — every comparison on one page + link to the prototype) ·
@@ -782,7 +922,7 @@ Decks are gitignored (local `behance/out/`) — no code deploy needed; just re-u
 Main → `3aaea69` (`70e13ae` = the feature commit), Coolify deploy `nx0l8i1xwue4zbbztcygmnql` finished, prod verified 200.
 1. **AI films (batch of 2 new case-hero films, both title-free — the standing constraint held):**
    - **Oud Closet case hero** = `public/videos/oud-closet-desert.mp4` (1.7MB) — re-encoded from the EXISTING Seedance
-     editorial library in `~/Desktop/oud-closet/assets/video/` (seedance-group-desert: trio walking the dunes at golden
+     editorial library in `~/Workspace/Archive/Clients-and-Pitches/oud-closet/assets/video/` (seedance-group-desert: trio walking the dunes at golden
      hour; zero credits spent). Poster `oud-closet/desert-still.webp`. Titled `cover.png` STAYS on the /work grid card.
    - **Mutqin case hero** = `public/videos/mutqin-journey.mp4` (313KB) — generated fresh: nano_banana_pro title-free
      plate (a lantern trail climbing a plum dune toward a cresting glow — the founder's journey; deliberately DISTINCT
@@ -848,7 +988,7 @@ Four things shipped this session, all live on itqanstudio.com (main → `7685eaa
    to Route53 zone `Z06561092N5NFW89QHZA8` (UPSERT preserving the existing MS + M365 SPF values); **propagated**
    (visible via 8.8.8.8). Ibrahim can click Verify in GSC now, then submit sitemap.xml + repeat in Bing (kit: GEO-ACTION-KIT.md).
 2. **Shareefico case study refresh** — the other-chat work lived on branch `feat/shareefico-case-study-refresh`
-   (commit `868b9bf`) in a SEPARATE clone at `~/Desktop/itqan-website` (branched pre-redesign). It's data+assets only
+   (commit `868b9bf`) in a SEPARATE clone at `~/Workspace/Projects/Internal/Itqan-Studio/itqan-website` (branched pre-redesign). It's data+assets only
    (4 new shareefi.co screenshots + the shareefico entries in case-studies.ts/projects.ts) so it flows straight into the
    redesigned case page — cherry-picked cleanly onto main (`ea68120`). New hero = new-cover-poster.jpg; gallery = new-home/
    new-work/new-brand.jpg; copy leads with the 3D-creator shareefi.co build. (case-studies.ts dropped coverVideo → hero is
@@ -1051,21 +1191,21 @@ these edits (nothing committed this session).
 
 **LATEST (2026-06-21): full SEO + GEO/LLM optimization pass — SHIPPED to `main`.** Ibrahim wanted to (a) rank top of Google for "design / automation / AI agency Dubai" and (b) be recommended/cited by LLMs (ChatGPT, Claude, Perplexity, Gemini, AI Overviews). Ran deep research (report at `agent-work/SEO-GEO-RESEARCH-REPORT.md` — local only, agent-work is gitignored) then implemented. **Two confirmed bugs fixed:** (1) `/images/og-image.png` was referenced in metadata but DID NOT EXIST → replaced with a real, on-brand 1200×630 OG card generated by `next/og` at `src/app/opengraph-image.tsx` (reads committed Manrope TTFs from `src/app/_og/`, zero build-time network); (2) `src/app/sitemap.ts` was a STALE hardcoded list missing mutqin/project-you/itqan-crm → now **data-driven from `src/data/case-studies.ts`** (+ legal pages). **New SEO infra:** centralized `src/lib/seo.ts` (NAP, keywords, JSON-LD builders — fixed the `sameAs` socials to match the footer: instagram `madebyitqan`, linkedin `company/110338926`); `src/components/seo/JsonLd.tsx` (escaped-`<` XSS-safe inline JSON-LD); full entity graph (Organization + WebSite + founder Person, with `jobTitle: "Co-founder"` to match on-page copy) site-wide in `layout.tsx`, plus per-page Service graph + BreadcrumbList + FAQPage (services), CreativeWork + Breadcrumb (case studies), CollectionPage/ItemList (work). **Per-page canonicals** (`alternates.canonical`) on every route incl. dynamic ones; `?intent=` on /contact canonicalizes to `/contact`; `/thank-you` is `noindex` (no canonical). **Keyword-targeted titles/desc** (home: "Itqan Studio — Design, Automation & AI Agency in Dubai"; services/work/about/contact reworded) — brand hero UNTOUCHED. **GEO:** `src/app/robots.ts` (dynamic; explicitly Allows all major AI crawlers — GPTBot/OAI-SearchBot/ChatGPT-User, ClaudeBot/Claude-SearchBot/Claude-User/anthropic-ai, PerplexityBot/Perplexity-User, Google-Extended, Applebot-Extended, Bingbot, CCBot — replaces deleted `public/robots.txt`); `public/llms.txt` (curated entity summary — low-risk hedge, evidence says it does little today); on-brand **FAQ section on /services** (`src/components/services/ServiceFAQ.tsx`, native `<details>` so answers are in crawlable SSR HTML, written GEO-first: direct factual answers + real stats). **CWV:** removed the render-blocking font `@import` in globals.css → moved to a `<head>` `<link>` + `preconnect`. Added `manifest.ts` + `viewport` export (themeColor moved out of deprecated metadata). **Schema note:** deliberately used `Organization` + `Service` (NOT `ProfessionalService` — schema.org deprecated it). Build clean (24/24); verified at runtime: robots/sitemap/og-image render, all JSON-LD parses, canonicals correct, OG is a valid 1200×630 PNG. code-reviewer pass: 0 critical/high; 4 mediums all fixed (Co-founder jobTitle, thank-you canonical removed, work ItemList sourced from caseStudies, OG gradient rgba). **OFF-SITE TODO for Ibrahim (can't be coded — biggest "agency Dubai" levers):** create+verify Google Business Profile; collect reviews via WhatsApp; submit sitemap to Google Search Console AND Bing Webmaster Tools (Bing powers ChatGPT search); list on Clutch/GoodFirms/DesignRush; get onto "best agencies in Dubai" listicles (top GEO lever). Future site phases: Arabic/hreflang, an `/insights` blog for freshness, per-service landing pages. **Deploy:** pushed to `main`; prod is AWS+Coolify — confirm Coolify deploys (watch the 38G disk; pre-prune if needed per the entry below) before this is live.
 
-**LATEST (2026-06-19, follow-up): removed ALL remaining "solo founder" phrasing + deployed to AWS/Coolify — LIVE & VERIFIED.** After the co-founder reframe (below), Ibrahim asked to strip every "solo founder" reference. Reworded the two ICP/audience lines + one code comment: [src/components/home/WhoFor.tsx](src/components/home/WhoFor.tsx) "Solo founders or 2-3 person teams" → "Early-stage founders or 2-3 person teams"; [src/components/magnet/MagnetLanding.tsx](src/components/magnet/MagnetLanding.tsx) "Solo founders who refuse to start with a logo" → "Founders who refuse to start with a logo"; [src/components/about/TeamSection.tsx](src/components/about/TeamSection.tsx) comment "Ibrahim, solo" → "Ibrahim, standalone". Committed `8774c65`, pushed `main`. **Deployed via Coolify API** (app uuid `cybvxnemzusk0yzjcwzrey3v`, token in `~/Desktop/aws-migration/secrets/coolify-api.env`): `GET http://52.212.71.212:8000/api/v1/deploy?uuid=…&force=true` → poll `…/deployments/{uuid}` for `status`. **First deploy FAILED: "no space left on device"** — the 38G EC2 root was at 75% and the Next.js/nixpacks build needs ~5GB transient (build cache lived in `/var/lib/containerd` buildkit snapshots). Fix = SSH (`ssh -i ~/.ssh/aws-migration-key.pem ubuntu@52.212.71.212`) + `sudo docker builder prune -af && sudo docker image prune -af` (NEVER `volume prune` / `--volumes` — 8 volumes hold the 2 self-hosted Supabase stacks' data). Re-deployed → finished, rolling update OK. Verified LIVE: `https://itqanstudio.com` + `/about` HTTP 200, "Co-founder of Itqan Studio" + "Early-stage founders…" present, zero "solo founder" anywhere. Post-build prune left box at 65% (14G free). **RECURRING RISK:** 38G root is tight for Coolify + 2 Supabase + apps; every build adds ~4-5GB cache → deploys will fail again without a pre-prune. **Recommend: grow the EBS root 38G→~60G (one-time, ~$2/mo) OR enable Coolify scheduled Docker cleanup.** See `~/Desktop/aws-migration/handover.md` (updated this session) for box ops.
+**LATEST (2026-06-19, follow-up): removed ALL remaining "solo founder" phrasing + deployed to AWS/Coolify — LIVE & VERIFIED.** After the co-founder reframe (below), Ibrahim asked to strip every "solo founder" reference. Reworded the two ICP/audience lines + one code comment: [src/components/home/WhoFor.tsx](src/components/home/WhoFor.tsx) "Solo founders or 2-3 person teams" → "Early-stage founders or 2-3 person teams"; [src/components/magnet/MagnetLanding.tsx](src/components/magnet/MagnetLanding.tsx) "Solo founders who refuse to start with a logo" → "Founders who refuse to start with a logo"; [src/components/about/TeamSection.tsx](src/components/about/TeamSection.tsx) comment "Ibrahim, solo" → "Ibrahim, standalone". Committed `8774c65`, pushed `main`. **Deployed via Coolify API** (app uuid `cybvxnemzusk0yzjcwzrey3v`, token in `~/Workspace/Archive/Internal/aws-migration/secrets/coolify-api.env`): `GET http://52.212.71.212:8000/api/v1/deploy?uuid=…&force=true` → poll `…/deployments/{uuid}` for `status`. **First deploy FAILED: "no space left on device"** — the 38G EC2 root was at 75% and the Next.js/nixpacks build needs ~5GB transient (build cache lived in `/var/lib/containerd` buildkit snapshots). Fix = SSH (`ssh -i ~/.ssh/aws-migration-key.pem ubuntu@52.212.71.212`) + `sudo docker builder prune -af && sudo docker image prune -af` (NEVER `volume prune` / `--volumes` — 8 volumes hold the 2 self-hosted Supabase stacks' data). Re-deployed → finished, rolling update OK. Verified LIVE: `https://itqanstudio.com` + `/about` HTTP 200, "Co-founder of Itqan Studio" + "Early-stage founders…" present, zero "solo founder" anywhere. Post-build prune left box at 65% (14G free). **RECURRING RISK:** 38G root is tight for Coolify + 2 Supabase + apps; every build adds ~4-5GB cache → deploys will fail again without a pre-prune. **Recommend: grow the EBS root 38G→~60G (one-time, ~$2/mo) OR enable Coolify scheduled Docker cleanup.** See `~/Workspace/Archive/Internal/aws-migration/handover.md` (updated this session) for box ops.
 
 **LATEST (2026-06-19): founder copy reframed solo → co-founder — SHIPPED.** Ibrahim is NOT the sole founder and didn't want the site implying it. Changed "Solo founder of Itqan Studio" → "Co-founder of Itqan Studio" in BOTH surfaces that carried it: homepage `THE FOUNDER` section [src/components/home/Portrait.tsx](src/components/home/Portrait.tsx) (eyebrow "The founder" → "The co-founder", body line, and citation "— Ibrahim Shareef, Founder" → "Co-founder") and the About hero body line [src/components/about/AboutHero.tsx](src/components/about/AboutHero.tsx). Kept the "Engineer. Designer. Storyteller. All in one." headline + "the rare person who can build the brand, code the system, tell the story" narrative — those describe his personal multi-disciplinary skill, not sole ownership. Committed `089358f`, pushed to `main`. **NOTE:** prod is AWS+Coolify (not Netlify) — confirm Coolify deploys before this is live. Left alone (audience-facing "solo founder" lines that describe the CLIENT, not Ibrahim): `WhoFor.tsx` "Solo founders or 2-3 person teams" + `MagnetLanding.tsx` "Solo founders who refuse to start with a logo". Ibrahim's own oud-closet / case-studies.ts / projects.ts WIP was deliberately NOT staged (committed only the 2 copy files).
 
-**LATEST (2026-06-14): Project You listing cover → the titled "Noor — a journey through light" poster.** Ibrahim supplied a finished self-titled poster (sun + dashboard laptop + Qur'an-companion phone on a dusk desert gradient, baked "Project You / Noor — a journey through light / نور"). Set it as the cover on BOTH the `/work` grid card and the homepage `FeaturedWork` tile. Source `/Users/ibrahimshareef/Desktop/project-you/handover/itqan-website/assets/cover.png` (3200×2400) → `public/images/portfolio/project-you/cover-poster.webp` (1800×1350, 52K, cwebp q82). Because the poster bakes the title, added a generic `coverHasTitle?: boolean`: (1) [src/data/projects.ts](src/data/projects.ts) — PY `coverImage` → `cover-poster.webp`, `coverHasTitle: true`; (2) [src/components/work/WorkGrid.tsx](src/components/work/WorkGrid.tsx) — when `coverHasTitle`, skip the overlaid title/subtitle + the bottom gradient (clean poster card); (3) [src/components/home/FeaturedWork.tsx](src/components/home/FeaturedWork.tsx) — added `coverHasTitle` to `FeaturedTile`; PY tile → `cover-poster.webp` + `coverHasTitle: true`; suppress the overlaid `<h2>` name when set (keeps Live pill + Product/Faith pills + hover testimonial). Result: poster shows on both surfaces with NO double title; Mutqin + all other cards/tiles unchanged. `npm run build` clean (21/21). Verified: real /work screenshot (PY top-right, clean poster) + cloned landing tile (poster + pills + quote, no overlaid name). Detail page `/work/project-you` untouched (still the video hero). NOTE: Mutqin's `/work` card + tile still show their baked title under the overlay (pre-existing, tolerated) — could get the same `coverHasTitle` treatment for consistency if wanted.
+**LATEST (2026-06-14): Project You listing cover → the titled "Noor — a journey through light" poster.** Ibrahim supplied a finished self-titled poster (sun + dashboard laptop + Qur'an-companion phone on a dusk desert gradient, baked "Project You / Noor — a journey through light / نور"). Set it as the cover on BOTH the `/work` grid card and the homepage `FeaturedWork` tile. Source `/Users/ibrahimshareef/Workspace/Projects/Internal/Personal-Brand/project-you/handover/itqan-website/assets/cover.png` (3200×2400) → `public/images/portfolio/project-you/cover-poster.webp` (1800×1350, 52K, cwebp q82). Because the poster bakes the title, added a generic `coverHasTitle?: boolean`: (1) [src/data/projects.ts](src/data/projects.ts) — PY `coverImage` → `cover-poster.webp`, `coverHasTitle: true`; (2) [src/components/work/WorkGrid.tsx](src/components/work/WorkGrid.tsx) — when `coverHasTitle`, skip the overlaid title/subtitle + the bottom gradient (clean poster card); (3) [src/components/home/FeaturedWork.tsx](src/components/home/FeaturedWork.tsx) — added `coverHasTitle` to `FeaturedTile`; PY tile → `cover-poster.webp` + `coverHasTitle: true`; suppress the overlaid `<h2>` name when set (keeps Live pill + Product/Faith pills + hover testimonial). Result: poster shows on both surfaces with NO double title; Mutqin + all other cards/tiles unchanged. `npm run build` clean (21/21). Verified: real /work screenshot (PY top-right, clean poster) + cloned landing tile (poster + pills + quote, no overlaid name). Detail page `/work/project-you` untouched (still the video hero). NOTE: Mutqin's `/work` card + tile still show their baked title under the overlay (pre-existing, tolerated) — could get the same `coverHasTitle` treatment for consistency if wanted.
 
 **DEPLOYMENT REALITY (corrected 2026-06-14): production is AWS, NOT Netlify.** `itqanstudio.com` → EC2 `i-0ea77f0db834833dc` ("coolify-box", eu-west-1, IP `52.212.71.212`), a Next.js server behind **Coolify** (self-hosted PaaS; dashboard `http://52.212.71.212:8000`, locked to Ibrahim's IP). The repo's `netlify.toml` + older "Netlify auto-deploys" notes below are STALE (migrated off Netlify). **Pushing to `main` does NOT auto-publish unless Coolify's GitHub webhook is set** — this caused the Noor commits to sit un-deployed earlier this session (Ibrahim fixed the AWS/Coolify deploy). SSH: `ssh -i ~/.ssh/aws-migration-key.pem ubuntu@52.212.71.212`. AWS CLI is configured locally (`ibrahim-admin`, acct `480437358661`, eu-west-1). To ship a change: push to `main` AND confirm Coolify deploys (dashboard → app → Deploy, or rely on the webhook if now configured). The "(Netlify auto-deploys)" phrases in entries below are inaccurate — read them as "pushed to main; deploy via Coolify."
 
-**LATEST (2026-06-14): Project You rebuilt as the Noor case study — landing + work #3 + animated detail hero — SHIPPED.** Committed (`d5a2265`), pushed to `main` (Netlify auto-deploys). The stale `project-you` entry (old "young Muslims / Founder OS / Next.js" copy, April-24 imagery, **last** on `/work`, absent from the homepage) was **fully replaced** with the Noor rebrand (calm faith-rooted life-OS + verse-by-verse Qur'an companion). Files: (1) [src/data/projects.ts](src/data/projects.ts) — project-you moved to **3rd** (after Mutqin + Shareefico, before Medacs) per Ibrahim; titleless `dawn.webp` cover; (2) [src/data/case-studies.ts](src/data/case-studies.ts) — full Noor entry moved after Shareefico: problem → Aurora→Noor pivot → the orb identity → the Itqan way, Identity/System/Automation phases ("soul/skeleton/heartbeat"), `stack: React, TypeScript, Supabase, Claude`, `liveUrl: https://projectyou.app`, `outcomeMetric`, pivot `testimonialQuote` (Ibrahim, founder voice, نور renders); (3) [src/components/home/FeaturedWork.tsx](src/components/home/FeaturedWork.tsx) — homepage tile **Oud Closet → Project You** (titleless `dawn.webp`, "Live" pill, Product/Faith pills); (4) `public/images/portfolio/project-you/` — 9 optimized webp (~444K via cwebp from 2880px Noor captures) + `public/videos/project-you-transition.mp4` (544K). **Detail hero = the looping day↔night transition video** (`coverVideo`); listings use the titleless `dawn.webp` so the system title never collides with a baked headline (same lesson as the Mutqin landing tile). **Deliberately NO `brandShowcase`** — that section's hardcoded copy ("a product with a **face** … Mu, a six-pose companion") is Mutqin-specific and contradicts Noor's **faceless** orb; the brand/pivot story is carried by the text fields + the testimonial instead. Gallery = 6 real app screens (dashboard, Qur'an reader, habits[**dark**], coach, finance, health) — breadth + the two-theme story. Deleted the now-unreferenced old `project-you-mkp-mkbk.png` (kept `project-you-mkp-mb.png` [Industries] + `app-hand-v2-render.png` [Services, Values] — still used elsewhere). `npm run build` clean (21/21, `/work/project-you` SSG); screenshot-verified landing 4-up, work-grid order, detail header/hero, gallery (6 up), testimonial. Source assets + brief: `/Users/ibrahimshareef/Desktop/project-you/handover/`. **Nothing outstanding on Project You's Itqan-site presence.** (Spot-check the Netlify deploy goes green: `/`, `/work`, `/work/project-you`.)
+**LATEST (2026-06-14): Project You rebuilt as the Noor case study — landing + work #3 + animated detail hero — SHIPPED.** Committed (`d5a2265`), pushed to `main` (Netlify auto-deploys). The stale `project-you` entry (old "young Muslims / Founder OS / Next.js" copy, April-24 imagery, **last** on `/work`, absent from the homepage) was **fully replaced** with the Noor rebrand (calm faith-rooted life-OS + verse-by-verse Qur'an companion). Files: (1) [src/data/projects.ts](src/data/projects.ts) — project-you moved to **3rd** (after Mutqin + Shareefico, before Medacs) per Ibrahim; titleless `dawn.webp` cover; (2) [src/data/case-studies.ts](src/data/case-studies.ts) — full Noor entry moved after Shareefico: problem → Aurora→Noor pivot → the orb identity → the Itqan way, Identity/System/Automation phases ("soul/skeleton/heartbeat"), `stack: React, TypeScript, Supabase, Claude`, `liveUrl: https://projectyou.app`, `outcomeMetric`, pivot `testimonialQuote` (Ibrahim, founder voice, نور renders); (3) [src/components/home/FeaturedWork.tsx](src/components/home/FeaturedWork.tsx) — homepage tile **Oud Closet → Project You** (titleless `dawn.webp`, "Live" pill, Product/Faith pills); (4) `public/images/portfolio/project-you/` — 9 optimized webp (~444K via cwebp from 2880px Noor captures) + `public/videos/project-you-transition.mp4` (544K). **Detail hero = the looping day↔night transition video** (`coverVideo`); listings use the titleless `dawn.webp` so the system title never collides with a baked headline (same lesson as the Mutqin landing tile). **Deliberately NO `brandShowcase`** — that section's hardcoded copy ("a product with a **face** … Mu, a six-pose companion") is Mutqin-specific and contradicts Noor's **faceless** orb; the brand/pivot story is carried by the text fields + the testimonial instead. Gallery = 6 real app screens (dashboard, Qur'an reader, habits[**dark**], coach, finance, health) — breadth + the two-theme story. Deleted the now-unreferenced old `project-you-mkp-mkbk.png` (kept `project-you-mkp-mb.png` [Industries] + `app-hand-v2-render.png` [Services, Values] — still used elsewhere). `npm run build` clean (21/21, `/work/project-you` SSG); screenshot-verified landing 4-up, work-grid order, detail header/hero, gallery (6 up), testimonial. Source assets + brief: `/Users/ibrahimshareef/Workspace/Projects/Internal/Personal-Brand/project-you/handover/`. **Nothing outstanding on Project You's Itqan-site presence.** (Spot-check the Netlify deploy goes green: `/`, `/work`, `/work/project-you`.)
 
 **LATEST (2026-06-14): Landing tile got its own dedicated cover — SHIPPED.** The homepage `FeaturedWork` Mutqin tile overlays its OWN name + category pills + testimonial + bottom gradient, so the titled poster double-named and Mu clashed with the overlay (desktop) / was cropped out (mobile). Added `public/images/portfolio/mutqin/hero-landing.webp` — a titleless device scene (same dawn gradient + glow + portal browser + 3D phone, no title, no Mu) — and pointed ONLY the homepage tile at it in [src/components/home/FeaturedWork.tsx](src/components/home/FeaturedWork.tsx). `/work` card + `/work/mutqin` case hero KEEP the titled `hero.webp`. Verified the real tile desktop (default + hover) + mobile — legible, no double name. Build clean; committed `71be8a9`, pushed to `main`. Both covers come from the SAME generator in the Mutqin repo (`cover-itqan.html`; the tile is `?v=tile`).
 
 **LATEST (2026-06-14): Mutqin cover image replaced with a Noor-style poster — SHIPPED.** Committed (`4ecf5cd`), pushed to `main` (Netlify auto-deploys). The old cover (`mutqin/hero.webp`) was the dark "From raw idea to investor-ready" slide: heavy body paragraph, a "Web-app · React" footer, and BLANK device screens — Ibrahim disliked it. Replaced with a premium on-brand poster modelled on the Project You "Noor" reference he loves: plum→mauve→cream dawn gradient + soft glow, "Mutqin" + Arabic متقن, and REAL product mockups — the founder portal in a clean browser window + the mobile portal on the 3D plum phone, with Mu waving. Only the single shared asset `public/images/portfolio/mutqin/hero.webp` changed (3200×2400, 131KB), so it updates all 3 surfaces at once: the `/work` listing card, the `/work/mutqin` case hero (2:1), and the homepage `FeaturedWork` tile. Production build clean (21/21, /work/mutqin SSG); all 3 surfaces screenshot-verified. **Reproducible** from the Mutqin repo: `startup-companion/public/_behance/cover-itqan.html` + `node scripts/cover-itqan.mjs` → `cwebp` → copy. Known tradeoff (matches the Noor reference + the prior cover): the poster bakes a "Mutqin" title, so it appears under the page h1 on the case page and under the overlaid name on the landing tile — a titleless variant is a one-line change (drop the `.title` block, re-render) if preferred. NOTE: a long-running itqan dev server had a stale `.next` cache 500ing /work/mutqin ("Cannot find module ./vendor-chunks/framer-motion.js") — cleared `.next` + rebuilt; unrelated to the asset.
 
-**LATEST (2026-06-14): Mutqin added as a featured project + full case study + homepage tile — SHIPPED.** Committed (`08f130e`) and pushed to `main`; Netlify auto-deploys from `main`. Mutqin (Itqan's own AI startup companion, live at https://mutqin.xyz) is now the **first/lead card** on `/work`, has a full detail page at `/work/mutqin`, and **replaces the Medacs tile on the homepage `FeaturedWork` grid** (Medacs stays in `/work` + its detail page). Files touched: (1) [src/data/projects.ts](src/data/projects.ts) — `mutqin` `Project` entry, first; (2) [src/data/case-studies.ts](src/data/case-studies.ts) — `mutqin` `CaseStudy` entry first + two new OPTIONAL interface fields `brandShowcase?: string[]` and `stack?: string`; (3) [src/app/work/[id]/page.tsx](src/app/work/%5Bid%5D/page.tsx) — gated `BrandShowcase` section (brand-cover + character-poses after the mockup gallery), a `Stack` stat in `AtAGlance`, and the emphasised Outcome stat now spans 1–2 cols adaptively so the 5-col strip never overflows; (4) [src/components/home/FeaturedWork.tsx](src/components/home/FeaturedWork.tsx) — explicit `FeaturedTile` type (optional `duration`/`status`); Mutqin tile shows a **"Live"** pill (no fabricated delivery window); pill is omitted entirely if a tile sets neither; (5) `public/images/portfolio/mutqin/` — 6 optimized WebP (hero, wizard, portal, mobile, brand, character; 348K total, from the 3200px source PNGs via cwebp). `npm run build` clean (21/21 pages, /work/mutqin in SSG). Decisions taken with Ibrahim: keep Mutqin first in the grid; feature on homepage in place of Medacs. **Nothing outstanding on Mutqin.** Source assets + brief live at `/Users/ibrahimshareef/Desktop/startup-companion/handover/itqan-website/`.
+**LATEST (2026-06-14): Mutqin added as a featured project + full case study + homepage tile — SHIPPED.** Committed (`08f130e`) and pushed to `main`; Netlify auto-deploys from `main`. Mutqin (Itqan's own AI startup companion, live at https://mutqin.xyz) is now the **first/lead card** on `/work`, has a full detail page at `/work/mutqin`, and **replaces the Medacs tile on the homepage `FeaturedWork` grid** (Medacs stays in `/work` + its detail page). Files touched: (1) [src/data/projects.ts](src/data/projects.ts) — `mutqin` `Project` entry, first; (2) [src/data/case-studies.ts](src/data/case-studies.ts) — `mutqin` `CaseStudy` entry first + two new OPTIONAL interface fields `brandShowcase?: string[]` and `stack?: string`; (3) [src/app/work/[id]/page.tsx](src/app/work/%5Bid%5D/page.tsx) — gated `BrandShowcase` section (brand-cover + character-poses after the mockup gallery), a `Stack` stat in `AtAGlance`, and the emphasised Outcome stat now spans 1–2 cols adaptively so the 5-col strip never overflows; (4) [src/components/home/FeaturedWork.tsx](src/components/home/FeaturedWork.tsx) — explicit `FeaturedTile` type (optional `duration`/`status`); Mutqin tile shows a **"Live"** pill (no fabricated delivery window); pill is omitted entirely if a tile sets neither; (5) `public/images/portfolio/mutqin/` — 6 optimized WebP (hero, wizard, portal, mobile, brand, character; 348K total, from the 3200px source PNGs via cwebp). `npm run build` clean (21/21 pages, /work/mutqin in SSG). Decisions taken with Ibrahim: keep Mutqin first in the grid; feature on homepage in place of Medacs. **Nothing outstanding on Mutqin.** Source assets + brief live at `/Users/ibrahimshareef/Workspace/Archive/Internal/startup-companion/handover/itqan-website/`.
 
 **Still open (2026-06-03): Lead-magnet DELIVERY is wired + capture route hardened.** On branch `feat/magnet-delivery-wiring` (commit `33ad091`, pushed to origin, NOT merged to main). When someone opts in on `/magnet/[slug]`, they now (a) get an instant on-page "Download your guide" button and (b) get enrolled in the shared Kit "Magnet Delivery" sequence (id `2777738`) which emails them the PDF. Three files changed: [src/app/api/leads/capture/route.ts](src/app/api/leads/capture/route.ts) (full rewrite), [src/lib/magnet-lookup.ts](src/lib/magnet-lookup.ts) (added `pdfUrl`), [src/components/magnet/MagnetLanding.tsx](src/components/magnet/MagnetLanding.tsx) (passes `pdfUrl`, shows download button). **ACTION NEEDED before this works in prod: set `KIT_API_KEY` in Netlify env** (no `.env` in repo; both `KIT_API_KEY` and `NOTION_TOKEN` live in Netlify host env). Also ensure each Itqan magnet's Notion "PDF URL" property is populated, or the on-page button falls back silently to "Check your inbox" and the delivery email's `{{ subscriber.magnet_pdf_url }}` will be empty. Shared Kit account = Shareefico's (account 2383668); custom field `magnet_pdf_url` (id 1279519) already exists. Canonical tag format: `magnet-itqan-<dmKeyword>` lowercase. To merge: open a PR from `feat/magnet-delivery-wiring` into `main`.
 
@@ -1172,7 +1312,7 @@ Verified by injecting a fixed crop-preview overlay at scroll-0 (the site's Lenis
 
 **Branch `main`, committed (`08f130e`) and pushed to origin. Build passes clean.**
 
-**Goal:** Add Mutqin (Itqan's flagship AI startup companion) as a featured project per the handover brief at `/Users/ibrahimshareef/Desktop/startup-companion/handover/itqan-website/HANDOVER-PROMPT.md`. Present it *within* the Itqan site (no restyle to Mutqin's brand) using Mutqin's own imagery.
+**Goal:** Add Mutqin (Itqan's flagship AI startup companion) as a featured project per the handover brief at `/Users/ibrahimshareef/Workspace/Archive/Internal/startup-companion/handover/itqan-website/HANDOVER-PROMPT.md`. Present it *within* the Itqan site (no restyle to Mutqin's brand) using Mutqin's own imagery.
 
 **Files changed:**
 - [src/data/projects.ts](src/data/projects.ts) — new `mutqin` `Project` entry, placed first (lead card). `filters: ['Application Development', 'Brand & Identity', 'UI/UX Design']` so it surfaces under every lens. cover = `hero.webp`.

@@ -19,6 +19,13 @@ const nextConfig = {
         destination: 'https://itqanstudio.com/:path*',
         permanent: true,
       },
+      // Brand v3 (8 Oct 2026): the old pages fold into sections of the one-page site.
+      { source: '/about', destination: '/#company', permanent: true },
+      { source: '/services', destination: '/#build', permanent: true },
+      { source: '/contact', destination: '/book', permanent: true },
+      { source: '/work', destination: '/#work', permanent: true },
+      // Only Millow and Nexilink have case pages now; every other old case lands on the work section.
+      { source: '/work/:slug((?!millow$|nexilink$)[^/]+)', destination: '/#work', permanent: true },
     ];
   },
 
@@ -40,6 +47,34 @@ const nextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()',
           },
+        ],
+      },
+      /*
+       * The booking admin shows every guest's details, so it gets a strict CSP:
+       * same-origin everything, no framing, no form posts elsewhere. Next 14
+       * inlines its bootstrap scripts and styles, hence 'unsafe-inline'; dev
+       * mode also needs 'unsafe-eval' for fast refresh.
+       */
+      {
+        source: '/admin/:path*',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data:",
+              "font-src 'self'",
+              "connect-src 'self'",
+              "frame-ancestors 'none'",
+              "base-uri 'none'",
+              "form-action 'self'",
+              "object-src 'none'",
+            ].join('; '),
+          },
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+          { key: 'Cache-Control', value: 'no-store' },
         ],
       },
     ];

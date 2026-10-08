@@ -166,7 +166,7 @@ export function organizationNode(): JsonLd {
       '@type': 'ImageObject',
       url: BUSINESS.logo,
     },
-    image: `${SITE_URL}/opengraph-image`,
+    image: `${SITE_URL}/v3/og-en.png`,
     description:
       'Itqan Studio is a Dubai-based design and AI agency. One partner for brand, websites that convert, content and social media, SEO, AI visibility (GEO), hosting and agentic automation — built and run by the same senior team.',
     slogan: SITE_TAGLINE,

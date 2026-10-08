@@ -1,6 +1,35 @@
 # Itqan Studio Website
 
-## Brand Identity
+## Brand v3 (7 Oct 2026): read this first
+
+The brand below this section is the OLD brand and is retired for anything new. From 7 Oct 2026 the
+brand is v3, "Resolve, the signal i": a pixel stem and square rose dot (the i of itqan) with the arc
+radiating in a dusk gradient; Ink #0B0A0D, Bone #F5F1EA, Itqan Rose #EF3A78; Geist, Geist Mono and
+Readex Pro for Arabic. Itqan is now an AI studio for decision makers in manufacturing, retail and F&B.
+
+The full spec, assets and the migration checklist live in the private repo `itqanstudio/itqan-brand`
+(this repo is public: never copy prices or strategy from there into here). A push to main deploys
+production, so push only with Ibrahim's go.
+
+### How the v3 site is built (8 Oct 2026)
+
+- **One root layout per language.** `src/app/(en)/` (lang en) and `src/app/ar/` (lang ar, dir rtl),
+  plus `src/app/(admin)/` and `src/app/(legacy)/`. There is no `app/layout.tsx`; each `[...missing]`
+  catch-all renders that language's 404. Moving between layouts is a full page load, by design.
+- **Copy** lives in `src/content/v3/` (`en.ts`, `ar.ts`, `booking.ts`), typed by `types.ts` so a missing
+  Arabic string fails the typecheck. Voice rules: no em or en dashes, no banned words, a fact in
+  every sentence, never an invented number. Headings are `[before, highlighted, after]`.
+- **Components** in `src/components/v3/`, styles in `src/styles/v3/` (plain CSS with logical
+  properties; the symbol never mirrors). The hero canvas and every animation honour reduced motion.
+- **Booking**: `src/lib/scheduling/` (SQLite via `node:sqlite` at `/app/.data/itqan.db` on a Coolify
+  persistent volume, slot engine, zod validation, SES mail, ics). Public `/book`, `/ar/book`, cancel
+  links `/book/cancel/<token>`. Admin at `/admin`: emailed one-time sign-in link for addresses in
+  `ADMIN_EMAILS` (default ibrahim@itqanstudio.com), weekly hours, rules, days off, bookings.
+  Optional env: `BOOKING_MEETING_URL` (video link in confirmations), `BOOKING_NOTIFY_EMAIL`.
+- **Legacy** (old brand, untouched): feedback, support, magnet, thank-you, brand portal.
+- Tests: `npm run test:unit` (vitest). Old routes redirect in `next.config.mjs`.
+
+## Brand Identity (old, pre-7 Oct 2026)
 - **Company**: Itqan Studio FZ LLC
 - **Meaning**: "Itqan" = Excellence in Arabic
 - **Tagline**: "Your brand has potential. We give it direction."

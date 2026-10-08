@@ -1,23 +1,17 @@
 import type { MetadataRoute } from 'next';
-import { SITE_NAME } from '@/lib/seo';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Itqan Studio — Design, Automation & AI Agency in Dubai',
-    short_name: SITE_NAME,
-    description:
-      'Dubai design, automation and AI agency. Brand, system and agentic automation for ambitious founders.',
+    name: 'Itqan. Private AI for manufacturing, retail and food and beverage',
+    short_name: 'Itqan',
+    description: 'Itqan builds AI agents for operations, supply chain and customer teams and runs them inside your own cloud account.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#130a14',
-    theme_color: '#1f1420',
+    background_color: '#0B0A0D',
+    theme_color: '#0B0A0D',
     icons: [
-      {
-        src: '/images/brand/dark-icon.svg',
-        sizes: 'any',
-        type: 'image/svg+xml',
-        purpose: 'any',
-      },
+      { src: '/v3/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+      { src: '/v3/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
     ],
   };
 }

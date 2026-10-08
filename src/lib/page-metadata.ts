@@ -16,8 +16,8 @@ interface PageMetadataInput {
   image?: string;
 }
 
-/** The dynamic OG image rendered by src/app/opengraph-image.tsx (1200x630). */
-const DEFAULT_OG_IMAGE = '/opengraph-image';
+/** The brand v3 share image (1200x630), a static file since 8 Oct 2026. */
+const DEFAULT_OG_IMAGE = '/v3/og-en.png';
 
 /**
  * Per-page metadata with matching Open Graph and Twitter fields.

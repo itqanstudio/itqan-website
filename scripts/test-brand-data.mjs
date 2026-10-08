@@ -62,7 +62,8 @@ check('every href starts at /brand', () => {
  */
 check('every href resolves to a route file', () => {
   for (const p of PORTAL_PAGES) {
-    const rel = p.href === '/brand' ? 'src/app/brand/page.tsx' : `src/app${p.href}/page.tsx`;
+    // The portal lives in the (legacy) route group since 8 Oct 2026; groups add no URL segment.
+    const rel = `src/app/(legacy)${p.href}/page.tsx`;
     assert.ok(existsSync(join(REPO, rel)), `${p.href} has no ${rel}`);
   }
 });
