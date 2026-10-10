@@ -4,7 +4,7 @@
 
 Branch `feat/crm-booking-link` (worktree `itqan-website-crm-link`), local commits only, nothing pushed.
 Contract: `itqan-crm-v3/docs/v3/REBUILD-SPEC.md` section 8. Tracked work:
-`agent-work/20261010202954_website_crm_booking_link.md` (gitignored).
+`agent-work/completed/20261010202954_website_crm_booking_link.md` (gitignored, local to this worktree).
 
 ### What changed
 - The CRM owns hours, days off, hosts (Ibrahim, Bisma) and bookings. The site keeps the public booking
