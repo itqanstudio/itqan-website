@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { localHostName } from '@/content/v3/booking-format';
 import { rateLimit } from '@/lib/rate-limit';
-import { createCrmBooking, isCrmDown, isOutcomeUnknown } from '@/lib/crm/client';
+import { createCrmBooking, isCrmDown, isOutcomeUnknown, type CrmFailure } from '@/lib/crm/client';
 import type { CreateBookingRequest } from '@/lib/crm/contract';
 import { bookingRequestSchema, firstIssue } from '@/lib/scheduling/validation';
 import { bookingIcs, sendGuestConfirmation, sendHostNotice } from '@/lib/scheduling/mail';
@@ -27,6 +27,28 @@ interface Created {
    * and the email are one event. The only copy when the email failed.
    */
   ics: string;
+}
+
+/** What the visitor hears when the CRM did not book. */
+function failureAnswer(result: CrmFailure, request: CreateBookingRequest): ReturnType<typeof json> {
+  // The CRM may have booked (it keeps going when this site stops waiting), but no email can go out
+  // without its answer. The visitor is told to check before trying again; the host still gets the
+  // CRM's notification and can find it by this time.
+  if (isOutcomeUnknown(result)) {
+    console.error('[book] booking outcome unknown; check the CRM calendar', {
+      start: request.start,
+      with: request.with ?? 'any',
+      status: result.status,
+      detail: result.message,
+    });
+    return json(result.message === 'timeout' ? 504 : 502, { ok: false, error: 'unconfirmed' });
+  }
+  if (isCrmDown(result)) return json(503, { ok: false, error: 'paused' });
+  if (result.error === 'unavailable') return json(409, { ok: false, error: 'taken' });
+  if (result.error === 'limit') return json(429, { ok: false, error: 'limit' });
+  if (result.error === 'invalid') return json(400, { ok: false, error: 'invalid' });
+  console.error('[book] unexpected CRM answer', { error: result.error, status: result.status });
+  return json(503, { ok: false, error: 'paused' });
 }
 
 /**
@@ -86,21 +108,7 @@ export async function POST(req: NextRequest) {
     ipHash,
   };
   const result = await createCrmBooking(request);
-  if (!result.ok) {
-    // The CRM may have booked (it keeps going when this site stops waiting), but no email can go out
-    // without its answer. The visitor is told to check before trying again; the host still gets the
-    // CRM's notification and can find it by this time.
-    if (isOutcomeUnknown(result)) {
-      console.error('[book] booking outcome unknown; check the CRM calendar', { start: input.start, with: input.with ?? 'any', status: result.status, detail: result.message });
-      return json(result.message === 'timeout' ? 504 : 502, { ok: false, error: 'unconfirmed' });
-    }
-    if (isCrmDown(result)) return json(503, { ok: false, error: 'paused' });
-    if (result.error === 'unavailable') return json(409, { ok: false, error: 'taken' });
-    if (result.error === 'limit') return json(429, { ok: false, error: 'limit' });
-    if (result.error === 'invalid') return json(400, { ok: false, error: 'invalid' });
-    console.error('[book] unexpected CRM answer', { error: result.error, status: result.status });
-    return json(503, { ok: false, error: 'paused' });
-  }
+  if (!result.ok) return failureAnswer(result, request);
 
   const { booking, cancelToken } = result.data;
   const [guest, host] = await Promise.all([sendGuestConfirmation(booking, cancelToken), sendHostNotice(booking)]);
