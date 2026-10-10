@@ -5,6 +5,7 @@ import { GET as getSlots } from '@/app/api/book/slots/route';
 import { POST as postBook } from '@/app/api/book/route';
 import { POST as postCancel } from '@/app/api/book/cancel/route';
 import { POST as postNotify } from '@/app/api/crm/notify/route';
+import { bookingIcs } from '@/lib/scheduling/mail';
 import type { BookingForEmail } from './contract';
 import { signatureHeader, verifySignature } from './hmac';
 import { clearReplayMemory } from './replay';
@@ -132,7 +133,7 @@ describe('POST /api/book', () => {
     expect(res.status).toBe(201);
     expect(await res.json()).toEqual({
       ok: true,
-      data: { id: booking.id, start: booking.start, end: booking.end, hostName: 'Ibrahim Shareef', emailed: true },
+      data: { id: booking.id, start: booking.start, end: booking.end, hostName: 'Ibrahim Shareef', emailed: true, ics: expect.any(String) },
     });
     const sent = JSON.parse(String(crmCalls[0].init.body)) as Record<string, unknown>;
     expect(sent).toMatchObject({ start: booking.start, with: 'ibrahim', email: 'sara@example.com', locale: 'en', timezone: 'Asia/Dubai' });
@@ -142,6 +143,34 @@ describe('POST /api/book', () => {
     expect(verifySignature({ secret: SECRET, header, method: 'POST', pathWithQuery: '/api/integrations/website/bookings', body: String(crmCalls[0].init.body) }).ok).toBe(true);
     expect(printed.some((m) => m.includes('to=sara@example.com'))).toBe(true);
     expect(printed.some((m) => m.includes('to=ibrahim@itqanstudio.com'))).toBe(true);
+  });
+
+  it('hands the widget the same calendar file the guest email attaches: full text, host as organizer (SW-3)', async () => {
+    const withLink = { ...booking, host: { ...booking.host, meetingUrl: 'https://meet.google.com/abc-defg-hij' } };
+    crm(201, { ok: true, data: { booking: withLink, cancelToken: 'tok_abcdefghijklmnopqrstuvwxyz' } });
+    const res = await postBook(bookRequest({ ...form, email: 'ics@example.com' }));
+    const { ics } = ((await res.json()) as { data: { ics: string } }).data;
+    const withoutStamp = (s: string) => s.replace(/^DTSTAMP:.*$/m, '');
+    expect(withoutStamp(ics)).toBe(withoutStamp(bookingIcs(withLink, 'PUBLISH', 'guest')));
+    expect(ics).toContain(`UID:${booking.id}@itqanstudio.com`);
+    expect(ics).toContain('SEQUENCE:0');
+    expect(ics).toContain('ORGANIZER;CN="Ibrahim Shareef":mailto:ibrahim@itqanstudio.com');
+    expect(ics).toContain('DESCRIPTION:Your 30-minute briefing with Itqan is booked.');
+    expect(ics).toContain('LOCATION:https://meet.google.com/abc-defg-hij');
+    expect(ics).not.toContain('We sent the details');
+    expect(ics).not.toContain('hello@itqanstudio.com');
+  });
+
+  it('still hands over the full calendar file when the confirmation email fails, in the guest language', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    crm(201, { ok: true, data: { booking: { ...booking, locale: 'ar' }, cancelToken: 'tok_abcdefghijklmnopqrstuvwxyz' } });
+    const res = await postBook(bookRequest({ ...form, locale: 'ar', email: 'nomail@example.com' }));
+    const { data } = (await res.json()) as { data: { emailed: boolean; ics: string } };
+    expect(data.emailed).toBe(false);
+    // Long lines are folded at 75 octets (RFC 5545); read the file unfolded.
+    const unfolded = data.ics.replace(/\r\n /g, '');
+    expect(unfolded).toContain('ORGANIZER;CN="إبراهيم شريف":mailto:ibrahim@itqanstudio.com');
+    expect(unfolded).toContain('ومدتها 30 دقيقة');
   });
 
   it('sends the CRM an address hash keyed with the shared secret, never one anyone can recompute (SW-4)', async () => {

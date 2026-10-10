@@ -14,6 +14,8 @@ export interface Booked {
   end: string;
   hostName: string;
   emailed: boolean;
+  /** The calendar file the confirmation email attaches, from the server; null when none came back. */
+  ics: string | null;
 }
 
 /** `unconfirmed`: the CRM may have booked but the site never got its answer. */
@@ -51,9 +53,9 @@ function asSlots(data: unknown): WidgetSlots | null {
 
 function asBooked(data: unknown): Booked | null {
   if (!isRecord(data)) return null;
-  const { id, start, end, hostName, emailed } = data;
+  const { id, start, end, hostName, emailed, ics } = data;
   if (typeof id !== 'string' || typeof start !== 'string' || typeof end !== 'string' || typeof hostName !== 'string') return null;
-  return { id, start, end, hostName, emailed: emailed === true };
+  return { id, start, end, hostName, emailed: emailed === true, ics: typeof ics === 'string' && ics.startsWith('BEGIN:VCALENDAR') ? ics : null };
 }
 
 export function slotsReady(data: WidgetSlots): SlotsLoad {

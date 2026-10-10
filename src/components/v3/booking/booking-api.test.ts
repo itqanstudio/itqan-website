@@ -22,12 +22,18 @@ describe('loadSlots', () => {
 });
 
 describe('postBooking', () => {
-  const booked = { id: 'b1', start: '2026-10-12T06:00:00.000Z', end: '2026-10-12T06:30:00.000Z', hostName: 'Ibrahim Shareef', emailed: true };
+  const ics = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nEND:VCALENDAR\r\n';
+  const booked = { id: 'b1', start: '2026-10-12T06:00:00.000Z', end: '2026-10-12T06:30:00.000Z', hostName: 'Ibrahim Shareef', emailed: true, ics };
 
   it('returns the booking', async () => {
     const fetcher = answer(201, { ok: true, data: booked });
     expect(await postBooking({ start: booked.start }, fetcher)).toEqual({ kind: 'booked', booked });
     expect(fetcher.mock.calls[0]).toEqual(['/api/book', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"start":"2026-10-12T06:00:00.000Z"}' }]);
+  });
+  it('keeps the server calendar file only when it is one, and still books without it (SW-3)', async () => {
+    expect(await postBooking({}, answer(201, { ok: true, data: { ...booked, ics: undefined } }))).toEqual({ kind: 'booked', booked: { ...booked, ics: null } });
+    expect(await postBooking({}, answer(201, { ok: true, data: { ...booked, ics: '<html>' } }))).toEqual({ kind: 'booked', booked: { ...booked, ics: null } });
+    expect(await postBooking({}, answer(201, { ok: true, data: { ...booked, ics: 42 } }))).toEqual({ kind: 'booked', booked: { ...booked, ics: null } });
   });
   it('maps every failure the route can give', async () => {
     expect(await postBooking({}, answer(409, { ok: false, error: 'taken' }))).toEqual({ kind: 'taken' });

@@ -5,7 +5,6 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import type { BookingCopy } from '@/content/v3/booking';
 import { localHostName, splitAt } from '@/content/v3/booking-format';
 import type { WidgetSlots } from '@/lib/crm/widget-slots';
-import { buildIcs } from '@/lib/scheduling/ics';
 import { failureMessage, loadSlots, postBooking, slotsReady, type Booked, type SlotsLoad } from './booking-api';
 import { SlotPicker } from './SlotPicker';
 import { DetailsForm, EMPTY_DETAILS, type Details } from './DetailsForm';
@@ -25,8 +24,6 @@ type Load = { state: 'loading' } | SlotsLoad;
 type Step = 'pick' | 'details' | 'done';
 type Done = Booked & { email: string };
 
-/** The studio address on the downloaded file; the emailed invite names the host's own address. */
-const ICS_ORGANIZER = 'hello@itqanstudio.com';
 const SPRING = { type: 'spring', stiffness: 320, damping: 32 } as const;
 const FADE = { duration: 0.15 } as const;
 
@@ -42,19 +39,12 @@ function WithName({ template, name }: { template: string; name: string }) {
   );
 }
 
-function downloadIcs(done: Done, t: BookingCopy): void {
-  const ics = buildIcs({
-    // Same UID as the emailed invite, so a calendar treats both as one event.
-    uid: `${done.id}@itqanstudio.com`,
-    start: new Date(done.start),
-    end: new Date(done.end),
-    summary: t.done.calendarTitle,
-    description: t.done.sent,
-    organizerEmail: ICS_ORGANIZER,
-    organizerName: done.hostName,
-    method: 'PUBLISH',
-    sequence: 0,
-  });
+/**
+ * Saves the calendar file the server built for this booking: the same file the
+ * confirmation email attaches (same UID, host as organizer, full text and
+ * link), so a calendar keeps one matching event.
+ */
+function downloadIcs(ics: string): void {
   const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }));
   const a = document.createElement('a');
   a.href = url;
@@ -64,6 +54,7 @@ function downloadIcs(done: Done, t: BookingCopy): void {
 }
 
 function DoneView({ t, lang, tz, done }: { t: BookingCopy; lang: 'en' | 'ar'; tz: string; done: Done }) {
+  const ics = done.ics;
   return (
     <>
       <h2>{t.done.title}</h2>
@@ -84,9 +75,11 @@ function DoneView({ t, lang, tz, done }: { t: BookingCopy; lang: 'en' | 'ar'; tz
         </p>
       )}
       <div className="btns">
-        <button type="button" className="btn pri" onClick={() => downloadIcs(done, t)}>
-          {t.done.calendar}
-        </button>
+        {ics && (
+          <button type="button" className="btn pri" onClick={() => downloadIcs(ics)}>
+            {t.done.calendar}
+          </button>
+        )}
         <a className="btn" href={lang === 'en' ? '/' : '/ar'}>
           {t.done.home}
         </a>

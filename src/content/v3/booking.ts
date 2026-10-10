@@ -56,7 +56,6 @@ export interface BookingCopy {
     body: string;
     sent: string;
     calendar: string;
-    calendarTitle: string;
     emailFailed: string;
     home: string;
   };
@@ -153,7 +152,6 @@ export const bookingCopy: Record<Lang, BookingCopy> = {
       body: 'Your briefing with {host} is on',
       sent: 'We sent the details and a calendar file to',
       calendar: 'Add to calendar (.ics)',
-      calendarTitle: 'Itqan briefing',
       emailFailed:
         'Your time is held, but our confirmation email did not go out. Save the calendar file below, and write to hello@itqanstudio.com if you need to move or cancel it.',
       home: 'Back to the site',
@@ -248,7 +246,6 @@ export const bookingCopy: Record<Lang, BookingCopy> = {
       body: 'جلستك التعريفية مع {host} في',
       sent: 'أرسلنا التفاصيل وملف التقويم إلى',
       calendar: 'أضف إلى التقويم (.ics)',
-      calendarTitle: 'جلسة تعريفية مع إتقان',
       emailFailed:
         'موعدك محجوز، لكن رسالة التأكيد لم تُرسل. احفظ ملف التقويم أدناه، وراسلنا على hello@itqanstudio.com إن احتجت إلى تغيير الموعد أو إلغائه.',
       home: 'العودة إلى الموقع',

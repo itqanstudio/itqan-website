@@ -4,7 +4,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { createCrmBooking, isCrmDown, isOutcomeUnknown } from '@/lib/crm/client';
 import type { CreateBookingRequest } from '@/lib/crm/contract';
 import { bookingRequestSchema, firstIssue } from '@/lib/scheduling/validation';
-import { sendGuestConfirmation, sendHostNotice } from '@/lib/scheduling/mail';
+import { bookingIcs, sendGuestConfirmation, sendHostNotice } from '@/lib/scheduling/mail';
 import { clientIp, ipKey, isAllowedOrigin, json, readJson } from '@/lib/scheduling/http';
 
 export const runtime = 'nodejs';
@@ -21,6 +21,12 @@ interface Created {
   end: string;
   hostName: string;
   emailed: boolean;
+  /**
+   * The guest's calendar file, built exactly like the one the confirmation
+   * email attaches (same UID, organizer, text and link), so "Add to calendar"
+   * and the email are one event. The only copy when the email failed.
+   */
+  ics: string;
 }
 
 /**
@@ -103,6 +109,13 @@ export async function POST(req: NextRequest) {
 
   return json<Created>(201, {
     ok: true,
-    data: { id: booking.id, start: booking.start, end: booking.end, hostName: localHostName(booking.host, input.locale), emailed: guest.sent },
+    data: {
+      id: booking.id,
+      start: booking.start,
+      end: booking.end,
+      hostName: localHostName(booking.host, input.locale),
+      emailed: guest.sent,
+      ics: bookingIcs(booking, 'PUBLISH', 'guest'),
+    },
   });
 }
