@@ -49,7 +49,8 @@ export interface BookingCopy {
   privacyLink: string;
   submit: string;
   submitting: string;
-  errors: { taken: string; invalid: string; rate: string; limit: string; server: string; network: string; paused: string };
+  /** `unconfirmed`: the booking system's answer did not arrive or could not be read; the time may be booked. */
+  errors: { taken: string; invalid: string; rate: string; limit: string; server: string; network: string; paused: string; unconfirmed: string };
   done: {
     title: string;
     body: string;
@@ -144,6 +145,8 @@ export const bookingCopy: Record<Lang, BookingCopy> = {
       server: 'Something went wrong on our side. Your time is not booked yet. Try again, or write to hello@itqanstudio.com.',
       network: 'The connection dropped. Your time is not booked yet. Try again.',
       paused: 'Booking is paused for a moment. Email hello@itqanstudio.com and we will find a time.',
+      unconfirmed:
+        'We did not get a clear answer from our booking system, so your briefing may already be booked. Check your email before you try again. If nothing from us has arrived, write to hello@itqanstudio.com and we will confirm your time.',
     },
     done: {
       title: 'Booked.',
@@ -237,6 +240,8 @@ export const bookingCopy: Record<Lang, BookingCopy> = {
       server: 'حدث خطأ لدينا ولم يُحجز موعدك بعد. حاول مجدداً أو راسلنا على hello@itqanstudio.com.',
       network: 'انقطع الاتصال ولم يُحجز موعدك بعد. حاول مجدداً.',
       paused: 'الحجز متوقف مؤقتاً. راسلنا على hello@itqanstudio.com وسنجد لك موعداً.',
+      unconfirmed:
+        'لم يصلنا رد واضح من نظام الحجز، لذا قد تكون جلستك محجوزة بالفعل. تحقّق من بريدك قبل أن تحاول مجدداً، وإن لم تصلك رسالة منا فراسلنا على hello@itqanstudio.com وسنؤكد لك الموعد.',
     },
     done: {
       title: 'تم الحجز.',

@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { localHostName } from '@/content/v3/booking-format';
 import { rateLimit } from '@/lib/rate-limit';
-import { createCrmBooking, isCrmDown } from '@/lib/crm/client';
+import { createCrmBooking, isCrmDown, isOutcomeUnknown } from '@/lib/crm/client';
 import type { CreateBookingRequest } from '@/lib/crm/contract';
 import { bookingRequestSchema, firstIssue } from '@/lib/scheduling/validation';
 import { sendGuestConfirmation, sendHostNotice } from '@/lib/scheduling/mail';
@@ -28,7 +28,9 @@ interface Created {
  * Public and unauthenticated, so it keeps its origin check, per-IP and
  * per-email rate limits, a 16 KB streamed body cap, a honeypot and schema
  * validation. Then the CRM books it (its database refuses double bookings and
- * picks the host) and this site sends the guest and host emails.
+ * picks the host) and this site sends the guest and host emails. When the CRM's
+ * answer does not arrive in time or cannot be read, the answer is "unconfirmed"
+ * (the booking may exist), never "paused".
  */
 export async function POST(req: NextRequest) {
   if (!isAllowedOrigin(req.headers.get('origin'))) return json(403, { ok: false, error: 'Bad origin' });
@@ -79,6 +81,13 @@ export async function POST(req: NextRequest) {
   };
   const result = await createCrmBooking(request);
   if (!result.ok) {
+    // The CRM may have booked (it keeps going when this site stops waiting), but no email can go out
+    // without its answer. The visitor is told to check before trying again; the host still gets the
+    // CRM's notification and can find it by this time.
+    if (isOutcomeUnknown(result)) {
+      console.error('[book] booking outcome unknown; check the CRM calendar', { start: input.start, with: input.with ?? 'any', status: result.status, detail: result.message });
+      return json(result.message === 'timeout' ? 504 : 502, { ok: false, error: 'unconfirmed' });
+    }
     if (isCrmDown(result)) return json(503, { ok: false, error: 'paused' });
     if (result.error === 'unavailable') return json(409, { ok: false, error: 'taken' });
     if (result.error === 'limit') return json(429, { ok: false, error: 'limit' });

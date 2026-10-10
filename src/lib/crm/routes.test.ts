@@ -201,6 +201,37 @@ describe('POST /api/book', () => {
     expect(await down.json()).toEqual({ ok: false, error: 'paused' });
     expect(printed).toHaveLength(0);
   });
+
+  it('when the CRM answer times out, says the booking may exist instead of "paused" (SW-1)', async () => {
+    // The client's 15 second abort, as the route sees it (the timing itself is tested in client.test.ts).
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init: RequestInit) => {
+        crmCalls.push({ url, init });
+        throw Object.assign(new Error('This operation was aborted'), { name: 'AbortError' });
+      }),
+    );
+    const res = await postBook(bookRequest({ ...form, email: 'slow@example.com' }));
+    expect(res.status).toBe(504);
+    expect(await res.json()).toEqual({ ok: false, error: 'unconfirmed' });
+    expect(crmCalls).toHaveLength(1);
+    expect(printed).toHaveLength(0);
+  });
+
+  it('a success status with an answer the site cannot read is unconfirmed too, not paused', async () => {
+    crm(201, { ok: true, data: { booking: { id: 'x' } } });
+    const res = await postBook(bookRequest({ ...form, email: 'garbled@example.com' }));
+    expect(res.status).toBe(502);
+    expect(await res.json()).toEqual({ ok: false, error: 'unconfirmed' });
+    expect(printed).toHaveLength(0);
+  });
+
+  it('a refused connection (no answer at all) is still paused', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new TypeError('fetch failed'))));
+    const res = await postBook(bookRequest({ ...form, email: 'refused@example.com' }));
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ ok: false, error: 'paused' });
+  });
 });
 
 describe('POST /api/book/cancel', () => {

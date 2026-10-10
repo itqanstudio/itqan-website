@@ -39,11 +39,28 @@ describe('postBooking', () => {
     expect(await postBooking({}, answer(201, { ok: true, data: { id: 1 } }))).toEqual({ kind: 'failed', reason: 'server' });
     expect(await postBooking({}, vi.fn(async () => Promise.reject(new TypeError('offline'))))).toEqual({ kind: 'failed', reason: 'network' });
   });
+  it('keeps "may already be booked" apart from paused and server errors (SW-1)', async () => {
+    expect(await postBooking({}, answer(504, { ok: false, error: 'unconfirmed' }))).toEqual({ kind: 'failed', reason: 'unconfirmed' });
+    expect(await postBooking({}, answer(502, { ok: false, error: 'unconfirmed' }))).toEqual({ kind: 'failed', reason: 'unconfirmed' });
+    expect(await postBooking({}, answer(504, 'Gateway Timeout'))).toEqual({ kind: 'failed', reason: 'server' });
+  });
   it('has a message for each failure in both languages', () => {
-    (['paused', 'limit', 'rate', 'invalid', 'server', 'network'] as const).forEach((reason) => {
+    (['paused', 'limit', 'rate', 'invalid', 'server', 'network', 'unconfirmed'] as const).forEach((reason) => {
       expect(failureMessage(bookingCopy.en.errors, reason)).toBeTruthy();
       expect(failureMessage(bookingCopy.ar.errors, reason)).toBeTruthy();
     });
     expect(failureMessage(bookingCopy.en.errors, 'paused')).toContain('hello@itqanstudio.com');
+  });
+  it('tells the visitor plainly to check their email before booking again when the outcome is unknown', () => {
+    const en = failureMessage(bookingCopy.en.errors, 'unconfirmed');
+    expect(en).toContain('may already be booked');
+    expect(en).toContain('Check your email before you try again');
+    expect(en).toContain('hello@itqanstudio.com');
+    expect(en).not.toMatch(/[–—]/);
+    const ar = failureMessage(bookingCopy.ar.errors, 'unconfirmed');
+    expect(ar).toContain('محجوزة بالفعل');
+    expect(ar).toContain('بريدك');
+    expect(ar).toContain('hello@itqanstudio.com');
+    expect(ar).not.toMatch(/[–—]/);
   });
 });

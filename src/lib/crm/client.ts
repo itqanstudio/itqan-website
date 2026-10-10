@@ -17,7 +17,15 @@ import { cancelBookingDataSchema, createBookingDataSchema, slotsDataSchema } fro
  */
 
 export const DEFAULT_CRM_ORIGIN = 'https://portal.itqanstudio.com';
+/** Slots and cancel. */
 export const CRM_TIMEOUT_MS = 8_000;
+/**
+ * POST bookings checks the hosts' Google calendars and then books, and the
+ * booking still commits if this site stops waiting. The budget stays well above
+ * the CRM's worst case, so a slow Google answer reaches the CRM's rules-only
+ * fallback (spec D8) instead of an abort here.
+ */
+export const CRM_BOOKING_TIMEOUT_MS = 15_000;
 export const WEBSITE_API = '/api/integrations/website';
 /** The biggest answer is the slot list; this is far above any real one. */
 const MAX_RESPONSE_BYTES = 2_000_000;
@@ -43,6 +51,17 @@ function fail(error: IntegrationErrorCode, status: number, message?: string): Cr
  */
 export function isCrmDown(f: CrmFailure): boolean {
   return f.status === 0 || f.status >= 500 || f.error === 'server' || f.error === 'unauthorized';
+}
+
+/**
+ * True when the request reached the CRM but this site cannot tell whether it
+ * acted: no answer before the timeout, or a success status with a body that
+ * could not be read. For a booking that means it may exist, so the visitor is
+ * told to check before trying again instead of "paused". Check this before
+ * isCrmDown, which is also true for a timeout.
+ */
+export function isOutcomeUnknown(f: CrmFailure): boolean {
+  return f.message === 'timeout' || (f.status >= 200 && f.status < 300 && f.error === 'server');
 }
 
 /**
@@ -194,7 +213,7 @@ export function fetchSlots(withSlug?: string, opts?: CallOptions): Promise<CrmRe
 }
 
 export function createCrmBooking(request: CreateBookingRequest, opts?: CallOptions): Promise<CrmResult<CreateBookingData>> {
-  return call('POST', `${WEBSITE_API}/bookings`, request, createBookingDataSchema, opts);
+  return call('POST', `${WEBSITE_API}/bookings`, request, createBookingDataSchema, { timeoutMs: opts?.timeoutMs ?? CRM_BOOKING_TIMEOUT_MS });
 }
 
 export function cancelCrmBooking(token: string, opts?: CallOptions): Promise<CrmResult<CancelBookingData>> {

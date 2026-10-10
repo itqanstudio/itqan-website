@@ -1,5 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cancelCrmBooking, createCrmBooking, crmOrigin, fetchSlots, interpret, isCrmDown, isPrivateHost, DEFAULT_CRM_ORIGIN } from './client';
+import {
+  cancelCrmBooking,
+  createCrmBooking,
+  crmOrigin,
+  fetchSlots,
+  interpret,
+  isCrmDown,
+  isOutcomeUnknown,
+  isPrivateHost,
+  CRM_BOOKING_TIMEOUT_MS,
+  CRM_TIMEOUT_MS,
+  DEFAULT_CRM_ORIGIN,
+} from './client';
 import type { CreateBookingRequest } from './contract';
 import { verifySignature } from './hmac';
 import { slotsDataSchema } from './schemas';
@@ -223,6 +235,42 @@ describe('answers', () => {
     const pending = fetchSlots(undefined, { timeoutMs: 8_000 });
     await vi.advanceTimersByTimeAsync(8_000);
     expect(await pending).toEqual({ ok: false, error: 'server', status: 0, message: 'timeout' });
+  });
+
+  it('gives the booking POST 15 seconds and every other call 8, so the CRM can finish its Google check (SW-1)', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        (_url: string, init: RequestInit) =>
+          new Promise<Response>((_resolve, reject) => {
+            init.signal?.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' })));
+          }),
+      ),
+    );
+    expect(CRM_BOOKING_TIMEOUT_MS).toBe(15_000);
+    expect(CRM_TIMEOUT_MS).toBe(8_000);
+    const settled: string[] = [];
+    void createCrmBooking(request).then(() => settled.push('booking'));
+    void fetchSlots().then(() => settled.push('slots'));
+    void cancelCrmBooking('x'.repeat(43)).then(() => settled.push('cancel'));
+    await vi.advanceTimersByTimeAsync(CRM_TIMEOUT_MS);
+    expect([...settled].sort()).toEqual(['cancel', 'slots']);
+    await vi.advanceTimersByTimeAsync(CRM_BOOKING_TIMEOUT_MS - CRM_TIMEOUT_MS - 1);
+    expect(settled).not.toContain('booking');
+    await vi.advanceTimersByTimeAsync(1);
+    expect(settled).toContain('booking');
+  });
+
+  it('tells "the CRM may have booked" apart from "the CRM is down" (SW-1)', () => {
+    expect(isOutcomeUnknown({ ok: false, error: 'server', status: 0, message: 'timeout' })).toBe(true);
+    expect(isOutcomeUnknown({ ok: false, error: 'server', status: 201, message: 'bad_shape' })).toBe(true);
+    expect(isOutcomeUnknown({ ok: false, error: 'server', status: 200, message: 'not_json' })).toBe(true);
+    expect(isOutcomeUnknown({ ok: false, error: 'server', status: 0, message: 'fetch failed' })).toBe(false);
+    expect(isOutcomeUnknown({ ok: false, error: 'unauthorized', status: 0, message: 'no_secret' })).toBe(false);
+    expect(isOutcomeUnknown({ ok: false, error: 'server', status: 503 })).toBe(false);
+    expect(isOutcomeUnknown({ ok: false, error: 'unavailable', status: 409 })).toBe(false);
+    expect(isOutcomeUnknown({ ok: false, error: 'limit', status: 200 })).toBe(false);
   });
 
   it('refuses an answer bigger than the cap', async () => {

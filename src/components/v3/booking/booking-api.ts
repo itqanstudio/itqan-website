@@ -16,7 +16,8 @@ export interface Booked {
   emailed: boolean;
 }
 
-export type BookFailure = 'paused' | 'limit' | 'rate' | 'invalid' | 'server' | 'network';
+/** `unconfirmed`: the CRM may have booked but the site never got its answer. */
+export type BookFailure = 'paused' | 'limit' | 'rate' | 'invalid' | 'server' | 'network' | 'unconfirmed';
 export type BookOutcome = { kind: 'booked'; booked: Booked } | { kind: 'taken' } | { kind: 'failed'; reason: BookFailure };
 
 type Fetcher = (input: string, init?: RequestInit) => Promise<Response>;
@@ -84,6 +85,7 @@ export async function postBooking(payload: Readonly<Record<string, unknown>>, fe
   const booked = res.ok && body.ok === true ? asBooked(body.data) : null;
   if (booked) return { kind: 'booked', booked };
   if (res.status === 409) return { kind: 'taken' };
+  if (body.error === 'unconfirmed') return { kind: 'failed', reason: 'unconfirmed' };
   if (body.error === 'paused') return { kind: 'failed', reason: 'paused' };
   if (body.error === 'limit') return { kind: 'failed', reason: 'limit' };
   if (res.status === 429) return { kind: 'failed', reason: 'rate' };

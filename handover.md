@@ -66,8 +66,14 @@ Contract: `itqan-crm-v3/docs/v3/REBUILD-SPEC.md` section 8. Tracked work:
   the old invite (the email itself still arrives).
 - The home page still says "30-minute briefing" in `src/content/v3/en.ts` (lines 39, 185, 275) and
   `ar.ts` (36, 182, 271). True while the CRM rule is 30 minutes; change them with the rule.
-- If the CRM books but its answer times out (8 s), the visitor sees the paused message and no email;
-  the host still gets the CRM notification. Rare; the host emails the guest.
+- Review fix SW-1 (11 Oct): the 8 s budget equalled the CRM's own Google timeout, so a Google stall
+  showed "paused" while the CRM could still commit the booking. POST bookings now waits 15 s (slots
+  and cancel stay 8 s; the CRM lowers its Google timeout to 4 s in a parallel fix). If the answer
+  still does not arrive, or a success answer cannot be read, `/api/book` answers 504/502
+  `unconfirmed` and the widget says the briefing may already be booked: check your email before
+  trying again, else write to hello@. No guest email goes out in that case (the site never got the
+  booking), so the host finds it in the CRM calendar (the site logs the start time) and emails the
+  guest.
 
 ### Monetization angle
 - The pattern built here (public booking page on the client's site, signed server-to-server calls,
