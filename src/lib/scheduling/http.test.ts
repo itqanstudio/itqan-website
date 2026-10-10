@@ -1,6 +1,9 @@
+import { createHash, createHmac } from 'node:crypto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { clientIp, ipKey, isAllowedOrigin, json, readBody, readJson } from './http';
+
+const SECRET = 'test-secret-0123456789abcdef0123456789abcdef';
 
 function req(url: string, init: { method?: string; headers?: Record<string, string>; body?: BodyInit } = {}): NextRequest {
   // `duplex` is required by Node for streamed bodies but missing from Next's RequestInit type.
@@ -36,9 +39,25 @@ describe('client identity', () => {
     expect(clientIp(req('http://x/'))).toBe('unknown');
   });
   it('hashes addresses one way and stably', () => {
-    expect(ipKey('203.0.113.9')).toBe(ipKey('203.0.113.9'));
-    expect(ipKey('203.0.113.9')).not.toContain('203');
-    expect(ipKey('203.0.113.9')).not.toBe(ipKey('203.0.113.10'));
+    expect(ipKey('203.0.113.9', SECRET)).toBe(ipKey('203.0.113.9', SECRET));
+    expect(ipKey('203.0.113.9', SECRET)).not.toContain('203');
+    expect(ipKey('203.0.113.9', SECRET)).not.toBe(ipKey('203.0.113.10', SECRET));
+  });
+  it('keys the hash with the shared secret, so nobody can rebuild it by hashing every IPv4 address (SW-4)', () => {
+    const key = ipKey('203.0.113.9', SECRET);
+    expect(key).toMatch(/^[0-9a-f]{64}$/);
+    expect(key).toBe(createHmac('sha256', SECRET).update('itqan-booking-ip:203.0.113.9').digest('hex'));
+    // The old unkeyed form anyone could recompute from the public prefix.
+    expect(key).not.toBe(createHash('sha256').update('itqan-booking:203.0.113.9').digest('hex'));
+    expect(key).not.toBe(ipKey('203.0.113.9', `${SECRET}-other`));
+  });
+  it('reads the secret from the environment and gives no key without a usable one', () => {
+    vi.stubEnv('ITQAN_BOOKING_SECRET', SECRET);
+    expect(ipKey('203.0.113.9')).toBe(ipKey('203.0.113.9', SECRET));
+    vi.stubEnv('ITQAN_BOOKING_SECRET', 'short');
+    expect(ipKey('203.0.113.9')).toBeNull();
+    expect(ipKey('203.0.113.9', 'short')).toBeNull();
+    expect(ipKey('203.0.113.9', null)).toBeNull();
   });
 });
 

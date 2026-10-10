@@ -1,3 +1,4 @@
+import { createHash, createHmac } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { GET as getSlots } from '@/app/api/book/slots/route';
@@ -141,6 +142,25 @@ describe('POST /api/book', () => {
     expect(verifySignature({ secret: SECRET, header, method: 'POST', pathWithQuery: '/api/integrations/website/bookings', body: String(crmCalls[0].init.body) }).ok).toBe(true);
     expect(printed.some((m) => m.includes('to=sara@example.com'))).toBe(true);
     expect(printed.some((m) => m.includes('to=ibrahim@itqanstudio.com'))).toBe(true);
+  });
+
+  it('sends the CRM an address hash keyed with the shared secret, never one anyone can recompute (SW-4)', async () => {
+    crm(201, { ok: true, data: { booking, cancelToken: 'tok_abcdefghijklmnopqrstuvwxyz' } });
+    // Own email per test: the per-email limit (3 in 10 minutes) is shared across this file.
+    await postBook(bookRequest({ ...form, email: 'hash@example.com' }, { origin: ORIGIN, 'x-forwarded-for': '198.51.100.40' }));
+    const sent = JSON.parse(String(crmCalls[0].init.body)) as { ipHash: string };
+    expect(sent.ipHash).toBe(createHmac('sha256', SECRET).update('itqan-booking-ip:198.51.100.40').digest('hex'));
+    expect(sent.ipHash).not.toBe(createHash('sha256').update('itqan-booking:198.51.100.40').digest('hex'));
+  });
+
+  it('fails closed without the secret: paused, and no call to the CRM', async () => {
+    crm(201, { ok: true, data: { booking, cancelToken: 'tok_abcdefghijklmnopqrstuvwxyz' } });
+    vi.stubEnv('ITQAN_BOOKING_SECRET', 'short');
+    const res = await postBook(bookRequest({ ...form, email: 'nosecret@example.com' }));
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ ok: false, error: 'paused' });
+    expect(crmCalls).toHaveLength(0);
+    expect(printed).toHaveLength(0);
   });
 
   it('names the host in Arabic for an Arabic booking', async () => {

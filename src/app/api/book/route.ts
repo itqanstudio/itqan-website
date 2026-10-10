@@ -56,6 +56,13 @@ export async function POST(req: NextRequest) {
   const byEmail = rateLimit(`book:email:${input.email}`, EMAIL_MAX, WINDOW_MS);
   if (!byEmail.allowed) return json(429, { ok: false, error: 'rate' }, { 'Retry-After': String(byEmail.retryAfterSeconds) });
 
+  // Keyed by the shared secret; without it nothing can be signed either, so booking is paused.
+  const ipHash = ipKey(ip);
+  if (!ipHash) {
+    console.error('[book] ITQAN_BOOKING_SECRET is missing or shorter than 32 characters; booking refused');
+    return json(503, { ok: false, error: 'paused' });
+  }
+
   const request: CreateBookingRequest = {
     start: input.start,
     ...(input.with ? { with: input.with } : {}),
@@ -68,7 +75,7 @@ export async function POST(req: NextRequest) {
     topic: input.topic,
     locale: input.locale,
     timezone: input.timezone,
-    ipHash: ipKey(ip),
+    ipHash,
   };
   const result = await createCrmBooking(request);
   if (!result.ok) {

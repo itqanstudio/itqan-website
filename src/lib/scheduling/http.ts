@@ -1,5 +1,7 @@
-import { createHash } from 'node:crypto';
+import { createHmac } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
+import { MIN_SECRET_LENGTH } from '@/lib/crm/contract';
+import { readSecret } from '@/lib/crm/hmac';
 
 const PROD_ORIGINS = ['https://itqanstudio.com', 'https://www.itqanstudio.com'];
 const DEV_ORIGIN = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
@@ -44,9 +46,22 @@ export function isAllowedOrigin(origin: string | null): boolean {
   return isDevelopment() && DEV_ORIGIN.test(origin);
 }
 
-/** A one-way key for counting bookings per connection without storing the address. */
-export function ipKey(ip: string): string {
-  return createHash('sha256').update(`itqan-booking:${ip}`).digest('hex');
+/**
+ * Fixed label at the start of the hashed text. A request signature made with the
+ * same secret starts with a timestamp, so the two can never be equal.
+ */
+const IP_HASH_PURPOSE = 'itqan-booking-ip:';
+
+/**
+ * A key for counting bookings per connection without storing the address:
+ * HMAC-SHA256 keyed by ITQAN_BOOKING_SECRET (64 hex characters). Without the
+ * secret, hashing every IPv4 address does not recover it from the CRM or a
+ * backup. The same address and secret always give the same key. Null when the
+ * secret is missing or shorter than 32 characters, so the caller fails closed.
+ */
+export function ipKey(ip: string, secret: string | null = readSecret()): string | null {
+  if (!secret || secret.length < MIN_SECRET_LENGTH) return null;
+  return createHmac('sha256', secret).update(`${IP_HASH_PURPOSE}${ip}`).digest('hex');
 }
 
 /**
