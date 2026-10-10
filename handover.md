@@ -1,5 +1,64 @@
 # Itqan Studio Website — Handover
 
+## 2026-10-11 — /book now runs on the CRM (CRM v3 rebuild, workstream W). NOT deployed: waits on Ibrahim's go
+
+Branch `feat/crm-booking-link` (worktree `itqan-website-crm-link`), local commits only, nothing pushed.
+Contract: `itqan-crm-v3/docs/v3/REBUILD-SPEC.md` section 8. Tracked work:
+`agent-work/20261010202954_website_crm_booking_link.md` (gitignored).
+
+### What changed
+- The CRM owns hours, days off, hosts (Ibrahim, Bisma) and bookings. The site keeps the public booking
+  UI, its guards and the emails, and calls the CRM's signed endpoints through `src/lib/crm/`
+  (`contract.ts` is a verbatim copy of the CRM's `src/lib/integrations/website-contract.ts`).
+- `/api/book/slots`, `/api/book`, `/api/book/cancel` proxy to the CRM with the same response shapes
+  (plus `hosts` on slots and `hostName` on a booking). `?with=<slug>` on `/book` narrows to one host.
+  CRM unreachable, 5xx or misconfigured: 503 `paused`, the widget says "Booking is paused for a moment.
+  Email hello@itqanstudio.com and we will find a time." (Arabic too).
+- `/book` fetches the free times while rendering (3 s timeout, 20 s cache, per-connection cap) so the
+  heading can say "{n}-minute" from the CRM's call length; on a miss the widget loads them itself.
+- Emails are host-aware: host name and call length in the guest mail, host as reply-to and .ics
+  organizer, host meeting link, host notice to the host's address. No visitor-typed text in guest mail.
+- New `POST /api/crm/notify` (signature required, replay refused): the CRM calls it after a host
+  cancels and the site emails the guest.
+- Removed: `/admin`, `/api/admin/*`, the admin components and CSS, `scripts/admin-login-link.mjs`, the
+  SQLite slot engine and repo. `/admin` and `/admin/*` redirect (308) to
+  https://portal.itqanstudio.com/calendar/availability. `ADMIN_EMAILS`, `BOOKING_NOTIFY_EMAIL` and
+  `BOOKING_MEETING_URL` are no longer read.
+- Copy: "A video call with Ibrahim or Bisma, the founders."; privacy policy names the CRM, the
+  12-month deletion of the booking record, and the business contact a booking creates.
+- New env (names only, values in Coolify): `ITQAN_BOOKING_SECRET` (32+ chars, same value on the CRM),
+  `CRM_API_ORIGIN` (optional, default https://portal.itqanstudio.com).
+
+### Deploy order (only with Ibrahim's go; a push to main deploys)
+1. The CRM side ships first: section 6 SQL applied, `/api/integrations/website/*` deployed, both
+   hosts seeded, `ITQAN_BOOKING_SECRET` set on the CRM app.
+2. Set `ITQAN_BOOKING_SECRET` (same value) on the Coolify app `itqanstudio`. Keep the
+   `itqanstudio-booking-data` volume mounted.
+3. Push and deploy this branch, then straight away run the one-time export in the NEW container (the
+   volume still holds `/app/.data/itqan.db`; the site no longer writes to it):
+   `node scripts/export-bookings-to-crm.mjs --dry-run` (counts only), then without `--dry-run`.
+   Re-running is safe (idempotent on the booking id). Until it has run, the CRM does not know the old
+   upcoming bookings and could offer those times again, so keep that gap to minutes.
+4. Check `/book`, `/ar/book`, a test booking and its cancel link, the `/admin` redirect, and that the
+   old upcoming bookings show in the CRM calendar.
+5. Old guests' cancel links stop working after the move (only a hash of their token exists); the
+   page tells them to reply to their confirmation email.
+6. After a week with no problems, the `itqanstudio-booking-data` volume can be backed up and removed
+   (Ibrahim's call).
+
+### Verified locally (11 Oct)
+- `npm run typecheck`, `npm run test:unit`, `npm run build` green.
+- End to end with `scripts/mock-crm.mjs` on :3999 and `next dev` on :3101 in Chrome (playwright):
+  book, confirm, cancel via the token link, paused state. Screenshots in the session scratchpad
+  `website-shots/`.
+
+### Open items
+- The CRM side (workstream C) must answer exactly the section 8 shapes; `scripts/mock-crm.mjs` is the
+  reference the site was tested against.
+- For imported bookings, the host-cancel email's .ics CANCEL uses the CRM booking id as the UID. If
+  the CRM gives imported rows a new id instead of the legacy one, calendar apps will not match it to
+  the old invite (the email itself still arrives).
+
 ## 2026-10-08 — Brand v3 site built, booking platform + admin, shipping to production
 
 Ibrahim signed off the brand kit and said: build the site and push it to main and production. Same
