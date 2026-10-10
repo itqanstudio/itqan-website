@@ -19,7 +19,7 @@
  */
 import { existsSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
-import { buildBatches, readLegacyData, summarize } from './lib/crm-export.mjs';
+import { buildBatches, exportOrigin, readLegacyData, summarize } from './lib/crm-export.mjs';
 import { MIN_SECRET_LENGTH, SIGNATURE_HEADER, signatureHeader } from './lib/crm-signature.mjs';
 
 const DEFAULT_DB = '/app/.data/itqan.db';
@@ -33,14 +33,8 @@ function fail(message) {
 }
 
 function crmOrigin() {
-  const raw = (process.env.CRM_API_ORIGIN || DEFAULT_ORIGIN).trim();
-  try {
-    const url = new URL(raw);
-    if (url.protocol !== 'https:' && url.protocol !== 'http:') fail('CRM_API_ORIGIN must be an http or https origin.');
-    return url.origin;
-  } catch {
-    return fail('CRM_API_ORIGIN is not a URL.');
-  }
+  const origin = exportOrigin(process.env.CRM_API_ORIGIN || DEFAULT_ORIGIN);
+  return origin ?? fail('CRM_API_ORIGIN must be an https origin (plain http only for localhost or a private address).');
 }
 
 async function post(origin, secret, body) {

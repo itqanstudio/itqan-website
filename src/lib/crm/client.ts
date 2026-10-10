@@ -45,15 +45,27 @@ export function isCrmDown(f: CrmFailure): boolean {
   return f.status === 0 || f.status >= 500 || f.error === 'server' || f.error === 'unauthorized';
 }
 
-/** CRM_API_ORIGIN (an http or https origin) or the production portal; null when the setting is unusable. */
+/**
+ * Hosts where plain http stays on the machine or the private network: loopback,
+ * a single-label name (a Docker service such as "itqan-crm") or an RFC 1918
+ * address. Booking details never cross the internet unencrypted.
+ */
+export function isPrivateHost(hostname: string): boolean {
+  const host = hostname.replace(/^\[|\]$/g, '').toLowerCase();
+  if (host === 'localhost' || host === '::1' || /^127\./.test(host)) return true;
+  if (/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)) return true;
+  return /^[a-z0-9-]+$/.test(host);
+}
+
+/** CRM_API_ORIGIN (https, or http on a private host) or the production portal; null when the setting is unusable. */
 export function crmOrigin(env: Record<string, string | undefined> = process.env): string | null {
   const raw = env.CRM_API_ORIGIN?.trim();
   if (!raw) return DEFAULT_CRM_ORIGIN;
   try {
     const url = new URL(raw);
-    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
     if (url.username || url.password) return null;
-    return url.origin;
+    if (url.protocol === 'https:') return url.origin;
+    return url.protocol === 'http:' && isPrivateHost(url.hostname) ? url.origin : null;
   } catch {
     return null;
   }

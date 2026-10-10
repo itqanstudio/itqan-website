@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { afterAll, describe, expect, it } from 'vitest';
-import { buildBatches, parseAvailability, readLegacyData, summarize } from '../../../scripts/lib/crm-export.mjs';
+import { buildBatches, exportOrigin, parseAvailability, readLegacyData, summarize } from '../../../scripts/lib/crm-export.mjs';
 import { computeV1, signatureHeader, verifySignature } from '../../../scripts/lib/crm-signature.mjs';
 import { computeV1 as computeV1Ts } from './hmac';
 
@@ -119,6 +119,15 @@ describe('scripts/lib/crm-export.mjs', () => {
     const data = readLegacyData(db);
     db.close();
     expect(buildBatches(data, 15_000).oversized).toBe(1);
+  });
+
+  it('posts over https, or plain http only to a local or private host', () => {
+    expect(exportOrigin(undefined)).toBe('https://portal.itqanstudio.com');
+    expect(exportOrigin('http://localhost:3999')).toBe('http://localhost:3999');
+    expect(exportOrigin('http://itqan-crm:3000')).toBe('http://itqan-crm:3000');
+    expect(exportOrigin('http://portal.itqanstudio.com')).toBeNull();
+    expect(exportOrigin('https://u:p@portal.itqanstudio.com')).toBeNull();
+    expect(exportOrigin('nonsense')).toBeNull();
   });
 
   it('leaves out saved hours it cannot read', () => {

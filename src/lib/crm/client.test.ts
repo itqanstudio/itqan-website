@@ -78,6 +78,16 @@ describe('crmOrigin', () => {
     expect(crmOrigin({ CRM_API_ORIGIN: 'not a url' })).toBeNull();
     expect(crmOrigin({ CRM_API_ORIGIN: 'https://user:pass@x.example' })).toBeNull();
   });
+  it('allows plain http only on loopback or the private network', () => {
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://itqan-crm:3000' })).toBe('http://itqan-crm:3000');
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://127.0.0.1:3999' })).toBe('http://127.0.0.1:3999');
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://[::1]:3999' })).toBe('http://[::1]:3999');
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://10.0.1.5:3000' })).toBe('http://10.0.1.5:3000');
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://172.20.0.4:3000' })).toBe('http://172.20.0.4:3000');
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://portal.itqanstudio.com' })).toBeNull();
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://52.212.71.212:3000' })).toBeNull();
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://172.32.0.1' })).toBeNull();
+  });
 });
 
 describe('signed requests', () => {

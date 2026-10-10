@@ -7,6 +7,27 @@
  *   { bookings: LegacyBooking[], availability?: LegacyAvailability, blockedDates?: { date, note }[] }
  */
 
+/**
+ * The CRM origin to post to: https, or plain http only on loopback, a
+ * single-label Docker service name or an RFC 1918 address (same rule as
+ * crmOrigin in src/lib/crm/client.ts). Null when unusable.
+ * @param {string | undefined} raw
+ * @returns {string | null}
+ */
+export function exportOrigin(raw) {
+  try {
+    const url = new URL((raw || 'https://portal.itqanstudio.com').trim());
+    if (url.username || url.password) return null;
+    if (url.protocol === 'https:') return url.origin;
+    const host = url.hostname.replace(/^\[|\]$/g, '').toLowerCase();
+    const privateHost =
+      host === 'localhost' || host === '::1' || /^127\./.test(host) || /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host) || /^[a-z0-9-]+$/.test(host);
+    return url.protocol === 'http:' && privateHost ? url.origin : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Below the CRM's 16 KB cap, with room for headers the CRM may count. */
 export const MAX_BATCH_BYTES = 15_000;
 
