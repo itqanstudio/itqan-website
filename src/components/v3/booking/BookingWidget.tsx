@@ -38,6 +38,7 @@ interface Done {
 /** The studio address on the downloaded file; the emailed invite names the host's own address. */
 const ICS_ORGANIZER = 'hello@itqanstudio.com';
 const SPRING = { type: 'spring', stiffness: 320, damping: 32 } as const;
+const FADE = { duration: 0.15 } as const;
 
 function ready(data: WidgetSlots): Load {
   return { state: 'ready', slots: data.slots, hosts: data.hosts };
@@ -152,8 +153,10 @@ export function BookingWidget({ t, lang, topic, withSlug, initial }: BookingWidg
   };
 
   const zones = Array.from(new Set([tz, ...COMMON_ZONES]));
+  // Same animated properties either way, so the server render (which cannot know the setting)
+  // hydrates cleanly; reduced motion keeps a short fade and drops the movement.
   const motionProps = reduce
-    ? {}
+    ? { initial: { opacity: 0, y: 0 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: 0 }, transition: FADE }
     : { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -8 }, transition: SPRING };
   const onlyHost = withSlug && load.state === 'ready' && load.hosts.length === 1 ? load.hosts[0] : null;
 

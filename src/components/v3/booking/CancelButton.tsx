@@ -73,15 +73,18 @@ export function CancelButton({ token, lang, t, rebook, errors }: CancelButtonPro
     );
   }
   return (
-    <div className="btns">
-      <button type="button" className="btn pri" onClick={() => void cancel()} disabled={state.kind === 'busy'} aria-busy={state.kind === 'busy'}>
-        {state.kind === 'busy' ? t.working : t.button}
-      </button>
-      {state.kind === 'error' && (
-        <p className="bk-msg err" role="alert">
-          {state.message}
-        </p>
-      )}
-    </div>
+    <>
+      <p className="lead">{t.ask}</p>
+      <div className="btns">
+        <button type="button" className="btn pri" onClick={() => void cancel()} disabled={state.kind === 'busy'} aria-busy={state.kind === 'busy'}>
+          {state.kind === 'busy' ? t.working : t.button}
+        </button>
+        {state.kind === 'error' && (
+          <p className="bk-msg err" role="alert">
+            {state.message}
+          </p>
+        )}
+      </div>
+    </>
   );
 }
