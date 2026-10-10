@@ -58,6 +58,20 @@ Contract: `itqan-crm-v3/docs/v3/REBUILD-SPEC.md` section 8. Tracked work:
 - The export script against a synthetic SQLite file and the mock: dry run counts, 3 requests under
   the cap, a second run skips all 30, a wrong secret is refused.
 
+### Review fixes (11 Oct, SW-1 to SW-4; local commits ab3c4a4, c016203, 3cb529f, 744989b)
+- SW-1: POST bookings waits 15 s (see the open item below); timeout or unreadable success answer is
+  `unconfirmed`, not `paused`.
+- SW-2: plain http to the CRM only for a whole private IPv4 literal, `localhost`, `::1` or a
+  single-label name with a letter; `10.evil.example.com` and `127.0.0.1.nip.io` need https. Same rule
+  in `scripts/lib/crm-export.mjs`.
+- SW-3: `/api/book` returns `ics`, the exact guest calendar file the confirmation email attaches (host
+  as organizer, full text, video link); "Add to calendar" downloads that.
+- SW-4: `ipHash` is HMAC-SHA256 keyed by `ITQAN_BOOKING_SECRET` (label `itqan-booking-ip:`), not a
+  plain sha256. Rotating the secret resets the per-connection count. Upcoming CRM bookings made before
+  this deploy keep their old hash, so for those visitors the "2 per connection" cap starts fresh once.
+- Checks after the fixes: typecheck, 122 vitest tests, `npm run build` green. `npm run lint` is not
+  set up in this repo (next lint asks to create a config). The browser smoke run was not repeated.
+
 ### Open items
 - The CRM side (workstream C) must answer exactly the section 8 shapes; `scripts/mock-crm.mjs` is the
   reference the site was tested against.
@@ -73,7 +87,10 @@ Contract: `itqan-crm-v3/docs/v3/REBUILD-SPEC.md` section 8. Tracked work:
   `unconfirmed` and the widget says the briefing may already be booked: check your email before
   trying again, else write to hello@. No guest email goes out in that case (the site never got the
   booking), so the host finds it in the CRM calendar (the site logs the start time) and emails the
-  guest.
+  guest. A retry after a booking that did commit answers "limit" or "taken"; an idempotency key on
+  the CRM's POST bookings would let a retry return the same booking (CRM contract change, not done).
+- `src/lib/crm/contract.ts` still says ipHash is "sha256 of the visitor IP". It is a verbatim copy of
+  the CRM's `website-contract.ts`, so the comment changes in the CRM first and is copied here.
 
 ### Monetization angle
 - The pattern built here (public booking page on the client's site, signed server-to-server calls,
