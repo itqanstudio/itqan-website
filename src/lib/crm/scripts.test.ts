@@ -5,6 +5,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { afterAll, describe, expect, it } from 'vitest';
 import { buildBatches, exportOrigin, parseAvailability, readLegacyData, summarize } from '../../../scripts/lib/crm-export.mjs';
 import { computeV1, signatureHeader, verifySignature } from '../../../scripts/lib/crm-signature.mjs';
+import { crmOrigin } from './client';
 import { computeV1 as computeV1Ts } from './hmac';
 
 const SECRET = 'test-secret-0123456789abcdef0123456789abcdef';
@@ -128,6 +129,28 @@ describe('scripts/lib/crm-export.mjs', () => {
     expect(exportOrigin('http://portal.itqanstudio.com')).toBeNull();
     expect(exportOrigin('https://u:p@portal.itqanstudio.com')).toBeNull();
     expect(exportOrigin('nonsense')).toBeNull();
+  });
+
+  it('compares IP literals exactly, like crmOrigin in the site (SW-2)', () => {
+    const cases: Array<[string, string | null]> = [
+      ['http://10.evil.example.com', null],
+      ['http://127.0.0.1.nip.io:3000', null],
+      ['http://192.168.attacker.net', null],
+      ['http://172.16.example.org', null],
+      ['http://10.0.0.256', null],
+      ['http://172.15.0.1', null],
+      ['http://52.212.71.212:3000', null],
+      ['http://10.0.1.5:3000', 'http://10.0.1.5:3000'],
+      ['http://192.168.1.20', 'http://192.168.1.20'],
+      ['http://172.31.0.4:3000', 'http://172.31.0.4:3000'],
+      ['http://127.0.0.1:3999', 'http://127.0.0.1:3999'],
+      ['http://[::1]:3999', 'http://[::1]:3999'],
+      ['https://10.evil.example.com', 'https://10.evil.example.com'],
+    ];
+    cases.forEach(([raw, expected]) => {
+      expect(exportOrigin(raw), raw).toBe(expected);
+      expect(crmOrigin({ CRM_API_ORIGIN: raw }), raw).toBe(expected);
+    });
   });
 
   it('leaves out saved hours it cannot read', () => {

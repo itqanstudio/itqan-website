@@ -46,15 +46,33 @@ export function isCrmDown(f: CrmFailure): boolean {
 }
 
 /**
+ * The four octets of an IPv4 literal written as the URL parser writes it
+ * (decimal, no leading zeros, each 0 to 255), or null for anything else. A DNS
+ * name such as 10.evil.example.com is never read as an address.
+ */
+function ipv4Octets(host: string): readonly number[] | null {
+  const parts = host.split('.');
+  if (parts.length !== 4 || !parts.every((p) => /^(0|[1-9]\d{0,2})$/.test(p))) return null;
+  const octets = parts.map(Number);
+  return octets.every((n) => n <= 255) ? octets : null;
+}
+
+/**
  * Hosts where plain http stays on the machine or the private network: loopback,
  * a single-label name (a Docker service such as "itqan-crm") or an RFC 1918
- * address. Booking details never cross the internet unencrypted.
+ * address. IP literals are compared whole; any other dotted name is a DNS name
+ * and needs https. Booking details never cross the internet unencrypted.
  */
 export function isPrivateHost(hostname: string): boolean {
   const host = hostname.replace(/^\[|\]$/g, '').toLowerCase();
-  if (host === 'localhost' || host === '::1' || /^127\./.test(host)) return true;
-  if (/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)) return true;
-  return /^[a-z0-9-]+$/.test(host);
+  if (host === 'localhost' || host === '::1') return true;
+  const ip = ipv4Octets(host);
+  if (ip) {
+    const [a, b] = ip;
+    return a === 127 || a === 10 || (a === 192 && b === 168) || (a === 172 && b >= 16 && b <= 31);
+  }
+  // At least one letter: an all-digit host is an IPv4 address in number form, not a service name.
+  return /^[a-z0-9-]*[a-z][a-z0-9-]*$/.test(host);
 }
 
 /** CRM_API_ORIGIN (https, or http on a private host) or the production portal; null when the setting is unusable. */

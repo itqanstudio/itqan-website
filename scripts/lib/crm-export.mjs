@@ -8,9 +8,38 @@
  */
 
 /**
- * The CRM origin to post to: https, or plain http only on loopback, a
- * single-label Docker service name or an RFC 1918 address (same rule as
- * crmOrigin in src/lib/crm/client.ts). Null when unusable.
+ * The four octets of an IPv4 literal (decimal, no leading zeros, 0 to 255), or
+ * null. A DNS name such as 10.evil.example.com is never read as an address.
+ * @param {string} host
+ * @returns {number[] | null}
+ */
+function ipv4Octets(host) {
+  const parts = host.split('.');
+  if (parts.length !== 4 || !parts.every((p) => /^(0|[1-9]\d{0,2})$/.test(p))) return null;
+  const octets = parts.map(Number);
+  return octets.every((n) => n <= 255) ? octets : null;
+}
+
+/**
+ * Loopback, a single-label Docker service name or an RFC 1918 address, with IP
+ * literals compared whole (same rule as isPrivateHost in src/lib/crm/client.ts).
+ * @param {string} hostname
+ * @returns {boolean}
+ */
+function isPrivateHost(hostname) {
+  const host = hostname.replace(/^\[|\]$/g, '').toLowerCase();
+  if (host === 'localhost' || host === '::1') return true;
+  const ip = ipv4Octets(host);
+  if (ip) {
+    const [a, b] = ip;
+    return a === 127 || a === 10 || (a === 192 && b === 168) || (a === 172 && b >= 16 && b <= 31);
+  }
+  return /^[a-z0-9-]*[a-z][a-z0-9-]*$/.test(host);
+}
+
+/**
+ * The CRM origin to post to: https, or plain http only on a private host (see
+ * isPrivateHost; same rule as crmOrigin in src/lib/crm/client.ts). Null when unusable.
  * @param {string | undefined} raw
  * @returns {string | null}
  */
@@ -19,10 +48,7 @@ export function exportOrigin(raw) {
     const url = new URL((raw || 'https://portal.itqanstudio.com').trim());
     if (url.username || url.password) return null;
     if (url.protocol === 'https:') return url.origin;
-    const host = url.hostname.replace(/^\[|\]$/g, '').toLowerCase();
-    const privateHost =
-      host === 'localhost' || host === '::1' || /^127\./.test(host) || /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host) || /^[a-z0-9-]+$/.test(host);
-    return url.protocol === 'http:' && privateHost ? url.origin : null;
+    return url.protocol === 'http:' && isPrivateHost(url.hostname) ? url.origin : null;
   } catch {
     return null;
   }

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cancelCrmBooking, createCrmBooking, crmOrigin, fetchSlots, interpret, isCrmDown, DEFAULT_CRM_ORIGIN } from './client';
+import { cancelCrmBooking, createCrmBooking, crmOrigin, fetchSlots, interpret, isCrmDown, isPrivateHost, DEFAULT_CRM_ORIGIN } from './client';
 import type { CreateBookingRequest } from './contract';
 import { verifySignature } from './hmac';
 import { slotsDataSchema } from './schemas';
@@ -87,6 +87,31 @@ describe('crmOrigin', () => {
     expect(crmOrigin({ CRM_API_ORIGIN: 'http://portal.itqanstudio.com' })).toBeNull();
     expect(crmOrigin({ CRM_API_ORIGIN: 'http://52.212.71.212:3000' })).toBeNull();
     expect(crmOrigin({ CRM_API_ORIGIN: 'http://172.32.0.1' })).toBeNull();
+  });
+  it('compares IP literals exactly, so a DNS name that starts like a private address needs https (SW-2)', () => {
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://10.evil.example.com' })).toBeNull();
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://127.0.0.1.nip.io:3000' })).toBeNull();
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://192.168.attacker.net' })).toBeNull();
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://172.16.example.org' })).toBeNull();
+    expect(crmOrigin({ CRM_API_ORIGIN: 'https://10.evil.example.com' })).toBe('https://10.evil.example.com');
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://192.168.1.20:3000' })).toBe('http://192.168.1.20:3000');
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://172.31.255.255' })).toBe('http://172.31.255.255');
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://172.15.0.1' })).toBeNull();
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://10.0.0.256' })).toBeNull();
+  });
+  it('reads only a whole dotted quad as an address when given a raw host name', () => {
+    expect(isPrivateHost('10.0.0.1')).toBe(true);
+    expect(isPrivateHost('127.10.20.30')).toBe(true);
+    expect(isPrivateHost('[::1]')).toBe(true);
+    expect(isPrivateHost('LOCALHOST')).toBe(true);
+    expect(isPrivateHost('itqan-crm')).toBe(true);
+    expect(isPrivateHost('10.0.0')).toBe(false);
+    expect(isPrivateHost('10.0.0.1.')).toBe(false);
+    expect(isPrivateHost('010.0.0.1')).toBe(false);
+    expect(isPrivateHost('10.0.0.999')).toBe(false);
+    expect(isPrivateHost('10.evil.example.com')).toBe(false);
+    // An all-digit host is an IPv4 address in number form (134744072 is 8.8.8.8), not a service name.
+    expect(isPrivateHost('134744072')).toBe(false);
   });
 });
 
