@@ -1,25 +1,38 @@
 import type { Lang } from './types';
 
+/*
+ * Booking copy, English and Arabic. Placeholders: {n} is the call length in
+ * minutes (the CRM's studio rule), {host} the person taking the call, {when}
+ * a formatted date and time. Fill them with `fill()`.
+ */
 export interface BookingCopy {
   metaTitle: string;
   metaDescription: string;
   kicker: string;
+  /** Heading when the call length is known. */
   title: readonly [string, string, string?];
+  /** Heading when it is not (the CRM did not answer before the page rendered). */
+  titleNoLength: readonly [string, string, string?];
   lead: string;
   securityLead: string;
+  pointLength: string;
+  pointNoLength: string;
   points: readonly string[];
+  withHost: string;
   steps: { day: string; time: string; details: string };
   tzLabel: string;
   tzChange: string;
   loading: string;
   loadError: string;
   retry: string;
+  paused: string;
   noSlots: string;
   noSlotsDay: string;
   prevWeek: string;
   nextWeek: string;
   back: string;
   selected: string;
+  chooseOne: string;
   fields: {
     name: string;
     email: string;
@@ -36,23 +49,25 @@ export interface BookingCopy {
   privacyLink: string;
   submit: string;
   submitting: string;
-  errors: { taken: string; invalid: string; rate: string; limit: string; server: string; network: string };
+  errors: { taken: string; invalid: string; rate: string; limit: string; server: string; network: string; paused: string };
   done: {
     title: string;
     body: string;
     sent: string;
     calendar: string;
+    calendarTitle: string;
     emailFailed: string;
     home: string;
   };
   cancel: {
     metaTitle: string;
     title: string;
-    body: string;
+    ask: string;
     button: string;
     working: string;
     doneTitle: string;
     doneBody: string;
+    doneBodyNoTime: string;
     already: string;
     past: string;
     notFound: string;
@@ -79,25 +94,31 @@ export interface BookingCopy {
 export const bookingCopy: Record<Lang, BookingCopy> = {
   en: {
     metaTitle: 'Book a briefing',
-    metaDescription: 'Pick a time for a free 30-minute briefing with Itqan about AI in manufacturing, retail or food and beverage.',
+    metaDescription: 'Pick a time for a free video briefing with Itqan about AI in manufacturing, retail or food and beverage.',
     kicker: 'Executive briefing',
     // U+2011 non-breaking hyphen keeps "30-minute" on one line in the large heading.
-    title: ['Pick a time for your ', '30‑minute briefing.'],
-    lead: 'A video call with Ibrahim Shareef, our founder. We ask where the hours go in your operation and tell you plainly whether an agent would help.',
+    title: ['Pick a time for your ', '{n}‑minute briefing.'],
+    titleNoLength: ['Pick a time for your ', 'briefing.'],
+    lead: 'A video call with Ibrahim or Bisma, the founders. We ask where the hours go in your operation and tell you plainly whether an agent would help.',
     securityLead: 'Tell us it is for a security review and we will bring the architecture, the data-flow diagram, the data processing agreement and our list of controls.',
-    points: ['Free, 30 minutes, on video', 'English, Arabic or Swedish', 'Times shown in your time zone'],
+    pointLength: 'Free, {n} minutes, on video',
+    pointNoLength: 'Free, on video',
+    points: ['English, Arabic or Swedish', 'Times shown in your time zone'],
+    withHost: 'Your call is with {host}.',
     steps: { day: '1. Pick a day', time: '2. Pick a time', details: '3. Your details' },
     tzLabel: 'Times in',
     tzChange: 'Change time zone',
     loading: 'Loading free times…',
     loadError: 'We could not load the free times.',
     retry: 'Try again',
-    noSlots: 'There are no free times in the next weeks. Write to ibrahim@itqanstudio.com and we will find one.',
+    paused: 'Booking is paused for a moment. Email hello@itqanstudio.com and we will find a time.',
+    noSlots: 'There are no free times in the next weeks. Write to hello@itqanstudio.com and we will find one.',
     noSlotsDay: 'No free times on this day.',
     prevWeek: 'Earlier days',
     nextWeek: 'Later days',
     back: 'Change time',
     selected: 'Your time',
+    chooseOne: 'Choose one',
     fields: {
       name: 'Your name',
       email: 'Work email',
@@ -110,7 +131,8 @@ export const bookingCopy: Record<Lang, BookingCopy> = {
       optional: 'optional',
     },
     industries: { manufacturing: 'Manufacturing', retail: 'Retail', fnb: 'Food and beverage', other: 'Something else' },
-    privacy: 'We use these details to hold the call and delete them 12 months after it. ',
+    privacy:
+      'We keep these details in our CRM to hold the call and delete the booking 12 months after it. Your name, email and company are also saved there as a business contact. ',
     privacyLink: 'Privacy policy',
     submit: 'Book the briefing',
     submitting: 'Booking…',
@@ -119,42 +141,45 @@ export const bookingCopy: Record<Lang, BookingCopy> = {
       invalid: 'Check the fields marked above and try again.',
       rate: 'Too many attempts from this connection. Wait ten minutes and try again.',
       limit: 'You already have a briefing booked. To move it, use the cancel link in your confirmation email, then pick a new time.',
-      server: 'Something went wrong on our side. Your time is not booked yet. Try again, or write to ibrahim@itqanstudio.com.',
+      server: 'Something went wrong on our side. Your time is not booked yet. Try again, or write to hello@itqanstudio.com.',
       network: 'The connection dropped. Your time is not booked yet. Try again.',
+      paused: 'Booking is paused for a moment. Email hello@itqanstudio.com and we will find a time.',
     },
     done: {
       title: 'Booked.',
-      body: 'Your briefing is on',
+      body: 'Your briefing with {host} is on',
       sent: 'We sent the details and a calendar file to',
       calendar: 'Add to calendar (.ics)',
+      calendarTitle: 'Itqan briefing',
       emailFailed:
-        'Your time is held, but our confirmation email did not go out. Save the calendar file below, and write to ibrahim@itqanstudio.com if you need to move or cancel it.',
+        'Your time is held, but our confirmation email did not go out. Save the calendar file below, and write to hello@itqanstudio.com if you need to move or cancel it.',
       home: 'Back to the site',
     },
     cancel: {
       metaTitle: 'Cancel a briefing',
       title: 'Cancel your briefing?',
-      body: 'Your briefing is on',
+      ask: 'This cancels the briefing booked with this link and frees the time for someone else.',
       button: 'Cancel the briefing',
       working: 'Cancelling…',
       doneTitle: 'Cancelled.',
-      doneBody: 'Your briefing is cancelled and the time is free again.',
+      doneBody: 'Your briefing on {when} is cancelled and the time is free again.',
+      doneBodyNoTime: 'Your briefing is cancelled and the time is free again.',
       already: 'This briefing was already cancelled.',
       past: 'This briefing has already taken place.',
-      notFound: 'We could not find this booking. The link may be old.',
+      notFound: 'We could not find this booking, or the link has expired. Reply to your confirmation email and we will cancel it for you.',
       rebook: 'Pick a new time',
     },
     email: {
       subject: 'Your Itqan briefing',
       hello: 'Hello',
-      confirmed: 'Your 30-minute briefing with Itqan is booked.',
+      confirmed: 'Your {n}-minute briefing with Itqan is booked.',
       when: 'When',
       with: 'With',
       link: 'Video call',
-      linkPending: 'Ibrahim will send the video link before the call.',
+      linkPending: '{host} will send the video link before the call.',
       prepare: 'If you can, bring one process that eats your team’s hours. That is where we start.',
       cancelLine: 'Need to cancel? Use this link:',
-      signoff: 'Ibrahim Shareef, Itqan',
+      signoff: '{host}, Itqan',
       cancelSubject: 'Your Itqan briefing is cancelled',
       cancelledByYou: 'You cancelled your briefing on',
       cancelledByUs: 'We had to cancel your briefing on',
@@ -163,24 +188,30 @@ export const bookingCopy: Record<Lang, BookingCopy> = {
   },
   ar: {
     metaTitle: 'احجز جلسة تعريفية',
-    metaDescription: 'اختر موعداً لجلسة تعريفية مجانية مدتها 30 دقيقة مع إتقان عن الذكاء الاصطناعي في التصنيع أو التجزئة أو الأغذية والمشروبات.',
+    metaDescription: 'اختر موعداً لجلسة تعريفية مجانية عبر الفيديو مع إتقان عن الذكاء الاصطناعي في التصنيع أو التجزئة أو الأغذية والمشروبات.',
     kicker: 'جلسة تعريفية للإدارة',
-    title: ['اختر موعداً لجلسة تعريفية ', 'مدتها 30 دقيقة.'],
-    lead: 'مكالمة فيديو مع إبراهيم شريف، مؤسس إتقان. نسأل أين يذهب الوقت في عملياتكم، ونقول لكم بوضوح إن كان وكيل ذكاء اصطناعي سيساعد.',
+    title: ['اختر موعداً لجلسة تعريفية ', 'مدتها {n} دقيقة.'],
+    titleNoLength: ['اختر موعداً ', 'لجلستك التعريفية.'],
+    lead: 'مكالمة فيديو مع إبراهيم أو بسمة، مؤسسَي إتقان. نسأل أين يذهب الوقت في عملياتكم، ونقول لكم بوضوح إن كان وكيل ذكاء اصطناعي سيساعد.',
     securityLead: 'أخبرنا أنها لمراجعة الأمان، وسنحضر البنية ومخطط تدفق البيانات واتفاقية معالجة البيانات وقائمة ضوابطنا.',
-    points: ['مجانية، 30 دقيقة، عبر الفيديو', 'بالعربية أو الإنجليزية أو السويدية', 'المواعيد بتوقيتك'],
+    pointLength: 'مجانية، {n} دقيقة، عبر الفيديو',
+    pointNoLength: 'مجانية، عبر الفيديو',
+    points: ['بالعربية أو الإنجليزية أو السويدية', 'المواعيد بتوقيتك'],
+    withHost: 'مكالمتك مع {host}.',
     steps: { day: '1. اختر اليوم', time: '2. اختر الوقت', details: '3. بياناتك' },
     tzLabel: 'المواعيد بتوقيت',
     tzChange: 'تغيير المنطقة الزمنية',
     loading: 'جارٍ تحميل المواعيد المتاحة…',
     loadError: 'تعذّر تحميل المواعيد المتاحة.',
     retry: 'حاول مجدداً',
-    noSlots: 'لا مواعيد متاحة في الأسابيع القادمة. راسلنا على ibrahim@itqanstudio.com وسنجد موعداً.',
+    paused: 'الحجز متوقف مؤقتاً. راسلنا على hello@itqanstudio.com وسنجد لك موعداً.',
+    noSlots: 'لا مواعيد متاحة في الأسابيع القادمة. راسلنا على hello@itqanstudio.com وسنجد موعداً.',
     noSlotsDay: 'لا مواعيد متاحة في هذا اليوم.',
     prevWeek: 'أيام سابقة',
     nextWeek: 'أيام لاحقة',
     back: 'تغيير الوقت',
     selected: 'موعدك',
+    chooseOne: 'اختر',
     fields: {
       name: 'اسمك',
       email: 'بريد العمل',
@@ -193,7 +224,8 @@ export const bookingCopy: Record<Lang, BookingCopy> = {
       optional: 'اختياري',
     },
     industries: { manufacturing: 'التصنيع', retail: 'التجزئة', fnb: 'الأغذية والمشروبات', other: 'مجال آخر' },
-    privacy: 'نستخدم هذه البيانات لعقد المكالمة، ونحذفها بعد 12 شهراً منها. ',
+    privacy:
+      'نحفظ هذه البيانات في نظام إدارة العملاء لدينا لعقد المكالمة، ونحذف الحجز بعد 12 شهراً منها. ويُحفظ اسمك وبريدك واسم شركتك فيه أيضاً جهةَ اتصال تجارية. ',
     privacyLink: 'سياسة الخصوصية (بالإنجليزية)',
     submit: 'احجز الجلسة',
     submitting: 'جارٍ الحجز…',
@@ -202,42 +234,45 @@ export const bookingCopy: Record<Lang, BookingCopy> = {
       invalid: 'راجع الحقول المشار إليها أعلاه ثم حاول مجدداً.',
       rate: 'محاولات كثيرة من هذا الاتصال. انتظر عشر دقائق ثم حاول مجدداً.',
       limit: 'لديك جلسة محجوزة بالفعل. لتغيير موعدها، استخدم رابط الإلغاء في رسالة التأكيد ثم اختر موعداً جديداً.',
-      server: 'حدث خطأ لدينا ولم يُحجز موعدك بعد. حاول مجدداً أو راسلنا على ibrahim@itqanstudio.com.',
+      server: 'حدث خطأ لدينا ولم يُحجز موعدك بعد. حاول مجدداً أو راسلنا على hello@itqanstudio.com.',
       network: 'انقطع الاتصال ولم يُحجز موعدك بعد. حاول مجدداً.',
+      paused: 'الحجز متوقف مؤقتاً. راسلنا على hello@itqanstudio.com وسنجد لك موعداً.',
     },
     done: {
       title: 'تم الحجز.',
-      body: 'جلستك التعريفية في',
+      body: 'جلستك التعريفية مع {host} في',
       sent: 'أرسلنا التفاصيل وملف التقويم إلى',
       calendar: 'أضف إلى التقويم (.ics)',
+      calendarTitle: 'جلسة تعريفية مع إتقان',
       emailFailed:
-        'موعدك محجوز، لكن رسالة التأكيد لم تُرسل. احفظ ملف التقويم أدناه، وراسلنا على ibrahim@itqanstudio.com إن احتجت إلى تغيير الموعد أو إلغائه.',
+        'موعدك محجوز، لكن رسالة التأكيد لم تُرسل. احفظ ملف التقويم أدناه، وراسلنا على hello@itqanstudio.com إن احتجت إلى تغيير الموعد أو إلغائه.',
       home: 'العودة إلى الموقع',
     },
     cancel: {
       metaTitle: 'إلغاء جلسة تعريفية',
       title: 'هل تريد إلغاء جلستك التعريفية؟',
-      body: 'جلستك التعريفية في',
+      ask: 'يلغي هذا الجلسة المحجوزة بهذا الرابط، ويصبح موعدها متاحاً لغيرك.',
       button: 'ألغِ الجلسة',
       working: 'جارٍ الإلغاء…',
       doneTitle: 'تم الإلغاء.',
-      doneBody: 'أُلغيت جلستك وأصبح الموعد متاحاً من جديد.',
+      doneBody: 'أُلغيت جلستك التعريفية في {when}، وأصبح الموعد متاحاً من جديد.',
+      doneBodyNoTime: 'أُلغيت جلستك وأصبح الموعد متاحاً من جديد.',
       already: 'أُلغيت هذه الجلسة من قبل.',
       past: 'انعقدت هذه الجلسة بالفعل.',
-      notFound: 'لم نجد هذا الحجز. ربما يكون الرابط قديماً.',
+      notFound: 'لم نجد هذا الحجز، أو انتهت صلاحية الرابط. ردّ على رسالة التأكيد وسنلغيه لك.',
       rebook: 'اختر موعداً جديداً',
     },
     email: {
       subject: 'جلستك التعريفية مع إتقان',
       hello: 'مرحباً',
-      confirmed: 'تم حجز جلستك التعريفية مع إتقان، ومدتها 30 دقيقة.',
+      confirmed: 'تم حجز جلستك التعريفية مع إتقان، ومدتها {n} دقيقة.',
       when: 'الموعد',
       with: 'مع',
       link: 'مكالمة الفيديو',
-      linkPending: 'سيرسل إبراهيم رابط الفيديو قبل المكالمة.',
+      linkPending: 'يصلك رابط الفيديو من {host} قبل المكالمة.',
       prepare: 'إن أمكن، أحضر معك عملية واحدة تستهلك ساعات فريقك. من هناك نبدأ.',
       cancelLine: 'تحتاج إلى الإلغاء؟ استخدم هذا الرابط:',
-      signoff: 'إبراهيم شريف، إتقان',
+      signoff: '{host}، إتقان',
       cancelSubject: 'أُلغيت جلستك التعريفية مع إتقان',
       cancelledByYou: 'ألغيت جلستك التعريفية في',
       cancelledByUs: 'اضطررنا إلى إلغاء جلستك التعريفية في',
@@ -246,11 +281,4 @@ export const bookingCopy: Record<Lang, BookingCopy> = {
   },
 };
 
-/** Long date and time of an instant in a zone, in the reader's language. */
-export function formatWhen(iso: string, timezone: string, lang: Lang): string {
-  const locale = lang === 'en' ? 'en-GB' : 'ar-u-nu-latn';
-  const d = new Date(iso);
-  const date = new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: timezone }).format(d);
-  const time = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: timezone }).format(d);
-  return `${date}${lang === 'ar' ? '،' : ','} ${time} (${timezone.replace(/_/g, ' ')})`;
-}
+export { fill, formatWhen, localHostName, splitAt } from './booking-format';

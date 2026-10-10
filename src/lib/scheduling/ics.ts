@@ -10,6 +10,8 @@ export interface IcsEvent {
   description: string;
   location?: string;
   organizerEmail: string;
+  /** Display name for the organizer, e.g. the host. Defaults to "Itqan". */
+  organizerName?: string;
   method: 'PUBLISH' | 'CANCEL';
   sequence: number;
   now?: Date;
@@ -21,6 +23,14 @@ function stamp(d: Date): string {
 
 export function escapeText(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+}
+
+/**
+ * A parameter value (RFC 5545 3.2): quoted, with the characters a quoted value
+ * cannot hold removed (double quotes and control characters).
+ */
+export function quoteParam(value: string): string {
+  return `"${value.replace(/["\u0000-\u001f\u007f]/g, '').trim() || 'Itqan'}"`;
 }
 
 /** Lines longer than 75 octets are folded with CRLF and a space (RFC 5545 3.1). */
@@ -62,7 +72,7 @@ export function buildIcs(e: IcsEvent): string {
     `SUMMARY:${escapeText(e.summary)}`,
     `DESCRIPTION:${escapeText(e.description)}`,
     ...(e.location ? [`LOCATION:${escapeText(e.location)}`] : []),
-    `ORGANIZER;CN=Itqan:mailto:${e.organizerEmail}`,
+    `ORGANIZER;CN=${quoteParam(e.organizerName ?? 'Itqan')}:mailto:${e.organizerEmail.replace(/[\r\n]/g, '')}`,
     `STATUS:${e.method === 'CANCEL' ? 'CANCELLED' : 'CONFIRMED'}`,
     'END:VEVENT',
     'END:VCALENDAR',

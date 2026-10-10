@@ -1,21 +1,33 @@
 import type { NextRequest } from 'next/server';
 import { rateLimit } from '@/lib/rate-limit';
-import { availableSlots } from '@/lib/scheduling/repo';
+import { fetchSlots, isCrmDown } from '@/lib/crm/client';
+import { parseHostSlug } from '@/lib/crm/slug';
+import { toWidgetSlots, type WidgetSlots } from '@/lib/crm/widget-slots';
 import { clientIp, json } from '@/lib/scheduling/http';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-/** GET /api/book/slots: every free start time, as UTC ISO strings. */
+/**
+ * GET /api/book/slots[?with=<slug>]: every free start time from the CRM, as UTC
+ * ISO strings, plus the call length, the studio time zone and the hosts.
+ * CRM down or misconfigured: 503 "paused", which the widget turns into the
+ * "Booking is paused" message.
+ */
 export async function GET(req: NextRequest) {
   const limit = rateLimit(`slots:${clientIp(req)}`, 60, 60_000);
   if (!limit.allowed) {
     return json(429, { ok: false, error: 'Too many requests' }, { 'Retry-After': String(limit.retryAfterSeconds) });
   }
-  try {
-    return json(200, { ok: true, data: availableSlots() });
-  } catch (err) {
-    console.error('[book/slots] failed:', err instanceof Error ? err.message : String(err));
-    return json(500, { ok: false, error: 'Could not load free times' });
+
+  const raw = req.nextUrl.searchParams.get('with');
+  const withSlug = parseHostSlug(raw);
+  if (raw && !withSlug) return json(400, { ok: false, error: 'invalid' });
+
+  const result = await fetchSlots(withSlug);
+  if (result.ok) return json<WidgetSlots>(200, { ok: true, data: toWidgetSlots(result.data) });
+  if (!isCrmDown(result) && (result.error === 'invalid' || result.error === 'not_found')) {
+    return json(400, { ok: false, error: 'invalid' });
   }
+  return json(503, { ok: false, error: 'paused' });
 }

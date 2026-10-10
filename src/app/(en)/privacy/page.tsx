@@ -13,7 +13,7 @@ export const metadata: Metadata = pageMetadata({
 
 export default function PrivacyPage() {
   return (
-    <LegalPageLayout title="Privacy Policy" lastUpdated="8 October 2026">
+    <LegalPageLayout title="Privacy Policy" lastUpdated="11 October 2026">
       <p>
         This Privacy Policy explains how <strong>Itqan Studio FZ LLC</strong> (&ldquo;Itqan Studio,&rdquo; &ldquo;we,&rdquo; &ldquo;us&rdquo;), a UAE Free Zone
         entity, collects, uses, and protects personal information when you visit
@@ -97,9 +97,10 @@ export default function PrivacyPage() {
         as required by applicable law.
       </p>
       <p>
-        Briefing bookings are stored in a database on our own server in the EU
-        (Ireland) and deleted 12 months after the booked time. Booking confirmations
-        are sent through Amazon SES.
+        Briefing bookings are stored in Itqan&rsquo;s CRM on our own server in the EU
+        (Ireland), and the booking record is deleted 12 months after the booked time.
+        A booking also saves your name, email and company as a business contact in
+        that CRM. Booking confirmations are sent through Amazon SES.
       </p>
 
       <h2>6. Your rights</h2>

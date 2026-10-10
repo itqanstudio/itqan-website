@@ -1,12 +1,15 @@
 import nodemailer from 'nodemailer';
-import { bookingCopy, formatWhen } from '@/content/v3/booking';
+import { bookingCopy, fill, formatWhen, localHostName } from '@/content/v3/booking';
+import type { BookingForEmail } from '@/lib/crm/contract';
 import { buildIcs } from './ics';
-import type { Booking } from './types';
 
 /** Short, because the booking response waits for the confirmation email. */
 const SMTP_TIMEOUT_MS = 8_000;
-const STUDIO_EMAIL = 'ibrahim@itqanstudio.com';
 const SITE_URL = 'https://itqanstudio.com';
+/** Where hosts manage bookings. A fixed public URL, never CRM_API_ORIGIN (which can be an internal address). */
+const PORTAL_URL = 'https://portal.itqanstudio.com';
+/** The founders work from Dubai and Gothenburg; the host email shows both. */
+const HOST_ZONES = ['Asia/Dubai', 'Europe/Stockholm'] as const;
 
 interface Mail {
   to: string;
@@ -43,8 +46,8 @@ function smtp() {
 
 /**
  * Sends one email. Without SMTP settings in development the message is printed
- * to the server log instead, so the booking and sign-in flows can be tested on
- * localhost. In production a missing setting is an error, never a silent skip.
+ * to the server log instead, so the booking flow can be tested on localhost.
+ * In production a missing setting is an error, never a silent skip.
  */
 export async function sendMail(mail: Mail): Promise<MailResult> {
   const conf = smtp();
@@ -74,71 +77,86 @@ export async function sendMail(mail: Mail): Promise<MailResult> {
   }
 }
 
-export function studioInbox(): string {
-  return process.env.BOOKING_NOTIFY_EMAIL || process.env.FEEDBACK_TO_EMAIL || STUDIO_EMAIL;
+/** The call length in whole minutes, from the booked start and end. */
+export function callMinutes(b: BookingForEmail): number {
+  return Math.max(1, Math.round((Date.parse(b.end) - Date.parse(b.start)) / 60_000));
 }
 
-export function meetingUrl(): string | undefined {
-  const url = process.env.BOOKING_MEETING_URL;
-  return url && /^https:\/\//.test(url) ? url : undefined;
+/** The host's video link, only when it is https. */
+export function meetingLink(b: BookingForEmail): string | undefined {
+  const url = b.host.meetingUrl;
+  return url && /^https:\/\/[^\s]+$/.test(url) ? url : undefined;
 }
 
 /**
- * The calendar file. The guest's copy carries only static copy, never a field
- * the visitor typed (their address is unverified); the studio's copy names the
- * company so the event reads well in Ibrahim's calendar.
+ * The calendar file. The guest's copy carries only static copy and the host's
+ * details, never a field the visitor typed (their address is unverified); the
+ * host's copy names the company so the event reads well in their calendar.
  */
-export function bookingIcs(b: Booking, method: 'PUBLISH' | 'CANCEL', audience: 'guest' | 'studio'): string {
-  const t = bookingCopy[b.locale];
-  const link = meetingUrl();
+export function bookingIcs(b: BookingForEmail, method: 'PUBLISH' | 'CANCEL', audience: 'guest' | 'host'): string {
+  const t = bookingCopy[b.locale].email;
+  const host = audience === 'guest' ? localHostName(b.host, b.locale) : b.host.name;
+  const link = meetingLink(b);
   return buildIcs({
     uid: `${b.id}@itqanstudio.com`,
-    start: new Date(b.startUtc),
-    end: new Date(b.endUtc),
-    summary: audience === 'studio' ? `Itqan briefing · ${b.company}` : t.email.subject,
-    description: [t.email.confirmed, link ? `${t.email.link}: ${link}` : t.email.linkPending].join('\n'),
+    start: new Date(b.start),
+    end: new Date(b.end),
+    summary: audience === 'host' ? `Itqan briefing · ${b.company}` : t.subject,
+    description: [fill(t.confirmed, { n: callMinutes(b) }), link ? `${t.link}: ${link}` : fill(t.linkPending, { host })].join('\n'),
     location: link,
-    organizerEmail: STUDIO_EMAIL,
+    organizerEmail: b.host.email,
+    organizerName: host,
     method,
     sequence: method === 'CANCEL' ? 1 : 0,
   });
 }
 
-function cancelUrl(b: Booking, token: string): string {
-  return `${SITE_URL}${b.locale === 'ar' ? '/ar' : ''}/book/cancel/${token}`;
+function localePath(b: BookingForEmail): string {
+  return b.locale === 'ar' ? '/ar' : '';
 }
 
-export async function sendGuestConfirmation(b: Booking, cancelToken: string): Promise<MailResult> {
+function greeting(b: BookingForEmail): string {
+  return `${bookingCopy[b.locale].email.hello}${b.locale === 'ar' ? '،' : ','}`;
+}
+
+export async function sendGuestConfirmation(b: BookingForEmail, cancelToken: string): Promise<MailResult> {
   const t = bookingCopy[b.locale].email;
-  const link = meetingUrl();
+  const host = localHostName(b.host, b.locale);
+  const link = meetingLink(b);
   const text = [
     // No visitor-typed text in mail to the visitor's address: the address is not
     // verified, so a name field must not become a way to send a message as Itqan.
-    `${t.hello}${b.locale === 'ar' ? '،' : ','}`,
+    greeting(b),
     '',
-    t.confirmed,
+    fill(t.confirmed, { n: callMinutes(b) }),
     '',
-    `${t.when}: ${formatWhen(b.startUtc, b.timezone, b.locale)}`,
-    `${t.with}: ${t.signoff}`,
-    link ? `${t.link}: ${link}` : t.linkPending,
+    `${t.when}: ${formatWhen(b.start, b.guestTimezone, b.locale)}`,
+    `${t.with}: ${host}`,
+    link ? `${t.link}: ${link}` : fill(t.linkPending, { host }),
     '',
     t.prepare,
     '',
     t.cancelLine,
-    cancelUrl(b, cancelToken),
+    `${SITE_URL}${localePath(b)}/book/cancel/${encodeURIComponent(cancelToken)}`,
     '',
-    t.signoff,
+    fill(t.signoff, { host }),
   ].join('\n');
-  return sendMail({ to: b.email, replyTo: STUDIO_EMAIL, subject: t.subject, text, ics: { method: 'PUBLISH', content: bookingIcs(b, 'PUBLISH', 'guest') } });
+  return sendMail({ to: b.guestEmail, replyTo: b.host.email, subject: t.subject, text, ics: { method: 'PUBLISH', content: bookingIcs(b, 'PUBLISH', 'guest') } });
 }
 
-export async function sendStudioNotice(b: Booking): Promise<MailResult> {
+function hostTimes(b: BookingForEmail): string[] {
+  return HOST_ZONES.map((zone) => `Time: ${formatWhen(b.start, zone, 'en')}`);
+}
+
+/** Everything the guest typed, to the host who takes the call. Reply goes to the guest. */
+export async function sendHostNotice(b: BookingForEmail): Promise<MailResult> {
   const text = [
-    `New briefing: ${formatWhen(b.startUtc, 'Asia/Dubai', 'en')}`,
-    `Guest time: ${formatWhen(b.startUtc, b.timezone, 'en')}`,
+    `New briefing with ${b.host.name}, ${callMinutes(b)} minutes.`,
+    ...hostTimes(b),
+    `Guest time: ${formatWhen(b.start, b.guestTimezone, 'en')}`,
     '',
-    `Name: ${b.name}`,
-    `Email: ${b.email}`,
+    `Name: ${b.guestName}`,
+    `Email: ${b.guestEmail}`,
     `Company: ${b.company}`,
     `Role: ${b.role || '-'}`,
     `Industry: ${b.industry}`,
@@ -148,60 +166,53 @@ export async function sendStudioNotice(b: Booking): Promise<MailResult> {
     'First job for an agent:',
     b.message || '-',
     '',
-    `Manage: ${SITE_URL}/admin`,
+    `Open in the CRM: ${PORTAL_URL}/calendar?booking=${encodeURIComponent(b.id)}`,
   ].join('\n');
   return sendMail({
-    to: studioInbox(),
-    replyTo: b.email,
-    subject: `[briefing] ${b.company} · ${b.name}`,
+    to: b.host.email,
+    replyTo: b.guestEmail,
+    subject: `[briefing] ${b.company} · ${b.guestName}`,
     text,
-    ics: { method: 'PUBLISH', content: bookingIcs(b, 'PUBLISH', 'studio') },
+    ics: { method: 'PUBLISH', content: bookingIcs(b, 'PUBLISH', 'host') },
   });
 }
 
-export async function sendCancellation(b: Booking, by: 'guest' | 'admin'): Promise<MailResult[]> {
+/** Static copy only, with the rebook link. `by` says who cancelled. */
+export async function sendGuestCancellation(b: BookingForEmail, by: 'guest' | 'host'): Promise<MailResult> {
   const t = bookingCopy[b.locale].email;
-  const when = formatWhen(b.startUtc, b.timezone, b.locale);
-  const rebook = `${SITE_URL}${b.locale === 'ar' ? '/ar' : ''}/book`;
-  const guestText = [
-    // No visitor-typed text in mail to the visitor's address: the address is not
-    // verified, so a name field must not become a way to send a message as Itqan.
-    `${t.hello}${b.locale === 'ar' ? '،' : ','}`,
+  const when = formatWhen(b.start, b.guestTimezone, b.locale);
+  const text = [
+    // No visitor-typed text in mail to the visitor's address (see sendGuestConfirmation).
+    greeting(b),
     '',
     `${by === 'guest' ? t.cancelledByYou : t.cancelledByUs} ${when}.`,
     '',
     t.rebook,
-    rebook,
+    `${SITE_URL}${localePath(b)}/book`,
     '',
-    t.signoff,
+    fill(t.signoff, { host: localHostName(b.host, b.locale) }),
   ].join('\n');
-  return Promise.all([
-    sendMail({
-      to: b.email,
-      replyTo: STUDIO_EMAIL,
-      subject: t.cancelSubject,
-      text: guestText,
-      ics: { method: 'CANCEL', content: bookingIcs(b, 'CANCEL', 'guest') },
-    }),
-    sendMail({
-      to: studioInbox(),
-      subject: `[briefing cancelled by ${by}] ${b.company} · ${b.name}`,
-      text: `Cancelled: ${formatWhen(b.startUtc, 'Asia/Dubai', 'en')}\n${b.name} <${b.email}>, ${b.company}`,
-      ics: { method: 'CANCEL', content: bookingIcs(b, 'CANCEL', 'studio') },
-    }),
-  ]);
+  return sendMail({
+    to: b.guestEmail,
+    replyTo: b.host.email,
+    subject: t.cancelSubject,
+    text,
+    ics: { method: 'CANCEL', content: bookingIcs(b, 'CANCEL', 'guest') },
+  });
 }
 
-export async function sendLoginLink(email: string, url: string): Promise<MailResult> {
+export async function sendHostCancellation(b: BookingForEmail): Promise<MailResult> {
   return sendMail({
-    to: email,
-    subject: 'Sign in to the Itqan booking admin',
-    text: [
-      'Open this link to sign in. It works once and expires in 15 minutes.',
-      '',
-      url,
-      '',
-      'If you did not ask for it, ignore this email. Nobody can sign in without the link.',
-    ].join('\n'),
+    to: b.host.email,
+    replyTo: b.guestEmail,
+    subject: `[briefing cancelled by guest] ${b.company} · ${b.guestName}`,
+    text: [`Cancelled by the guest:`, ...hostTimes(b), `${b.guestName} <${b.guestEmail}>, ${b.company}`].join('\n'),
+    ics: { method: 'CANCEL', content: bookingIcs(b, 'CANCEL', 'host') },
   });
+}
+
+/** A guest cancelled from their link: both sides hear about it. */
+export async function sendGuestCancelledNotices(b: BookingForEmail): Promise<{ guest: MailResult; host: MailResult }> {
+  const [guest, host] = await Promise.all([sendGuestCancellation(b, 'guest'), sendHostCancellation(b)]);
+  return { guest, host };
 }

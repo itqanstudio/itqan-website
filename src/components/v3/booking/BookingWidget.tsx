@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import type { BookingCopy } from '@/content/v3/booking';
+import { localHostName, splitAt } from '@/content/v3/booking-format';
+import type { WidgetSlots } from '@/lib/crm/widget-slots';
 import { buildIcs } from '@/lib/scheduling/ics';
 import { SlotPicker } from './SlotPicker';
 import { DetailsForm, EMPTY_DETAILS, type Details } from './DetailsForm';
@@ -12,23 +14,50 @@ interface BookingWidgetProps {
   t: BookingCopy;
   lang: 'en' | 'ar';
   topic: 'briefing' | 'security';
+  /** Restricts the free times and the booking to one host (`/book?with=<slug>`). */
+  withSlug?: string;
+  /** Free times fetched while the page rendered; null makes the widget load them itself. */
+  initial: WidgetSlots | null;
 }
 
-type Load = { state: 'loading' } | { state: 'error' } | { state: 'ready'; slots: string[] };
+type Load =
+  | { state: 'loading' }
+  | { state: 'error' }
+  | { state: 'paused' }
+  | { state: 'ready'; slots: string[]; hosts: WidgetSlots['hosts'] };
 type Step = 'pick' | 'details' | 'done';
 interface Done {
   id: string;
   start: string;
   end: string;
+  hostName: string;
   email: string;
   emailed: boolean;
 }
 
+/** The studio address on the downloaded file; the emailed invite names the host's own address. */
+const ICS_ORGANIZER = 'hello@itqanstudio.com';
 const SPRING = { type: 'spring', stiffness: 320, damping: 32 } as const;
 
-export function BookingWidget({ t, lang, topic }: BookingWidgetProps) {
+function ready(data: WidgetSlots): Load {
+  return { state: 'ready', slots: data.slots, hosts: data.hosts };
+}
+
+/** "Your call is with {host}." with the name isolated for right-to-left text. */
+function WithName({ template, name }: { template: string; name: string }) {
+  const [before, after] = splitAt(template, 'host');
+  return (
+    <>
+      {before}
+      <bdi>{name}</bdi>
+      {after}
+    </>
+  );
+}
+
+export function BookingWidget({ t, lang, topic, withSlug, initial }: BookingWidgetProps) {
   const reduce = useReducedMotion();
-  const [load, setLoad] = useState<Load>({ state: 'loading' });
+  const [load, setLoad] = useState<Load>(initial ? ready(initial) : { state: 'loading' });
   const [tz, setTz] = useState('UTC');
   const [step, setStep] = useState<Step>('pick');
   const [selected, setSelected] = useState<string | null>(null);
@@ -38,23 +67,29 @@ export function BookingWidget({ t, lang, topic }: BookingWidgetProps) {
   const [notice, setNotice] = useState<string | null>(null);
   const [done, setDone] = useState<Done | null>(null);
   const headRef = useRef<HTMLDivElement>(null);
+  const query = withSlug ? `?with=${encodeURIComponent(withSlug)}` : '';
 
   const fetchSlots = useCallback(async () => {
     setLoad({ state: 'loading' });
     try {
-      const res = await fetch('/api/book/slots', { cache: 'no-store' });
-      const body = (await res.json()) as { ok: boolean; data?: { slots: string[] } };
-      if (!res.ok || !body.ok || !body.data) throw new Error('load');
-      setLoad({ state: 'ready', slots: body.data.slots });
+      const res = await fetch(`/api/book/slots${query}`, { cache: 'no-store' });
+      const body = (await res.json()) as { ok: boolean; error?: string; data?: WidgetSlots };
+      if (res.ok && body.ok && body.data) {
+        setLoad(ready(body.data));
+        return;
+      }
+      setLoad(res.status === 503 && body.error === 'paused' ? { state: 'paused' } : { state: 'error' });
     } catch {
       setLoad({ state: 'error' });
     }
-  }, []);
+  }, [query]);
 
+  // On mount: both inputs are fixed for the life of the widget, so this runs once.
+  // Later loads come from Try again or a taken time.
   useEffect(() => {
     setTz(detectZone());
-    void fetchSlots();
-  }, [fetchSlots]);
+    if (!initial) void fetchSlots();
+  }, [fetchSlots, initial]);
 
   // Move focus to the top of the widget on every step change, for keyboard and screen reader users.
   useEffect(() => {
@@ -69,9 +104,9 @@ export function BookingWidget({ t, lang, topic }: BookingWidgetProps) {
       const res = await fetch('/api/book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...details, start: selected, locale: lang, timezone: tz, topic }),
+        body: JSON.stringify({ ...details, start: selected, locale: lang, timezone: tz, topic, ...(withSlug ? { with: withSlug } : {}) }),
       });
-      const body = (await res.json()) as { ok: boolean; error?: string; data?: { id: string; start: string; end: string; emailed: boolean } };
+      const body = (await res.json()) as { ok: boolean; error?: string; data?: Omit<Done, 'email'> };
       if (res.ok && body.ok && body.data) {
         setDone({ ...body.data, email: details.email.trim() });
         setStep('done');
@@ -84,7 +119,8 @@ export function BookingWidget({ t, lang, topic }: BookingWidgetProps) {
         void fetchSlots();
         return;
       }
-      if (body.error === 'limit') setError(t.errors.limit);
+      if (body.error === 'paused') setError(t.errors.paused);
+      else if (body.error === 'limit') setError(t.errors.limit);
       else setError(res.status === 429 ? t.errors.rate : res.status === 400 ? t.errors.invalid : t.errors.server);
     } catch {
       setError(t.errors.network);
@@ -100,9 +136,10 @@ export function BookingWidget({ t, lang, topic }: BookingWidgetProps) {
       uid: `${done.id}@itqanstudio.com`,
       start: new Date(done.start),
       end: new Date(done.end),
-      summary: lang === 'en' ? 'Itqan briefing' : 'جلسة تعريفية مع إتقان',
+      summary: t.done.calendarTitle,
       description: t.done.sent,
-      organizerEmail: 'ibrahim@itqanstudio.com',
+      organizerEmail: ICS_ORGANIZER,
+      organizerName: done.hostName,
       method: 'PUBLISH',
       sequence: 0,
     });
@@ -118,10 +155,16 @@ export function BookingWidget({ t, lang, topic }: BookingWidgetProps) {
   const motionProps = reduce
     ? {}
     : { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -8 }, transition: SPRING };
+  const onlyHost = withSlug && load.state === 'ready' && load.hosts.length === 1 ? load.hosts[0] : null;
 
   return (
     <div className="bk-card">
       <div className="bk-head" ref={headRef} tabIndex={-1}>
+        {step !== 'done' && onlyHost && (
+          <p className="bk-with">
+            <WithName template={t.withHost} name={localHostName(onlyHost, lang)} />
+          </p>
+        )}
         {step !== 'done' && (
           <label className="bk-tz">
             <span>{t.tzLabel}</span>
@@ -139,9 +182,9 @@ export function BookingWidget({ t, lang, topic }: BookingWidgetProps) {
         {step === 'pick' && (
           <motion.div key="pick" {...motionProps}>
             {load.state === 'loading' && <p className="bk-empty" aria-live="polite">{t.loading}</p>}
-            {load.state === 'error' && (
+            {(load.state === 'error' || load.state === 'paused') && (
               <div className="bk-empty" role="alert">
-                <p>{t.loadError}</p>
+                <p>{load.state === 'paused' ? t.paused : t.loadError}</p>
                 <button type="button" className="btn" onClick={() => void fetchSlots()}>
                   {t.retry}
                 </button>
@@ -182,7 +225,7 @@ export function BookingWidget({ t, lang, topic }: BookingWidgetProps) {
           <motion.div key="done" className="bk-done" {...motionProps} aria-live="polite">
             <h2>{t.done.title}</h2>
             <p>
-              {t.done.body} <b>{longLabel(done.start, tz, lang)}</b> ({tz.replace(/_/g, ' ')}).
+              <WithName template={t.done.body} name={done.hostName} /> <b>{longLabel(done.start, tz, lang)}</b> ({tz.replace(/_/g, ' ')}).
             </p>
             {done.emailed ? (
               <p>

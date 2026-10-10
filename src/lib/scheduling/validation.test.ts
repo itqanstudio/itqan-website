@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { availabilitySchema, bookingRequestSchema, blockedDateSchema } from './validation';
-import { DEFAULT_AVAILABILITY } from './config';
+import { bookingRequestSchema, cancelRequestSchema, firstIssue } from './validation';
 import { buildIcs, escapeText, foldLine } from './ics';
+import { isValidTimeZone } from './time';
 import { counterpartPath } from '@/lib/v3/seo';
 
 const good = {
@@ -34,26 +34,28 @@ describe('bookingRequestSchema', () => {
     expect(bookingRequestSchema.safeParse({ ...good, industry: 'oil' }).success).toBe(false);
     expect(bookingRequestSchema.safeParse({ ...good, message: 'x'.repeat(2001) }).success).toBe(false);
   });
+  it('takes an optional host slug and nothing that is not one', () => {
+    expect(bookingRequestSchema.parse({ ...good, with: 'bisma' }).with).toBe('bisma');
+    expect(bookingRequestSchema.parse(good).with).toBeUndefined();
+    ['Bisma', 'b', '1abc', 'a'.repeat(40), 'bisma?x=1', ''].forEach((w) => expect(bookingRequestSchema.safeParse({ ...good, with: w }).success).toBe(false));
+  });
+  it('names the first failing field', () => {
+    const parsed = bookingRequestSchema.safeParse({ ...good, email: 'nope' });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) expect(firstIssue(parsed.error)).toMatch(/^email: /);
+  });
 });
 
-describe('availabilitySchema', () => {
-  it('accepts the defaults', () => {
-    expect(availabilitySchema.safeParse(DEFAULT_AVAILABILITY).success).toBe(true);
+describe('cancelRequestSchema and time zones', () => {
+  it('accepts a url-safe token only', () => {
+    expect(cancelRequestSchema.safeParse({ token: 'A'.repeat(43) }).success).toBe(true);
+    expect(cancelRequestSchema.safeParse({ token: 'short' }).success).toBe(false);
+    expect(cancelRequestSchema.safeParse({ token: `${'A'.repeat(40)}/..` }).success).toBe(false);
   });
-  it('rejects overlapping or backwards windows', () => {
-    const overlap = { ...DEFAULT_AVAILABILITY, weekly: { ...DEFAULT_AVAILABILITY.weekly, mon: [{ start: '10:00', end: '12:00' }, { start: '11:00', end: '13:00' }] } };
-    const backwards = { ...DEFAULT_AVAILABILITY, weekly: { ...DEFAULT_AVAILABILITY.weekly, mon: [{ start: '12:00', end: '10:00' }] } };
-    expect(availabilitySchema.safeParse(overlap).success).toBe(false);
-    expect(availabilitySchema.safeParse(backwards).success).toBe(false);
-  });
-  it('rejects values out of range', () => {
-    expect(availabilitySchema.safeParse({ ...DEFAULT_AVAILABILITY, slotMinutes: 7 }).success).toBe(false);
-    expect(availabilitySchema.safeParse({ ...DEFAULT_AVAILABILITY, horizonDays: 0 }).success).toBe(false);
-    expect(availabilitySchema.safeParse({ ...DEFAULT_AVAILABILITY, timezone: 'Nowhere' }).success).toBe(false);
-  });
-  it('validates blocked dates', () => {
-    expect(blockedDateSchema.safeParse({ date: '2026-02-30' }).success).toBe(false);
-    expect(blockedDateSchema.parse({ date: '2026-12-02' }).note).toBe('');
+  it('knows real time zones', () => {
+    expect(isValidTimeZone('Europe/Stockholm')).toBe(true);
+    expect(isValidTimeZone('Mars/Olympus')).toBe(false);
+    expect(isValidTimeZone('')).toBe(false);
   });
 });
 
