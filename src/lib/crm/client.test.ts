@@ -1,0 +1,211 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cancelCrmBooking, createCrmBooking, crmOrigin, fetchSlots, interpret, isCrmDown, DEFAULT_CRM_ORIGIN } from './client';
+import type { CreateBookingRequest } from './contract';
+import { verifySignature } from './hmac';
+import { slotsDataSchema } from './schemas';
+
+const SECRET = 'test-secret-0123456789abcdef0123456789abcdef';
+
+const booking = {
+  id: '4f9a2b1c-0000-4000-8000-000000000001',
+  start: '2026-10-12T06:00:00.000Z',
+  end: '2026-10-12T06:30:00.000Z',
+  guestName: 'Sara Ahmed',
+  guestEmail: 'sara@example.com',
+  company: 'Example Foods',
+  role: 'COO',
+  industry: 'fnb',
+  message: '',
+  topic: 'briefing',
+  locale: 'en',
+  guestTimezone: 'Asia/Dubai',
+  host: { slug: 'ibrahim', name: 'Ibrahim Shareef', email: 'ibrahim@itqanstudio.com', meetingUrl: 'https://meet.google.com/abc-defg-hij' },
+};
+
+const request: CreateBookingRequest = {
+  start: booking.start,
+  name: 'Sara Ahmed',
+  email: 'sara@example.com',
+  company: 'Example Foods',
+  role: 'COO',
+  industry: 'fnb',
+  message: '',
+  topic: 'briefing',
+  locale: 'en',
+  timezone: 'Asia/Dubai',
+  ipHash: 'a'.repeat(64),
+};
+
+interface Captured {
+  url: string;
+  init: RequestInit;
+}
+
+let calls: Captured[] = [];
+
+function respond(status: number, body: unknown): void {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response(typeof body === 'string' ? body : JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+    }),
+  );
+}
+
+beforeEach(() => {
+  calls = [];
+  vi.stubEnv('ITQAN_BOOKING_SECRET', SECRET);
+  vi.stubEnv('CRM_API_ORIGIN', '');
+  vi.spyOn(console, 'error').mockImplementation(() => undefined);
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+  vi.useRealTimers();
+});
+
+describe('crmOrigin', () => {
+  it('defaults to the production portal and accepts an http(s) override', () => {
+    expect(crmOrigin({})).toBe(DEFAULT_CRM_ORIGIN);
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://localhost:3999/' })).toBe('http://localhost:3999');
+    expect(crmOrigin({ CRM_API_ORIGIN: 'https://portal.example.com/some/path' })).toBe('https://portal.example.com');
+  });
+  it('refuses anything that is not a plain http(s) origin', () => {
+    expect(crmOrigin({ CRM_API_ORIGIN: 'ftp://x.example' })).toBeNull();
+    expect(crmOrigin({ CRM_API_ORIGIN: 'not a url' })).toBeNull();
+    expect(crmOrigin({ CRM_API_ORIGIN: 'https://user:pass@x.example' })).toBeNull();
+  });
+});
+
+describe('signed requests', () => {
+  it('signs a GET with the path and query, and sends no body', async () => {
+    respond(200, { ok: true, data: { slotMinutes: 30, timezone: 'Asia/Dubai', hosts: [], slots: [] } });
+    const result = await fetchSlots('bisma');
+    expect(result).toEqual({ ok: true, data: { slotMinutes: 30, timezone: 'Asia/Dubai', hosts: [], slots: [] } });
+    const { url, init } = calls[0];
+    expect(url).toBe('https://portal.itqanstudio.com/api/integrations/website/slots?with=bisma');
+    expect(init.method).toBe('GET');
+    expect(init.body).toBeUndefined();
+    expect(init.redirect).toBe('error');
+    const header = (init.headers as Record<string, string>)['x-itqan-signature'];
+    expect(
+      verifySignature({ secret: SECRET, header, method: 'GET', pathWithQuery: '/api/integrations/website/slots?with=bisma', body: '' }).ok,
+    ).toBe(true);
+  });
+
+  it('signs the exact JSON body of a POST', async () => {
+    vi.stubEnv('CRM_API_ORIGIN', 'http://localhost:3999');
+    respond(201, { ok: true, data: { booking, cancelToken: 'tok_abcdefghijklmnopqrstuvwxyz' } });
+    const result = await createCrmBooking(request);
+    expect(result.ok).toBe(true);
+    const { url, init } = calls[0];
+    expect(url).toBe('http://localhost:3999/api/integrations/website/bookings');
+    expect(JSON.parse(String(init.body))).toEqual(request);
+    const headers = init.headers as Record<string, string>;
+    expect(headers['content-type']).toBe('application/json');
+    expect(
+      verifySignature({ secret: SECRET, header: headers['x-itqan-signature'], method: 'POST', pathWithQuery: '/api/integrations/website/bookings', body: String(init.body) }).ok,
+    ).toBe(true);
+  });
+
+  it('omits the query when no host is named', async () => {
+    respond(200, { ok: true, data: { slotMinutes: 30, timezone: 'Asia/Dubai', hosts: [], slots: [] } });
+    await fetchSlots();
+    expect(calls[0].url).toBe('https://portal.itqanstudio.com/api/integrations/website/slots');
+  });
+
+  it('fails closed without a usable secret: no request at all', async () => {
+    vi.stubEnv('ITQAN_BOOKING_SECRET', 'short');
+    respond(200, {});
+    expect(await fetchSlots()).toEqual({ ok: false, error: 'unauthorized', status: 0, message: 'no_secret' });
+    expect(calls).toHaveLength(0);
+  });
+
+  it('refuses a broken CRM_API_ORIGIN without calling out', async () => {
+    vi.stubEnv('CRM_API_ORIGIN', 'javascript:alert(1)');
+    respond(200, {});
+    expect(await cancelCrmBooking('x'.repeat(43))).toMatchObject({ ok: false, error: 'server', status: 0 });
+    expect(calls).toHaveLength(0);
+  });
+});
+
+describe('answers', () => {
+  it('passes business errors through with their status', async () => {
+    respond(409, { ok: false, error: 'unavailable' });
+    const taken = await createCrmBooking(request);
+    expect(taken).toEqual({ ok: false, error: 'unavailable', status: 409 });
+    if (!taken.ok) expect(isCrmDown(taken)).toBe(false);
+
+    respond(429, { ok: false, error: 'limit', message: 'one upcoming booking per email' });
+    expect(await createCrmBooking(request)).toEqual({ ok: false, error: 'limit', status: 429, message: 'one upcoming booking per email' });
+
+    respond(404, { ok: false, error: 'not_found' });
+    expect(await cancelCrmBooking('x'.repeat(43))).toMatchObject({ ok: false, error: 'not_found', status: 404 });
+
+    respond(409, { ok: false, error: 'past' });
+    expect(await cancelCrmBooking('x'.repeat(43))).toMatchObject({ ok: false, error: 'past', status: 409 });
+  });
+
+  it('treats 5xx, 401, HTML pages and wrong shapes as the CRM being down', async () => {
+    respond(503, { ok: false, error: 'unavailable' });
+    const down = await fetchSlots();
+    expect(down.ok === false && isCrmDown(down)).toBe(true);
+
+    respond(401, { ok: false, error: 'unauthorized' });
+    const unauth = await fetchSlots();
+    expect(unauth.ok === false && isCrmDown(unauth)).toBe(true);
+
+    respond(404, '<html>Not found</html>');
+    const html = await cancelCrmBooking('x'.repeat(43));
+    expect(html).toMatchObject({ ok: false, error: 'server', status: 404 });
+
+    respond(200, { ok: true, data: { slotMinutes: 'thirty' } });
+    expect(await fetchSlots()).toMatchObject({ ok: false, error: 'server', message: 'bad_shape' });
+
+    respond(201, { ok: true, data: { booking: { ...booking, host: { ...booking.host, meetingUrl: 'http://insecure.example' } }, cancelToken: 'tok_abcdefghijklmnopqrstuvwxyz' } });
+    expect(await createCrmBooking(request)).toMatchObject({ ok: false, error: 'server' });
+  });
+
+  it('returns a failure, never a throw, when the network fails', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new TypeError('fetch failed'))));
+    expect(await fetchSlots()).toEqual({ ok: false, error: 'server', status: 0, message: 'fetch failed' });
+  });
+
+  it('gives up after the timeout', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        (_url: string, init: RequestInit) =>
+          new Promise<Response>((_resolve, reject) => {
+            init.signal?.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' })));
+          }),
+      ),
+    );
+    const pending = fetchSlots(undefined, { timeoutMs: 8_000 });
+    await vi.advanceTimersByTimeAsync(8_000);
+    expect(await pending).toEqual({ ok: false, error: 'server', status: 0, message: 'timeout' });
+  });
+
+  it('refuses an answer bigger than the cap', async () => {
+    const huge = new ReadableStream<Uint8Array>({
+      start(controller) {
+        for (let i = 0; i < 2100; i += 1) controller.enqueue(new Uint8Array(1024));
+        controller.close();
+      },
+    });
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(huge, { status: 200 })));
+    expect(await fetchSlots()).toMatchObject({ ok: false, error: 'server', status: 0, message: 'response_too_large' });
+  });
+});
+
+describe('interpret', () => {
+  it('rejects non-objects and unknown error codes', () => {
+    expect(interpret(200, '[]', slotsDataSchema)).toMatchObject({ ok: false, message: 'not_an_object' });
+    expect(interpret(400, '{"ok":false,"error":"weird"}', slotsDataSchema)).toMatchObject({ ok: false, error: 'server', message: 'unexpected_answer' });
+    expect(interpret(500, '{"ok":true,"data":{}}', slotsDataSchema)).toMatchObject({ ok: false, error: 'server' });
+  });
+});
