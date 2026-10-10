@@ -32,7 +32,7 @@
 ## Backups / DR
 - Bookings are in the CRM's Postgres, which has its own daily `pg_dump` to S3 (see the CRM's
   `DEPLOYMENT.md`). The legacy SQLite file is covered only by the daily AMIs until it is exported.
-  The whole box (incl. this app + its config) is captured by **daily AMIs** (DLM policy `policy-09cd80b526ed584a1`, retain 7) — full-box restore in minutes. See `~/Desktop/aws-migration/DR-RUNBOOK.md`.
+  The whole box (incl. this app + its config) is captured by **daily AMIs** (DLM policy `policy-09cd80b526ed584a1`, retain 7); a full-box restore takes minutes. See `~/Desktop/aws-migration/DR-RUNBOOK.md`.
 
 ## Monitoring
 - Route 53 health check + CloudWatch alarm `uptime-itqanstudio-com` → SNS email on downtime.

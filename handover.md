@@ -1,6 +1,6 @@
 # Itqan Studio Website — Handover
 
-## 2026-10-11 — /book now runs on the CRM (CRM v3 rebuild, workstream W). NOT deployed: waits on Ibrahim's go
+## 2026-10-11: /book now runs on the CRM (CRM v3 rebuild, workstream W). NOT deployed: waits on Ibrahim's go
 
 Branch `feat/crm-booking-link` (worktree `itqan-website-crm-link`), local commits only, nothing pushed.
 Contract: `itqan-crm-v3/docs/v3/REBUILD-SPEC.md` section 8. Tracked work:
@@ -47,10 +47,16 @@ Contract: `itqan-crm-v3/docs/v3/REBUILD-SPEC.md` section 8. Tracked work:
    (Ibrahim's call).
 
 ### Verified locally (11 Oct)
-- `npm run typecheck`, `npm run test:unit`, `npm run build` green.
-- End to end with `scripts/mock-crm.mjs` on :3999 and `next dev` on :3101 in Chrome (playwright):
-  book, confirm, cancel via the token link, paused state. Screenshots in the session scratchpad
+- `npm run typecheck`, `npm test` (105 vitest tests in 10 files plus the 3 node script suites),
+  `npm run build` green. Coverage on the new code: `src/lib/crm` 97%, `src/lib/scheduling` 92%,
+  `scripts/lib` 98% (lines). gitleaks over the branch commits: clean.
+- The whole flow with `scripts/mock-crm.mjs` on :3999 and `next dev` on :3101, driven in Chrome by
+  `scripts/smoke-booking.mjs` (15/15): book, confirm naming the host, cancel via the token link, an
+  Arabic booking with `?with=bisma`, a host cancel through `/api/crm/notify`, the paused state in
+  English and Arabic, the `/admin` redirect, no console errors. Screenshots in the session scratchpad
   `website-shots/`.
+- The export script against a synthetic SQLite file and the mock: dry run counts, 3 requests under
+  the cap, a second run skips all 30, a wrong secret is refused.
 
 ### Open items
 - The CRM side (workstream C) must answer exactly the section 8 shapes; `scripts/mock-crm.mjs` is the
@@ -58,6 +64,15 @@ Contract: `itqan-crm-v3/docs/v3/REBUILD-SPEC.md` section 8. Tracked work:
 - For imported bookings, the host-cancel email's .ics CANCEL uses the CRM booking id as the UID. If
   the CRM gives imported rows a new id instead of the legacy one, calendar apps will not match it to
   the old invite (the email itself still arrives).
+- The home page still says "30-minute briefing" in `src/content/v3/en.ts` (lines 39, 185, 275) and
+  `ar.ts` (36, 182, 271). True while the CRM rule is 30 minutes; change them with the rule.
+- If the CRM books but its answer times out (8 s), the visitor sees the paused message and no email;
+  the host still gets the CRM notification. Rare; the host emails the guest.
+
+### Monetization angle
+- The pattern built here (public booking page on the client's site, signed server-to-server calls,
+  bookings landing as contacts in the client's own CRM, a mock for local testing) is a reusable module
+  for client sites that run their own CRM.
 
 ## 2026-10-08 — Brand v3 site built, booking platform + admin, shipping to production
 

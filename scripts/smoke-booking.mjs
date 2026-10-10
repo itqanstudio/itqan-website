@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Local end-to-end check of the booking flow against scripts/mock-crm.mjs.
+ * Local check of the whole booking flow against scripts/mock-crm.mjs.
  * Drives the installed Google Chrome (playwright-core, channel "chrome"; no
  * browser download) and saves a screenshot per step.
  *

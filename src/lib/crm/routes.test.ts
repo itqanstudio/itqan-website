@@ -9,7 +9,7 @@ import { signatureHeader, verifySignature } from './hmac';
 import { clearReplayMemory } from './replay';
 
 /*
- * The public booking routes and the CRM callback, end to end inside the
+ * The public booking routes and the CRM callback, whole requests inside the
  * process: the CRM is a stubbed fetch, mail prints to the log (development
  * mode without SMTP). Every test uses its own client IP so the in-memory rate
  * limits do not leak between tests.
