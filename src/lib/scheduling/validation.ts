@@ -46,7 +46,11 @@ export const bookingRequestSchema = z.object({
 export type BookingRequest = z.infer<typeof bookingRequestSchema>;
 
 /** Bidi embedding, override and isolate marks: they make text read otherwise than it is stored. */
-const BIDI_CONTROLS = /[‪-‮⁦-⁩]/g;
+const BIDI_CONTROLS = new RegExp(
+  // U+202A to U+202E and U+2066 to U+2069, built from code points so this file holds no invisible characters.
+  `[${String.fromCodePoint(0x202a)}-${String.fromCodePoint(0x202e)}${String.fromCodePoint(0x2066)}-${String.fromCodePoint(0x2069)}]`,
+  'g',
+);
 
 /**
  * The guest's reason on the cancel page, as plain text: line breaks kept (CRLF

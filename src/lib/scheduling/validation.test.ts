@@ -54,7 +54,9 @@ describe('cancelRequestSchema and time zones', () => {
   });
   it('reads the optional reason as plain text, and an empty one as none', () => {
     const token = 'A'.repeat(43);
-    expect(cancelRequestSchema.parse({ token, reason: ' Two\r\nlines\u0007 ‮done‬ ' })).toEqual({ token, reason: 'Two\nlines done' });
+    // Bidi marks built from code points, so the source file holds no invisible characters.
+    const overridden = `${String.fromCodePoint(0x202e)}done${String.fromCodePoint(0x202c)}`;
+    expect(cancelRequestSchema.parse({ token, reason: ` Two\r\nlines\u0007 ${overridden} ` })).toEqual({ token, reason: 'Two\nlines done' });
     expect(cancelRequestSchema.parse({ token, reason: '  \n ' })).toEqual({ token, reason: undefined });
     expect(cancelRequestSchema.parse({ token })).toEqual({ token });
     expect(cancelRequestSchema.safeParse({ token, reason: 'ر'.repeat(500) }).success).toBe(true);

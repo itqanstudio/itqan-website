@@ -387,7 +387,8 @@ describe('POST /api/book/cancel', () => {
 
   it("passes the guest's reason to the CRM and to the founders, as plain text", async () => {
     crmCancel({ changed: true, booking, noticeOwed: true });
-    const res = await cancel('A'.repeat(43), ORIGIN, { reason: '  We found another supplier.\r\nThank you.‮  ' });
+    // A right-to-left override built from its code point, so the source file holds no invisible character.
+    const res = await cancel('A'.repeat(43), ORIGIN, { reason: `  We found another supplier.\r\nThank you.${String.fromCodePoint(0x202e)}  ` });
     expect(res.status).toBe(200);
     expect(JSON.parse(String(crmCalls[0].init.body))).toEqual({ token: 'A'.repeat(43), reason: 'We found another supplier.\nThank you.' });
     expect(to('bisma@itqanstudio.com')[0]).toContain('Their reason:\nWe found another supplier.\nThank you.');
