@@ -1,8 +1,11 @@
 import { formatWhen } from '@/content/v3/booking';
 import type { BookingForEmail } from '@/lib/crm/contract';
+import { claimSend, clearSendMemory, sendMemorySize, settleSend } from './founders-memory';
 import { buildIcs, type IcsAttendee, type IcsMethod } from './ics';
 import { callMinutes, meetingLink, sendMail, type MailResult } from './mail';
 import { BIDI_CONTROLS } from './validation';
+
+export { FOUNDER_MEMORY_MAX } from './founders-memory';
 
 /*
  * The founders' calendar invite. Every booking sends each active founder (the
@@ -17,9 +20,8 @@ import { BIDI_CONTROLS } from './validation';
  * retry reaches this file again. A calendar takes a repeated CANCEL as a no-op,
  * but each one is another email, so this process remembers every REQUEST and
  * CANCEL that went (booking, method, address) for 24 hours and does not send
- * it again. A send that did not go is forgotten at once, so a retry tries it.
- * The memory is bounded (the oldest is dropped first); the site is one
- * long-lived Node process (same assumption as lib/rate-limit.ts).
+ * it again (founders-memory.ts). A send that did not go is forgotten at once,
+ * so a retry tries it; one still going is never dropped to make room.
  *
  * In order: both sends run in the background, so a quick cancel could reach a
  * founder before the invite it withdraws, and a calendar would then ignore the
@@ -44,13 +46,6 @@ export interface CancelNote {
   reason?: string;
 }
 
-/** How long a founder's sent REQUEST or CANCEL is remembered. */
-const SENT_MEMORY_MS = 24 * 60 * 60 * 1000;
-/** The most sends remembered: two founders, two methods, so about 500 bookings a day. */
-export const FOUNDER_MEMORY_MAX = 2_000;
-
-/** "<booking id>|<method>|<address>" -> when this process started sending it. */
-const sentAt = new Map<string, number>();
 /** Per booking, the invite send still running: a cancel for that booking waits for it. */
 const pendingInvites = new Map<string, Promise<unknown>>();
 
@@ -58,37 +53,15 @@ function memoryKey(bookingId: string, method: IcsMethod, email: string): string 
   return `${bookingId}|${method}|${email.toLowerCase()}`;
 }
 
-/**
- * Takes a send for this process: false when it went (or is going) within the
- * last 24 hours. Marked before sending, so two calls at once send it once.
- */
-function claimSend(key: string, now: number): boolean {
-  const at = sentAt.get(key);
-  if (at !== undefined && now - at < SENT_MEMORY_MS) return false;
-  sentAt.delete(key);
-  while (sentAt.size >= FOUNDER_MEMORY_MAX) {
-    const oldest = sentAt.keys().next();
-    if (oldest.done) break;
-    sentAt.delete(oldest.value);
-  }
-  sentAt.set(key, now);
-  return true;
-}
-
-/** A send that did not go: forgotten (only while it is still this claim), so a retry sends it. */
-function releaseSend(key: string, at: number): void {
-  if (sentAt.get(key) === at) sentAt.delete(key);
-}
-
 /** Test hook: forget every send and every running invite. */
 export function clearFounderMemory(): void {
-  sentAt.clear();
+  clearSendMemory();
   pendingInvites.clear();
 }
 
-/** Test hook: how many sends are remembered. */
+/** Test hook: how many sends are remembered, going or gone. */
 export function founderMemorySize(): number {
-  return sentAt.size;
+  return sendMemorySize();
 }
 
 /**
@@ -256,7 +229,7 @@ async function sendOne(key: string, claimedAt: number, send: () => Promise<MailR
     console.error('[mail] a founder calendar email threw:', err instanceof Error ? err.message : String(err));
     result = { sent: false, reason: 'failed' };
   }
-  if (!result.sent) releaseSend(key, claimedAt);
+  settleSend(key, claimedAt, result.sent);
   return result;
 }
 
@@ -293,7 +266,7 @@ async function sendToFounders(b: BookingForEmail, cancel?: CancelNote): Promise<
       )
     );
   } catch (err) {
-    claimed.forEach(({ key, at }) => releaseSend(key, at));
+    claimed.forEach(({ key, at }) => settleSend(key, at, false));
     console.error('[mail] the founders\' calendar emails threw for booking', b.id, err instanceof Error ? err.message : String(err));
     return b.team.map((): MailResult => ({ sent: false, reason: 'failed' }));
   }

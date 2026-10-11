@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BookingForEmail } from '@/lib/crm/contract';
-import { clearFounderMemory, founderMemorySize, sendFounderCancellations, sendFounderInvites } from './founders-mail';
+import { FOUNDER_MEMORY_MAX, clearFounderMemory, founderMemorySize, sendFounderCancellations, sendFounderInvites } from './founders-mail';
 import type { Mail, MailResult } from './mail';
 
 /*
@@ -94,6 +94,37 @@ describe('a cancel never overtakes its invite', () => {
     const cancels = sendFounderCancellations(booking, { by: 'host' });
     expect(sendMail).toHaveBeenCalledTimes(2);
     await cancels;
+  });
+});
+
+describe('the send memory (review r2)', () => {
+  const one = { ...booking, team: [booking.team[0]] };
+  const id = (n: number) => `b3c1d2e4-0000-4000-8000-${String(n).padStart(12, '0')}`;
+
+  it('sends once when two calls for the same booking come at once', async () => {
+    sendMail.mockResolvedValue({ sent: true });
+    const [first, second] = await Promise.all([sendFounderInvites(booking), sendFounderInvites(booking)]);
+    expect(first).toEqual([{ sent: true }, { sent: true }]);
+    expect(second).toEqual([]);
+    expect(sendMail).toHaveBeenCalledTimes(2);
+  });
+
+  it('never drops a send that is still going to make room, so a retry of it does not send it again', async () => {
+    let release: () => void = () => undefined;
+    const hanging = new Promise<MailResult>((resolve) => {
+      release = () => resolve({ sent: true });
+    });
+    sendMail.mockImplementationOnce(() => hanging).mockResolvedValue({ sent: true });
+    const first = sendFounderInvites({ ...one, id: id(0) });
+    // A full memory of sends that went, all after the one still going.
+    for (let n = 1; n <= FOUNDER_MEMORY_MAX; n += 1) await sendFounderInvites({ ...one, id: id(n) });
+    expect(await sendFounderInvites({ ...one, id: id(0) })).toEqual([]);
+    expect(sendMail).toHaveBeenCalledTimes(FOUNDER_MEMORY_MAX + 1);
+    release();
+    expect(await first).toEqual([{ sent: true }]);
+    // Once it went it is remembered like any other, and the memory stays bounded.
+    expect(await sendFounderInvites({ ...one, id: id(0) })).toEqual([]);
+    expect(founderMemorySize()).toBe(FOUNDER_MEMORY_MAX);
   });
 });
 
