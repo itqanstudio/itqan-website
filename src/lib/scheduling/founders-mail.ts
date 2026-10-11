@@ -366,12 +366,17 @@ function retryCancel(b: BookingForEmail, cancel: CancelNote, attempt: number): v
   }
   console.warn(`[mail] founders calendar cancel not sent; trying again in ${delay / 1000} s for booking`, b.id);
   const timer = later(delay, () => {
-    void cancelInOrder(b, cancel).then((results) => {
-      // Dropped meanwhile (the test hook): this retry ends here.
-      if (cancelRetries.get(b.id) !== timer) return;
-      if (results.some(failedToSend)) retryCancel(b, cancel, attempt + 1);
-      else cancelRetries.delete(b.id);
-    });
+    void cancelInOrder(b, cancel)
+      .then((results) => {
+        // Dropped meanwhile (the test hook): this retry ends here.
+        if (cancelRetries.get(b.id) !== timer) return;
+        if (results.some(failedToSend)) retryCancel(b, cancel, attempt + 1);
+        else cancelRetries.delete(b.id);
+      })
+      .catch((err: unknown) => {
+        if (cancelRetries.get(b.id) === timer) cancelRetries.delete(b.id);
+        console.error('[mail] the founders calendar cancel retry failed for booking', b.id, err instanceof Error ? err.message : String(err));
+      });
   });
   cancelRetries.set(b.id, timer);
 }
