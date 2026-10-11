@@ -33,9 +33,19 @@ describe('the cancel form', () => {
     expect(cancelFailure('reason_too_long')).toEqual({ final: false, message: 'reasonTooLong' });
     expect(cancelFailure('unreadable')).toEqual({ final: false, message: 'unreadable' });
     expect(cancelFailure('paused')).toEqual({ final: false, message: 'paused' });
-    expect(cancelFailure('invalid')).toEqual({ final: false, message: 'server' });
-    expect(cancelFailure('rate')).toEqual({ final: false, message: 'server' });
     expect(cancelFailure(undefined)).toEqual({ final: false, message: 'server' });
+    expect(cancelFailure('Bad origin')).toEqual({ final: false, message: 'server' });
+  });
+
+  it('says "wait and try again" for a rate limit and treats a malformed request like an unreadable one (review r2)', () => {
+    expect(cancelFailure('rate')).toEqual({ final: false, message: 'rate' });
+    expect(cancelFailure('invalid')).toEqual({ final: false, message: 'unreadable' });
+  });
+
+  it('has its own sentence for every error code the cancel route answers with (review r2)', () => {
+    // Every `error` the route writes (src/app/api/book/cancel/route.ts), except the origin refusal the page never meets.
+    const routeCodes = ['rate', 'unreadable', 'not_found', 'reason_too_long', 'invalid', 'paused', 'past', 'reason_rejected'];
+    routeCodes.forEach((code) => expect(cancelFailure(code).message, code).not.toBe('server'));
   });
 });
 
@@ -60,5 +70,10 @@ describe('the cancel page copy', () => {
     }
     expect(bookingCopy.en.cancel.reasonRejected).toBe('We could not take this reason. Change it or leave it empty, then try again.');
     expect(bookingCopy.en.cancel.unreadable).toBe('Your request did not reach us in one piece. Try again.');
+  });
+
+  it('tells a rate limit to wait, in both languages (review r2)', () => {
+    expect(bookingCopy.en.errors.rate).toBe('Too many attempts from this connection. Wait ten minutes and try again.');
+    expect(bookingCopy.ar.errors.rate).toContain('انتظر عشر دقائق');
   });
 });

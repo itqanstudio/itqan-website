@@ -12,7 +12,7 @@ interface CancelButtonProps {
   lang: Lang;
   t: BookingCopy['cancel'];
   rebook: string;
-  errors: { server: string; paused: string; network: string };
+  errors: { server: string; paused: string; rate: string; network: string };
 }
 
 type State =
@@ -48,6 +48,7 @@ function failureState(body: Answer, t: BookingCopy['cancel'], errors: CancelButt
     reasonRejected: t.reasonRejected,
     unreadable: t.unreadable,
     paused: errors.paused,
+    rate: errors.rate,
     server: errors.server,
   };
   return { kind: failure.final ? 'final' : 'error', message: text[failure.message] };

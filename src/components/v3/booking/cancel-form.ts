@@ -27,8 +27,8 @@ export function keepHref(lang: 'en' | 'ar'): string {
   return lang === 'ar' ? '/ar' : '/';
 }
 
-/** Which sentence a failed cancel shows: cancel-page copy, or the shared paused and server errors. */
-export type CancelFailureMessage = 'past' | 'notFound' | 'reasonTooLong' | 'reasonRejected' | 'unreadable' | 'paused' | 'server';
+/** Which sentence a failed cancel shows: cancel-page copy, or the shared paused, rate and server errors. */
+export type CancelFailureMessage = 'past' | 'notFound' | 'reasonTooLong' | 'reasonRejected' | 'unreadable' | 'paused' | 'rate' | 'server';
 
 export interface CancelFailure {
   /** True when the link cannot work again: the form is replaced by the message and a rebook link. */
@@ -39,8 +39,9 @@ export interface CancelFailure {
 /**
  * What an error code from POST /api/book/cancel means for the page. Only a
  * call that already took place or a link that failed is final; a reason the
- * CRM refused, one that is too long, or a request that arrived broken keep the
- * form so the guest can fix it and send again.
+ * CRM refused, one that is too long, a request that arrived broken or
+ * malformed (`invalid`), or too many tries (`rate`, wait and send again) keep
+ * the form so the guest can send again.
  */
 export function cancelFailure(code: string | undefined): CancelFailure {
   switch (code) {
@@ -53,7 +54,10 @@ export function cancelFailure(code: string | undefined): CancelFailure {
     case 'reason_too_long':
       return { final: false, message: 'reasonTooLong' };
     case 'unreadable':
+    case 'invalid':
       return { final: false, message: 'unreadable' };
+    case 'rate':
+      return { final: false, message: 'rate' };
     case 'paused':
       return { final: false, message: 'paused' };
     default:

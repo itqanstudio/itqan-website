@@ -20,7 +20,7 @@ export function CancelPage({ lang, token }: { lang: Lang; token: string }) {
       <div className="wrap">
         <h1 id="cancel-title">{t.title}</h1>
         {valid ? (
-          <CancelButton token={token} lang={lang} t={t} rebook={rebook} errors={{ server: copy.errors.server, paused: copy.errors.paused, network: copy.errors.network }} />
+          <CancelButton token={token} lang={lang} t={t} rebook={rebook} errors={{ server: copy.errors.server, paused: copy.errors.paused, rate: copy.errors.rate, network: copy.errors.network }} />
         ) : (
           <>
             <p className="lead">{t.notFound}</p>
