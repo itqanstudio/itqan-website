@@ -500,6 +500,48 @@ describe('POST /api/book/cancel', () => {
     expect(crmCalls.slice(0, 2).map((c) => c.url.split('/').pop())).toEqual(['cancel', 'cancel']);
   });
 
+  it("retries a founder's calendar cancel that failed, after the CRM has stopped asking for it (review r2)", async () => {
+    vi.useFakeTimers();
+    try {
+      // The guest's email goes and is recorded; Bisma's calendar cancel fails once.
+      let bismaFails = 1;
+      vi.spyOn(console, 'info').mockImplementation((msg: string) => {
+        if (msg.includes('to=bisma@itqanstudio.com ') && bismaFails > 0) {
+          bismaFails -= 1;
+          throw new Error('smtp down');
+        }
+        printed.push(msg);
+      });
+      let recorded = false;
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (url: string, init: RequestInit) => {
+          crmCalls.push({ url, init });
+          if (url.endsWith('/bookings/notice-sent')) {
+            recorded = true;
+            return new Response(JSON.stringify({ ok: true, data: { recorded: true } }), { status: 200 });
+          }
+          return new Response(JSON.stringify({ ok: true, data: { changed: !recorded, booking, noticeOwed: !recorded } }), { status: 200 });
+        }),
+      );
+      expect((await cancel('E'.repeat(43))).status).toBe(200);
+      expect(to('sara@example.com')).toHaveLength(1);
+      expect(to('bisma@itqanstudio.com')).toHaveLength(0);
+      // The guest cancels again: the CRM owes nothing now, so the route sends nothing.
+      expect((await cancel('E'.repeat(43))).status).toBe(200);
+      expect(to('bisma@itqanstudio.com')).toHaveLength(0);
+      // A minute later this process tries Bisma's cancel again on its own.
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect(to('bisma@itqanstudio.com')).toHaveLength(1);
+      expect(to('bisma@itqanstudio.com')[0]).toContain('ics=CANCEL');
+      expect(to('ibrahim@itqanstudio.com')).toHaveLength(1);
+      expect(to('sara@example.com')).toHaveLength(1);
+    } finally {
+      clearFounderMemory();
+      vi.useRealTimers();
+    }
+  });
+
   it('sends each founder the cancel once from this process, while the guest email still follows the CRM (W5)', async () => {
     crmCancel({ changed: false, booking, noticeOwed: true });
     await cancel('A'.repeat(43));

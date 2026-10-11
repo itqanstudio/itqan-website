@@ -53,8 +53,22 @@ export interface CancelNote {
  */
 export const INVITE_WAIT_MS = 4 * SMTP_TIMEOUT_MS;
 
+/**
+ * When a founders' CANCEL that failed is tried again in this process (review
+ * r2): once the guest's email is recorded the CRM stops asking the site to
+ * send, so nothing else would. The first retry is 1 minute after the failed
+ * send, the second 5 minutes after a failed first retry; then it is given up
+ * (logged). Only a send that failed is retried, never one that is not
+ * configured. A restart loses a retry that is waiting.
+ */
+export const CANCEL_RETRY_DELAYS_MS: readonly number[] = [60_000, 300_000];
+/** The most bookings with a cancel retry waiting at once (far above two founders' day). */
+const CANCEL_RETRY_MAX = 500;
+
 /** Per booking, the invite send still running: a cancel for that booking waits for it. */
 const pendingInvites = new Map<string, Promise<unknown>>();
+/** Per booking, the timer of the cancel retry waiting to run: one per booking. */
+const cancelRetries = new Map<string, ReturnType<typeof setTimeout>>();
 
 /** A timer that never keeps the process alive on its own (Node's unref, when the timer has one). */
 function later(ms: number, run: () => void): ReturnType<typeof setTimeout> {
@@ -91,10 +105,12 @@ function memoryKey(bookingId: string, method: IcsMethod, email: string): string 
   return `${bookingId}|${method}|${email.toLowerCase()}`;
 }
 
-/** Test hook: forget every send and every running invite. */
+/** Test hook: forget every send and every running invite, and drop every waiting cancel retry. */
 export function clearFounderMemory(): void {
   clearSendMemory();
   pendingInvites.clear();
+  cancelRetries.forEach((timer) => clearTimeout(timer));
+  cancelRetries.clear();
 }
 
 /** Test hook: how many sends are remembered, going or gone. */
@@ -331,16 +347,58 @@ export function sendFounderInvites(b: BookingForEmail): Promise<MailResult[]> {
   return sends;
 }
 
-/**
- * Any cancel: each founder gets the CANCEL for the same event, once, and never
- * before this booking's invite send has finished (sent or not). From the first
- * call on, no new invite goes for this booking. Never throws.
- */
-export function sendFounderCancellations(b: BookingForEmail, cancel: CancelNote): Promise<MailResult[]> {
-  markCancelled(b.id, Date.now());
+/** The CANCEL to each founder who has not had it, after this booking's invite send (waited for at most INVITE_WAIT_MS). */
+function cancelInOrder(b: BookingForEmail, cancel: CancelNote): Promise<MailResult[]> {
   const invite = pendingInvites.get(b.id);
   if (!invite) return sendToFounders(b, cancel);
   return inviteEnded(b.id, invite).then(() => sendToFounders(b, cancel));
+}
+
+const failedToSend = (result: MailResult): boolean => !result.sent && result.reason === 'failed';
+
+/** Runs retry `attempt` after its delay, and the next one if that fails too; past the last, gives up. */
+function retryCancel(b: BookingForEmail, cancel: CancelNote, attempt: number): void {
+  const delay = CANCEL_RETRY_DELAYS_MS[attempt];
+  if (delay === undefined) {
+    cancelRetries.delete(b.id);
+    console.error('[mail] gave up on the founders calendar cancel after its retries for booking', b.id);
+    return;
+  }
+  console.warn(`[mail] founders calendar cancel not sent; trying again in ${delay / 1000} s for booking`, b.id);
+  const timer = later(delay, () => {
+    void cancelInOrder(b, cancel).then((results) => {
+      // Dropped meanwhile (the test hook): this retry ends here.
+      if (cancelRetries.get(b.id) !== timer) return;
+      if (results.some(failedToSend)) retryCancel(b, cancel, attempt + 1);
+      else cancelRetries.delete(b.id);
+    });
+  });
+  cancelRetries.set(b.id, timer);
+}
+
+/** Starts the retries for a cancel that failed for some founder, unless this booking already has them. */
+function retryIfFailed(b: BookingForEmail, cancel: CancelNote, results: readonly MailResult[]): void {
+  if (!results.some(failedToSend) || cancelRetries.has(b.id)) return;
+  if (cancelRetries.size >= CANCEL_RETRY_MAX) {
+    console.error('[mail] too many founders calendar cancels waiting to retry; no retry for booking', b.id);
+    return;
+  }
+  retryCancel(b, cancel, 0);
+}
+
+/**
+ * Any cancel: each founder gets the CANCEL for the same event, once, and never
+ * before this booking's invite send has finished (sent or not). From the first
+ * call on, no new invite goes for this booking, and a CANCEL that failed is
+ * tried again in this process (CANCEL_RETRY_DELAYS_MS). Never throws.
+ */
+export function sendFounderCancellations(b: BookingForEmail, cancel: CancelNote): Promise<MailResult[]> {
+  markCancelled(b.id, Date.now());
+  const sends = cancelInOrder(b, cancel);
+  void sends
+    .then((results) => retryIfFailed(b, cancel, results))
+    .catch((err: unknown) => console.error('[mail] could not set up the founders cancel retry for booking', b.id, err instanceof Error ? err.message : String(err)));
+  return sends;
 }
 
 /** Logs the founders' sends that did not go (counts only); they never change an answer. */

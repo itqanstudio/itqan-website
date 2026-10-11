@@ -52,6 +52,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  // Drops any cancel retry a test left waiting, so no timer outlives its test.
+  clearFounderMemory();
   vi.unstubAllEnvs();
   vi.restoreAllMocks();
 });
@@ -137,6 +139,82 @@ describe('a cancel waits for its invite only so long (review r2)', () => {
     const cancels = sendFounderCancellations(booking, { by: 'guest' });
     await invites;
     expect(await cancels).toEqual([{ sent: true }, { sent: true }]);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+});
+
+describe('a founders cancel that did not go is tried again (review r2)', () => {
+  const MINUTE = 60_000;
+  const toBisma = () => methods().filter((m) => m === 'CANCEL bisma@itqanstudio.com').length;
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('retries 1 minute after the failed send, only for the founder it missed, then stops', async () => {
+    vi.useFakeTimers();
+    let bismaFails = 1;
+    sendMail.mockImplementation((mail) => {
+      if (mail.to.startsWith('bisma') && bismaFails > 0) {
+        bismaFails -= 1;
+        return Promise.resolve<MailResult>({ sent: false, reason: 'failed' });
+      }
+      return Promise.resolve<MailResult>({ sent: true });
+    });
+    expect(await sendFounderCancellations(booking, { by: 'guest' })).toEqual([{ sent: true }, { sent: false, reason: 'failed' }]);
+    await vi.advanceTimersByTimeAsync(MINUTE - 1);
+    expect(toBisma()).toBe(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(methods()).toEqual(['CANCEL ibrahim@itqanstudio.com', 'CANCEL bisma@itqanstudio.com', 'CANCEL bisma@itqanstudio.com']);
+    await vi.advanceTimersByTimeAsync(30 * MINUTE);
+    expect(sendMail).toHaveBeenCalledTimes(3);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('retries again 5 minutes after a failed retry, then gives up and says so', async () => {
+    vi.useFakeTimers();
+    sendMail.mockImplementation((mail) =>
+      Promise.resolve<MailResult>(mail.to.startsWith('bisma') ? { sent: false, reason: 'failed' } : { sent: true }),
+    );
+    await sendFounderCancellations(booking, { by: 'host' });
+    await vi.advanceTimersByTimeAsync(MINUTE);
+    expect(toBisma()).toBe(2);
+    await vi.advanceTimersByTimeAsync(5 * MINUTE - 1);
+    expect(toBisma()).toBe(2);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(toBisma()).toBe(3);
+    await vi.advanceTimersByTimeAsync(60 * MINUTE);
+    expect(toBisma()).toBe(3);
+    expect(methods().filter((m) => m.startsWith('CANCEL ibrahim'))).toHaveLength(1);
+    expect(console.error).toHaveBeenCalledWith(expect.stringMatching(/gave up/), booking.id);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('keeps one retry per booking however many cancels fail, and none for a send that is not configured', async () => {
+    vi.useFakeTimers();
+    sendMail.mockImplementation((mail) =>
+      Promise.resolve<MailResult>(mail.to.startsWith('bisma') ? { sent: false, reason: 'failed' } : { sent: true }),
+    );
+    await sendFounderCancellations(booking, { by: 'host' });
+    await sendFounderCancellations(booking, { by: 'host' });
+    expect(toBisma()).toBe(2);
+    expect(vi.getTimerCount()).toBe(1);
+    sendMail.mockResolvedValue({ sent: true });
+    await vi.advanceTimersByTimeAsync(MINUTE);
+    expect(toBisma()).toBe(3);
+    expect(vi.getTimerCount()).toBe(0);
+
+    vi.stubEnv('CONTACT_FROM_EMAIL', '');
+    await sendFounderCancellations({ ...booking, id: 'b3c1d2e4-0000-4000-8000-000000000003' }, { by: 'host' });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('is dropped by the test hook, so nothing fires later', async () => {
+    vi.useFakeTimers();
+    sendMail.mockResolvedValue({ sent: false, reason: 'failed' });
+    await sendFounderCancellations(booking, { by: 'host' });
+    expect(vi.getTimerCount()).toBe(1);
+    clearFounderMemory();
     expect(vi.getTimerCount()).toBe(0);
   });
 });
