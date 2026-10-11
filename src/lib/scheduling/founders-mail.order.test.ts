@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BookingForEmail } from '@/lib/crm/contract';
-import { FOUNDER_MEMORY_MAX, clearFounderMemory, founderMemorySize, sendFounderCancellations, sendFounderInvites } from './founders-mail';
+import {
+  FOUNDER_MEMORY_MAX,
+  INVITE_WAIT_MS,
+  clearFounderMemory,
+  founderMemorySize,
+  sendFounderCancellations,
+  sendFounderInvites,
+} from './founders-mail';
 import type { Mail, MailResult } from './mail';
 
 /*
@@ -95,6 +102,42 @@ describe('a cancel never overtakes its invite', () => {
     const cancels = sendFounderCancellations(booking, { by: 'host' });
     expect(sendMail).toHaveBeenCalledTimes(2);
     await cancels;
+  });
+});
+
+describe('a cancel waits for its invite only so long (review r2)', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('sends the CANCEL when the wait is up, even when the invite send never ends', async () => {
+    vi.useFakeTimers();
+    sendMail.mockImplementation((mail) =>
+      mail.ics?.method === 'REQUEST' ? new Promise<MailResult>(() => undefined) : Promise.resolve<MailResult>({ sent: true }),
+    );
+    void sendFounderInvites(booking);
+    const cancels = sendFounderCancellations(booking, { by: 'guest' });
+    await vi.advanceTimersByTimeAsync(INVITE_WAIT_MS - 1);
+    expect(methods()).toEqual(['REQUEST ibrahim@itqanstudio.com', 'REQUEST bisma@itqanstudio.com']);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(await cancels).toEqual([{ sent: true }, { sent: true }]);
+    expect(methods().slice(2)).toEqual(['CANCEL ibrahim@itqanstudio.com', 'CANCEL bisma@itqanstudio.com']);
+    expect(console.error).toHaveBeenCalledWith(expect.stringMatching(/still running/), booking.id);
+    // A later cancel for that booking does not wait for the stuck send again.
+    const again = sendFounderCancellations(booking, { by: 'host' });
+    expect(vi.getTimerCount()).toBe(0);
+    expect(await again).toEqual([]);
+  });
+
+  it('waits a bit above the mail budget and leaves no timer behind when the invite ends first', async () => {
+    expect(INVITE_WAIT_MS).toBeGreaterThan(3 * 8_000);
+    vi.useFakeTimers();
+    sendMail.mockResolvedValue({ sent: true });
+    const invites = sendFounderInvites(booking);
+    const cancels = sendFounderCancellations(booking, { by: 'guest' });
+    await invites;
+    expect(await cancels).toEqual([{ sent: true }, { sent: true }]);
+    expect(vi.getTimerCount()).toBe(0);
   });
 });
 

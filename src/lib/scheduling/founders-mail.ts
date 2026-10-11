@@ -2,7 +2,7 @@ import { formatWhen } from '@/content/v3/booking';
 import type { BookingForEmail } from '@/lib/crm/contract';
 import { claimSend, clearSendMemory, isCancelled, markCancelled, sendMemorySize, settleSend } from './founders-memory';
 import { buildIcs, type IcsAttendee, type IcsMethod } from './ics';
-import { callMinutes, meetingLink, sendMail, type MailResult } from './mail';
+import { SMTP_TIMEOUT_MS, callMinutes, meetingLink, sendMail, type MailResult } from './mail';
 import { BIDI_CONTROLS } from './validation';
 
 export { FOUNDER_MEMORY_MAX } from './founders-memory';
@@ -46,8 +46,46 @@ export interface CancelNote {
   reason?: string;
 }
 
+/**
+ * The longest a cancel waits for its booking's invite send (review r2): above
+ * the mail budget (the SMTP connect, greeting and socket timeouts, plus room),
+ * so only a send that hangs is overtaken.
+ */
+export const INVITE_WAIT_MS = 4 * SMTP_TIMEOUT_MS;
+
 /** Per booking, the invite send still running: a cancel for that booking waits for it. */
 const pendingInvites = new Map<string, Promise<unknown>>();
+
+/** A timer that never keeps the process alive on its own (Node's unref, when the timer has one). */
+function later(ms: number, run: () => void): ReturnType<typeof setTimeout> {
+  const timer = setTimeout(run, ms);
+  const handle: unknown = timer;
+  if (typeof handle === 'object' && handle !== null && 'unref' in handle && typeof handle.unref === 'function') handle.unref();
+  return timer;
+}
+
+/**
+ * Waits for this booking's invite send to end, at most INVITE_WAIT_MS (review
+ * r2): a send that hangs must not hold the CANCEL back for ever. When the wait
+ * runs out the cancel goes anyway, and later cancels no longer wait for that
+ * send. Never rejects, and leaves no timer behind when the invite ends first.
+ */
+function inviteEnded(bookingId: string, invite: Promise<unknown>): Promise<void> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const ranOut = new Promise<boolean>((resolve) => {
+    timer = later(INVITE_WAIT_MS, () => resolve(true));
+  });
+  const ended = invite.then(
+    () => false,
+    () => false,
+  );
+  return Promise.race([ended, ranOut]).then((late) => {
+    clearTimeout(timer);
+    if (!late) return;
+    console.error('[mail] the founders invite send is still running; sending the calendar cancel anyway for booking', bookingId);
+    if (pendingInvites.get(bookingId) === invite) pendingInvites.delete(bookingId);
+  });
+}
 
 function memoryKey(bookingId: string, method: IcsMethod, email: string): string {
   return `${bookingId}|${method}|${email.toLowerCase()}`;
@@ -302,8 +340,7 @@ export function sendFounderCancellations(b: BookingForEmail, cancel: CancelNote)
   markCancelled(b.id, Date.now());
   const invite = pendingInvites.get(b.id);
   if (!invite) return sendToFounders(b, cancel);
-  const send = () => sendToFounders(b, cancel);
-  return invite.then(send, send);
+  return inviteEnded(b.id, invite).then(() => sendToFounders(b, cancel));
 }
 
 /** Logs the founders' sends that did not go (counts only); they never change an answer. */

@@ -3,8 +3,8 @@ import { bookingCopy, fill, formatWhen, localHostName } from '@/content/v3/booki
 import type { BookingForEmail } from '@/lib/crm/contract';
 import { buildIcs, type IcsMethod } from './ics';
 
-/** Short, because the booking response waits for the confirmation email. */
-const SMTP_TIMEOUT_MS = 8_000;
+/** Short, because the booking response waits for the confirmation email. Each of connect, greeting and socket. */
+export const SMTP_TIMEOUT_MS = 8_000;
 const SITE_URL = 'https://itqanstudio.com';
 
 export interface Mail {
