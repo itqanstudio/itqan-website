@@ -73,8 +73,11 @@ export interface BookingForEmail {
   /**
    * Every active founder (their booking_hosts row, taking bookings or not), the
    * host marked isHost. The website sends each one the calendar invite (REQUEST)
-   * and, on any cancel, its CANCEL. The host is always on it: both sides add
-   * them when the list is empty or leaves them out, listed once by address.
+   * and, on any cancel, its CANCEL. The CRM always puts an active host on it (it
+   * adds them when the founders are unread, the list is empty or leaves them
+   * out) and never adds back a host it marks inactive; an address is listed
+   * once. The website takes any list as sent, an empty one included, and adds
+   * the booking's host only when the field is missing (a CRM from before it).
    */
   team: Array<{ name: string; email: string; isHost: boolean }>;
 }

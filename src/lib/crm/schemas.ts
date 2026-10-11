@@ -41,17 +41,21 @@ const teamMemberSchema = z.object({
 });
 
 /**
- * The founders who get the calendar invite and its cancel, the booking's host
- * always among them (W1): a missing or empty list, rows that all fail the
- * checks, or a list without the host still invite the person taking the call.
- * A founder whose row does not pass the checks is left out (and logged) rather
- * than failing the booking it rides on; an address is listed once, whatever its
- * case, and the host's address alone is marked isHost.
+ * The founders who get the calendar invite and its cancel. A list the CRM sent,
+ * an empty one included, is taken as sent (code review M1): the CRM already puts
+ * an active host on it and leaves out a host deactivated after the booking, so
+ * that address gets no guest details. Only a CRM from before the field (no
+ * `team`) gets the booking's host alone, as the old host notice did. A founder
+ * whose row does not pass the checks is left out (and logged) rather than
+ * failing the booking it rides on; the host's row carries the same name and
+ * address as `booking.host`, so it cannot fail alone. An address is listed once,
+ * whatever its case, and the host's address alone is marked isHost.
  */
 function founders(entries: readonly unknown[] | undefined, host: Host): Team {
+  if (entries === undefined) return [{ name: host.name, email: host.email, isHost: true }];
   const hostKey = host.email.toLowerCase();
   const seen = new Set<string>();
-  const listed: Team = (entries ?? []).flatMap((entry) => {
+  return entries.flatMap((entry) => {
     const parsed = teamMemberSchema.safeParse(entry);
     if (!parsed.success) {
       console.error('[crm] a founder on the booking did not pass the checks and gets no calendar email');
@@ -62,7 +66,6 @@ function founders(entries: readonly unknown[] | undefined, host: Host): Team {
     seen.add(key);
     return [{ name: parsed.data.name, email: parsed.data.email, isHost: key === hostKey }];
   });
-  return seen.has(hostKey) ? listed : [{ name: host.name, email: host.email, isHost: true }, ...listed];
 }
 
 /** The most raw text a stored reason may carry before it is cleaned: the cancel page's own raw limit. */

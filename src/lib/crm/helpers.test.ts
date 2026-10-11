@@ -133,7 +133,7 @@ describe('schemas', () => {
     expect(bookingForEmailSchema.safeParse({ ...booking, team: Array.from({ length: 21 }, () => booking.team[0]) }).success).toBe(false);
     vi.restoreAllMocks();
   });
-  it('always lists the host, whatever the team says (W1): empty, all refused, or without the host', () => {
+  it('adds the host only for a CRM from before the team field; any list the CRM sends is taken as sent (code review M1)', () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const host = { name: 'Ibrahim Shareef', email: 'ibrahim@itqanstudio.com', isHost: true };
     const bisma = { name: 'Bisma Aslam', email: 'bisma@itqanstudio.com', isHost: false };
@@ -141,12 +141,14 @@ describe('schemas', () => {
       const parsed = bookingForEmailSchema.safeParse({ ...booking, team });
       return parsed.success ? parsed.data.team : 'refused';
     };
-    // An empty list reads as missing: the host alone.
-    expect(teamOf([])).toEqual([host]);
-    // Every row refused: still the host.
-    expect(teamOf([{ name: 'Evil\r\nBcc: x@y.z', email: 'evil@example.com', isHost: true }, 'x'])).toEqual([host]);
-    // The host left out: put first, marked.
-    expect(teamOf([bisma])).toEqual([host, bisma]);
+    // No field at all (an older CRM): the host alone, as the old host notice did.
+    expect(teamOf(undefined)).toEqual([host]);
+    // An empty list is the CRM's answer (a deactivated host and nobody else active): nobody.
+    expect(teamOf([])).toEqual([]);
+    // Every row refused: nobody is added back.
+    expect(teamOf([{ name: 'Evil\r\nBcc: x@y.z', email: 'evil@example.com', isHost: true }, 'x'])).toEqual([]);
+    // The host left out (the CRM never adds back a host it marks inactive): their address gets nothing.
+    expect(teamOf([bisma])).toEqual([bisma]);
     // The host listed but not marked, or someone else marked: the host's address decides, in the team's order.
     expect(teamOf([{ ...bisma, isHost: true }, { ...host, name: 'Ibrahim', isHost: false }])).toEqual([bisma, { ...host, name: 'Ibrahim' }]);
     // The host's address in another case counts as the host, once.
