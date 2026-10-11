@@ -42,6 +42,13 @@ describe('quoteParam', () => {
     expect(quoteParam('Sara "the boss": COO; Ops')).toBe('"Sara the boss: COO; Ops"');
     expect(quoteParam('  ')).toBe('"Itqan"');
   });
+
+  it('writes NEL and the Unicode line and paragraph separators as spaces, so a name cannot start a property (review r2)', () => {
+    // Built from code points, so the source file holds no invisible characters.
+    const [nel, ls, ps] = [0x85, 0x2028, 0x2029].map((cp) => String.fromCodePoint(cp));
+    expect(quoteParam(`A${ls}SUMMARY:Forged${ps}X-PAD:${nel}B`)).toBe('"A SUMMARY:Forged X-PAD: B"');
+    expect(quoteParam(`${ls}${nel}`)).toBe('"Itqan"');
+  });
 });
 
 describe('foldLine', () => {
@@ -119,5 +126,21 @@ describe('buildIcs', () => {
     const ics = buildIcs({ ...base, organizerEmail: 'a@b.c\r\nATTENDEE:mailto:x@y.z', attendees: [{ name: 'X', email: 'x@y.z\nEND:VEVENT', role: 'OPT-PARTICIPANT' }] });
     expect(physicalLines(unfold(ics)).filter((l) => l === 'END:VEVENT')).toHaveLength(1);
     expect(physicalLines(unfold(ics)).filter((l) => l.startsWith('ATTENDEE'))).toHaveLength(1);
+  });
+
+  it('holds no Unicode line break anywhere, whatever the names and addresses carry (review r2)', () => {
+    const breaks = [0x85, 0x2028, 0x2029].map((cp) => String.fromCodePoint(cp));
+    const [nel, ls, ps] = breaks;
+    const ics = buildIcs({
+      ...base,
+      organizerName: `Itqan${nel}Studio`,
+      organizerEmail: `bookings${ls}@itqanstudio.com`,
+      attendees: [{ name: `A${ls}SUMMARY:Forged${ps}X-PAD:`, email: `x${nel}@y.z`, role: 'OPT-PARTICIPANT' }],
+    });
+    expect(breaks.some((ch) => ics.includes(ch))).toBe(false);
+    const lines = physicalLines(unfold(ics));
+    expect(lines.filter((l) => l.startsWith('SUMMARY'))).toHaveLength(1);
+    expect(lines).toContain('ATTENDEE;CN="A SUMMARY:Forged X-PAD:";ROLE=OPT-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:x@y.z');
+    expect(lines).toContain('ORGANIZER;CN="Itqan Studio":mailto:bookings@itqanstudio.com');
   });
 });

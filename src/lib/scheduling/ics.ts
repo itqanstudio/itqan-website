@@ -59,16 +59,18 @@ export function escapeText(value: string): string {
 
 /**
  * A parameter value (RFC 5545 3.2): quoted, with the characters a quoted value
- * cannot hold removed (double quotes and control characters). Commas, colons and
- * semicolons are safe inside the quotes.
+ * cannot hold removed (double quotes and control characters). A Unicode line
+ * break becomes a space, as in escapeText it becomes \n: a parser that splits
+ * on it would otherwise read the rest of a name as a new property. Commas,
+ * colons and semicolons are safe inside the quotes.
  */
 export function quoteParam(value: string): string {
-  return `"${value.replace(/["\u0000-\u001f\u007f]/g, '').trim() || 'Itqan'}"`;
+  return `"${value.replace(UNICODE_BREAKS, ' ').replace(/["\u0000-\u001f\u007f]/g, '').trim() || 'Itqan'}"`;
 }
 
 /** A calendar address: mailto plus the address, with anything that could end the line or the value removed. */
 function calAddress(email: string): string {
-  return `mailto:${email.replace(/[\u0000-\u001f\u007f\s"]/g, '')}`;
+  return `mailto:${email.replace(UNICODE_BREAKS, '').replace(/[\u0000-\u001f\u007f\s"]/g, '')}`;
 }
 
 /** Lines longer than 75 octets are folded with CRLF and a space (RFC 5545 3.1), never inside a character. */
