@@ -128,6 +128,19 @@ describe('buildIcs', () => {
     expect(physicalLines(unfold(ics)).filter((l) => l.startsWith('ATTENDEE'))).toHaveLength(1);
   });
 
+  it('writes each Unicode line break in the title and description as one escaped newline in one property (review r2, tests seat)', () => {
+    for (const cp of [0x85, 0x2028, 0x2029]) {
+      const ch = String.fromCodePoint(cp);
+      const ics = buildIcs({ ...base, summary: `Sara${ch}DTSTART:20990101T000000Z`, description: `Line one${ch}END:VEVENT` });
+      expect(ics.includes(ch), cp.toString(16)).toBe(false);
+      const lines = physicalLines(unfold(ics));
+      expect(lines.filter((l) => l.startsWith('SUMMARY:'))).toEqual(['SUMMARY:Sara\\nDTSTART:20990101T000000Z']);
+      expect(lines.filter((l) => l.startsWith('DESCRIPTION:'))).toEqual(['DESCRIPTION:Line one\\nEND:VEVENT']);
+      expect(lines.filter((l) => l.startsWith('DTSTART'))).toHaveLength(1);
+      expect(lines.filter((l) => l === 'END:VEVENT')).toHaveLength(1);
+    }
+  });
+
   it('holds no Unicode line break anywhere, whatever the names and addresses carry (review r2)', () => {
     const breaks = [0x85, 0x2028, 0x2029].map((cp) => String.fromCodePoint(cp));
     const [nel, ls, ps] = breaks;

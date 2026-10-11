@@ -179,6 +179,25 @@ describe('schemas', () => {
     expect(reasonOf({ cancelReason: 'x'.repeat(501) })).toBeNull();
     vi.restoreAllMocks();
   });
+  it('holds the stored reason to its edges: 500 after cleaning, 2,000 raw (review r2, tests seat)', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const reasonOf = (cancelReason: unknown) => {
+      const parsed = cancelBookingDataSchema.safeParse({ changed: false, booking, noticeOwed: true, cancelReason });
+      return parsed.success ? parsed.data.cancelReason : 'refused';
+    };
+    const bell = '\u0007';
+    // Exactly the limit once cleaned is kept.
+    expect(reasonOf('x'.repeat(500))).toBe('x'.repeat(500));
+    // Exactly the raw maximum, cleaning down under the limit, is kept; one more raw character is dropped.
+    expect(reasonOf(`${'x'.repeat(500)}${bell.repeat(1_500)}`)).toBe('x'.repeat(500));
+    expect(reasonOf(`${'x'.repeat(10)}${bell.repeat(1_991)}`)).toBeNull();
+    // Over the limit even after cleaning is dropped; so is anything that is not text.
+    expect(reasonOf(`${'x'.repeat(501)}${bell}`)).toBeNull();
+    expect(reasonOf({ text: 'moved' })).toBeNull();
+    expect(reasonOf(['moved'])).toBeNull();
+    expect(console.error).toHaveBeenCalledTimes(4);
+    vi.restoreAllMocks();
+  });
   it('checks the notify request exactly', () => {
     expect(notifyRequestSchema.safeParse({ type: 'booking.cancelled', by: 'host', notifyGuest: true, booking }).success).toBe(true);
     expect(notifyRequestSchema.safeParse({ type: 'booking.created', by: 'host', notifyGuest: true, booking }).success).toBe(false);
