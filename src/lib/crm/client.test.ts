@@ -3,6 +3,7 @@ import {
   cancelCrmBooking,
   createCrmBooking,
   crmOrigin,
+  crmOriginProblem,
   fetchSlots,
   interpret,
   isCrmDown,
@@ -127,6 +128,25 @@ describe('crmOrigin', () => {
     expect(isLoopbackHost('127.0.0.999')).toBe(false);
     expect(isLoopbackHost('127.evil.example.com')).toBe(false);
     expect(isLoopbackHost('2130706433')).toBe(false);
+  });
+});
+
+describe('crmOriginProblem (the startup check, review r2)', () => {
+  it('is quiet when CRM_API_ORIGIN is unset, blank or usable', () => {
+    expect(crmOriginProblem({})).toBeNull();
+    expect(crmOriginProblem({ CRM_API_ORIGIN: '   ' })).toBeNull();
+    expect(crmOriginProblem({ CRM_API_ORIGIN: 'https://portal.itqanstudio.com' })).toBeNull();
+    expect(crmOriginProblem({ CRM_API_ORIGIN: 'http://localhost:3999' })).toBeNull();
+  });
+
+  it('names the setting and what booking does when it is set but refused, never the value itself', () => {
+    for (const raw of ['http://itqan-crm:3000', 'http://10.0.1.5:3000', 'not a url', 'https://user:secret@x.example']) {
+      const problem = crmOriginProblem({ CRM_API_ORIGIN: raw });
+      expect(problem, raw).toMatch(/^CRM_API_ORIGIN is set but refused/);
+      expect(problem, raw).toContain('paused');
+      expect(problem, raw).not.toContain(raw);
+    }
+    expect(crmOriginProblem({ CRM_API_ORIGIN: 'https://user:secret@x.example' })).not.toContain('secret');
   });
 });
 

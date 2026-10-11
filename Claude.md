@@ -27,7 +27,9 @@ production, so push only with Ibrahim's go.
   `src/lib/crm/` (contract copied verbatim from the CRM, HMAC in `hmac.ts`, client in `client.ts`);
   `POST /api/crm/notify` lets the CRM ask the site to email a guest after a host cancels. Emails and
   .ics stay here (`src/lib/scheduling/mail.ts`, host-aware). Env: `ITQAN_BOOKING_SECRET` (32+ chars,
-  same as the CRM), `CRM_API_ORIGIN` (default https://portal.itqanstudio.com). There is no site
+  same as the CRM), `CRM_API_ORIGIN` (default https://portal.itqanstudio.com; https, or plain http
+  only on loopback; a refused value logs a `[startup]` error from `src/instrumentation.ts` and pauses
+  booking). There is no site
   admin: `/admin` redirects to the CRM's availability page. `scripts/mock-crm.mjs` stands in for the
   CRM locally; `scripts/export-bookings-to-crm.mjs` moves the old SQLite data once.
 - **Legacy** (old brand, untouched): feedback, support, magnet, thank-you, brand portal.

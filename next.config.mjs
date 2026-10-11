@@ -2,6 +2,8 @@
 const nextConfig = {
   // Do not advertise the framework in a response header.
   poweredByHeader: false,
+  // Runs src/instrumentation.ts once at server start: it logs a CRM_API_ORIGIN the site refuses.
+  experimental: { instrumentationHook: true },
   images: {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 31536000,

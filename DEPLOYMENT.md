@@ -19,6 +19,10 @@
   value on the CRM app. Missing or shorter: the site refuses every CRM call and `/book` shows "Booking
   is paused".
 - `CRM_API_ORIGIN`: where the site reaches the CRM. Optional; default `https://portal.itqanstudio.com`.
+  It must be https, or plain http only on `localhost`, `::1` or `127.x.x.x` (a private address or a
+  Docker service name such as `http://itqan-crm:3000` needs https). A value the site refuses pauses
+  every booking and cancel; the server says so once at start, in the Coolify log, as a line beginning
+  `[startup] CRM_API_ORIGIN is set but refused`. Check the log after any deploy that changes it.
 - Mail for confirmations: `SES_SMTP_HOST`, `SES_SMTP_PORT`, `SES_SMTP_USERNAME`, `SES_SMTP_PASSWORD`,
   `CONTACT_FROM_EMAIL`. Host notices go to the host's address from the CRM.
 - `BOOKING_DB_PATH`: only for the one-time export, when the SQLite file is somewhere other than

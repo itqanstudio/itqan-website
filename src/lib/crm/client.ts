@@ -118,6 +118,20 @@ export function crmOrigin(env: Record<string, string | undefined> = process.env)
   }
 }
 
+/**
+ * What the server says at startup when CRM_API_ORIGIN is set but refused
+ * (instrumentation.ts), or null when it is unset or usable. A refused origin
+ * pauses every booking and cancel, so this is caught at deploy, not by guests.
+ * The value itself is never printed: a refused one may carry a password.
+ */
+export function crmOriginProblem(env: Record<string, string | undefined> = process.env): string | null {
+  if (!env.CRM_API_ORIGIN?.trim() || crmOrigin(env)) return null;
+  return (
+    'CRM_API_ORIGIN is set but refused: it must be an https origin, or plain http only on localhost, ::1 or 127.x.x.x, ' +
+    'with no user name or password. Until it is fixed, every booking and cancel on the site answers "paused".'
+  );
+}
+
 async function readCapped(res: Response, maxBytes: number): Promise<string> {
   if (!res.body) return '';
   const reader = res.body.getReader();
