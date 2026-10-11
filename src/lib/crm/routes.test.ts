@@ -5,6 +5,7 @@ import { GET as getSlots } from '@/app/api/book/slots/route';
 import { POST as postBook } from '@/app/api/book/route';
 import { POST as postCancel } from '@/app/api/book/cancel/route';
 import { POST as postNotify } from '@/app/api/crm/notify/route';
+import { clearFounderMemory } from '@/lib/scheduling/founders-mail';
 import { bookingIcs } from '@/lib/scheduling/mail';
 import type { BookingForEmail } from './contract';
 import { signatureHeader, verifySignature } from './hmac';
@@ -90,6 +91,7 @@ beforeEach(() => {
   printed = [];
   crmCalls = [];
   clearReplayMemory();
+  clearFounderMemory();
   forgetSlots();
   vi.stubEnv('ITQAN_BOOKING_SECRET', SECRET);
   vi.stubEnv('CRM_API_ORIGIN', 'http://localhost:3999');
@@ -443,6 +445,73 @@ describe('POST /api/book/cancel', () => {
     expect(crmCalls).toHaveLength(2);
   });
 
+  it("gives the founders the reason the CRM stored, never a retry's own text (W5)", async () => {
+    crmCancel({ changed: false, booking, noticeOwed: true, cancelReason: 'We chose another supplier.' });
+    await cancel('A'.repeat(43), ORIGIN, { reason: 'Something else entirely.' });
+    expect(to('bisma@itqanstudio.com')[0]).toContain('Their reason:\nWe chose another supplier.');
+    expect(printed.join('')).not.toContain('Something else entirely.');
+    clearFounderMemory();
+    printed = [];
+    // Stored as none: no reason line, whatever the retry typed.
+    crmCancel({ changed: false, booking, noticeOwed: true, cancelReason: null });
+    await cancel('A'.repeat(43), ORIGIN, { reason: 'Typed on the retry.' });
+    expect(to('bisma@itqanstudio.com')[0]).not.toContain('Their reason');
+  });
+
+  it('with a CRM from before the stored reason: the cancel that went through sends its own reason, a repeat sends none', async () => {
+    crmCancel({ changed: true, booking, noticeOwed: true });
+    await cancel('A'.repeat(43), ORIGIN, { reason: 'First and only.' });
+    expect(to('bisma@itqanstudio.com')[0]).toContain('Their reason:\nFirst and only.');
+    clearFounderMemory();
+    printed = [];
+    crmCancel({ changed: false, booking, noticeOwed: true });
+    await cancel('A'.repeat(43), ORIGIN, { reason: 'Typed on the retry.' });
+    expect(to('bisma@itqanstudio.com')[0]).not.toContain('Their reason');
+  });
+
+  it('sends each founder the cancel once from this process, while the guest email still follows the CRM (W5)', async () => {
+    crmCancel({ changed: false, booking, noticeOwed: true });
+    await cancel('A'.repeat(43));
+    await cancel('A'.repeat(43));
+    expect(to('sara@example.com')).toHaveLength(2);
+    expect(to('ibrahim@itqanstudio.com')).toHaveLength(1);
+    expect(to('bisma@itqanstudio.com')).toHaveLength(1);
+  });
+
+  it('tells a reason the CRM refused apart from a dead link: 400 reason_rejected, never 404 (W7)', async () => {
+    crm(400, { ok: false, error: 'invalid', message: 'reason: The reason is empty' });
+    const res = await cancel('A'.repeat(43), ORIGIN, { reason: 'A reason the CRM will not take.' });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ ok: false, error: 'reason_rejected' });
+    // With no reason sent, the CRM refused the link itself: that one is not found.
+    const plain = await cancel('A'.repeat(43));
+    expect(plain.status).toBe(404);
+    expect(await plain.json()).toEqual({ ok: false, error: 'not_found' });
+  });
+
+  it('tells an unreadable request, a reason that is too long and a malformed one apart (W7)', async () => {
+    crmCancel({ changed: true, booking, noticeOwed: true });
+    const unreadable = await postCancel(
+      request('http://localhost/api/book/cancel', { method: 'POST', headers: { origin: ORIGIN, 'content-type': 'application/json' }, body: '{"token":' }),
+    );
+    expect(unreadable.status).toBe(400);
+    expect(await unreadable.json()).toEqual({ ok: false, error: 'unreadable' });
+    const tooLong = await cancel('A'.repeat(43), ORIGIN, { reason: 'x'.repeat(501) });
+    expect(await tooLong.json()).toEqual({ ok: false, error: 'reason_too_long' });
+    const wayTooLong = await cancel('A'.repeat(43), ORIGIN, { reason: 'x'.repeat(2001) });
+    expect(await wayTooLong.json()).toEqual({ ok: false, error: 'reason_too_long' });
+    const malformed = await cancel('A'.repeat(43), ORIGIN, { reason: 42 });
+    expect(await malformed.json()).toEqual({ ok: false, error: 'invalid' });
+    expect(crmCalls).toHaveLength(0);
+  });
+
+  it('answers an unexpected CRM refusal as paused (retry later), not as a dead link', async () => {
+    crm(409, { ok: false, error: 'unavailable' });
+    const res = await cancel('A'.repeat(43));
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ ok: false, error: 'paused' });
+  });
+
   it('sends nothing once the emails are recorded, or for a host cancel', async () => {
     crmCancel({ changed: false, booking, noticeOwed: false });
     expect(((await (await cancel('A'.repeat(43))).json()) as { data: { changed: boolean } }).data.changed).toBe(false);
@@ -516,6 +585,16 @@ describe('POST /api/crm/notify', () => {
     expect(await (await notify(body, signatureHeader(SECRET, 'POST', path, body))).json()).toEqual({ ok: true, data: { emailed: true } });
     expect(printed).toHaveLength(2);
     expect(to('ibrahim@itqanstudio.com')[0]).toContain('ics=CANCEL');
+  });
+
+  it('a CRM retry emails the guest again when asked, but each founder gets the calendar cancel once (W5)', async () => {
+    const first = payload(false);
+    await notify(first, signatureHeader(SECRET, 'POST', path, first));
+    const retry = payload(true);
+    expect(await (await notify(retry, signatureHeader(SECRET, 'POST', path, retry))).json()).toEqual({ ok: true, data: { emailed: true } });
+    expect(to('sara@example.com')).toHaveLength(1);
+    expect(to('ibrahim@itqanstudio.com')).toHaveLength(1);
+    expect(to('bisma@itqanstudio.com')).toHaveLength(1);
   });
 
   it('refuses a missing, wrong, stale or replayed signature', async () => {

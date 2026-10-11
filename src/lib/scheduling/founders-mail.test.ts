@@ -1,6 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BookingForEmail } from '@/lib/crm/contract';
-import { finishInBackground, foundersIcs, logFounderSends, sendFounderCancellations, sendFounderInvites, senderAddress, shortWhen } from './founders-mail';
+import {
+  FOUNDER_MEMORY_MAX,
+  clearFounderMemory,
+  finishInBackground,
+  founderMemorySize,
+  foundersIcs,
+  logFounderSends,
+  sendFounderCancellations,
+  sendFounderInvites,
+  senderAddress,
+  shortWhen,
+} from './founders-mail';
 
 const booking: BookingForEmail = {
   id: 'b3c1d2e4-0000-4000-8000-000000000001',
@@ -30,6 +41,7 @@ let printed: string[] = [];
 
 beforeEach(() => {
   printed = [];
+  clearFounderMemory();
   ['SES_SMTP_HOST', 'SES_SMTP_PORT', 'SES_SMTP_USERNAME', 'SES_SMTP_PASSWORD'].forEach((k) => vi.stubEnv(k, ''));
   vi.stubEnv('CONTACT_FROM_EMAIL', ORGANIZER);
   vi.stubEnv('NODE_ENV', 'development');
@@ -42,6 +54,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 describe('the founders invite (METHOD:REQUEST)', () => {
@@ -63,8 +76,41 @@ describe('the founders invite (METHOD:REQUEST)', () => {
   it('describes the guest, the notes, who hosts and where it is in the CRM', () => {
     const description = lines(foundersIcs(booking, ORGANIZER)).find((l) => l.startsWith('DESCRIPTION:'));
     expect(description).toBe(
-      'DESCRIPTION:Guest: Sara Ahmed <sara@example.com>\\nCompany: Example Foods\\, Dubai\\nNotes: Catering requests\\; quotes by WhatsApp\\nHost: Ibrahim Shareef\\nVideo call: https://meet.google.com/abc-defg-hij\\nOpen in the CRM: https://portal.itqanstudio.com/calendar?booking=b3c1d2e4-0000-4000-8000-000000000001'
+      'DESCRIPTION:Guest: Sara Ahmed (sara@example.com)\\nCompany: Example Foods\\, Dubai\\nNotes: Catering requests\\; quotes by WhatsApp\\nHost: Ibrahim Shareef\\nVideo call: https://meet.google.com/abc-defg-hij\\nOpen in the CRM: https://portal.itqanstudio.com/calendar?booking=b3c1d2e4-0000-4000-8000-000000000001'
     );
+  });
+
+  it('neutralises markup in what the guest typed (calendars render the description as HTML), and keeps the links plain', () => {
+    const typed = {
+      ...booking,
+      guestName: 'Sara <a href="https://evil.example">Ahmed</a>',
+      company: 'Foods & <b>Co</b>',
+      role: '<i>COO</i>',
+      message: '<img src=x onerror=alert(1)> see &lt;this&gt;',
+    };
+    const ics = lines(foundersIcs(typed, ORGANIZER, { by: 'guest', reason: '<script>x</script> & more' }));
+    const summary = ics.find((l) => l.startsWith('SUMMARY:')) ?? '';
+    const description = ics.find((l) => l.startsWith('DESCRIPTION:')) ?? '';
+    expect(summary).not.toMatch(/[<>&]/);
+    expect(description).not.toMatch(/[<>&]/);
+    expect(summary).toBe('SUMMARY:Itqan briefing: Sara ‹a href="https://evil.example"›Ahmed‹/a›\\, Foods ＆ ‹b›Co‹/b›');
+    expect(description).toContain('Their reason: ‹script›x‹/script› ＆ more');
+    expect(description).toContain('Guest: Sara ‹a href="https://evil.example"›Ahmed‹/a› (sara@example.com)');
+    expect(description).toContain('Notes: ‹img src=x onerror=alert(1)› see ＆lt\\;this＆gt\\;');
+    expect(description).toContain('Video call: https://meet.google.com/abc-defg-hij');
+    expect(description).toContain('Open in the CRM: https://portal.itqanstudio.com/calendar?booking=b3c1d2e4-0000-4000-8000-000000000001');
+  });
+
+  it('strips bidi overrides from the subject and the calendar text, whatever the CRM sent', async () => {
+    const rlo = String.fromCodePoint(0x202e);
+    const lri = String.fromCodePoint(0x2066);
+    const typed = { ...booking, guestName: `Sara${rlo} Ahmed`, company: `${lri}Example Foods` };
+    const ics = unfold(foundersIcs(typed, ORGANIZER, { by: 'guest', reason: `moved${rlo}` }));
+    expect(ics).not.toContain(rlo);
+    expect(ics).not.toContain(lri);
+    await sendFounderInvites(typed);
+    expect(printed[0]).toContain('subject=[briefing] Sara Ahmed, Example Foods, Mon 12 Oct');
+    expect(printed.join('')).not.toContain(rlo);
   });
 
   it('sends one email per founder, to that founder, naming the guest, company and time, saying who hosts', async () => {
@@ -167,5 +213,71 @@ describe('sending is best effort', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(console.error).toHaveBeenCalledWith('[x] 1 of 1 founder calendar emails not sent for booking', 'b2');
     expect(console.error).toHaveBeenCalledWith('[y] founder calendar emails failed for booking', 'b3', 'boom');
+  });
+});
+
+describe('each founder gets one invite and one cancel per booking from this process (W5)', () => {
+  it('does not repeat an invite or a cancel a founder already got, and still sends what is new', async () => {
+    expect(await sendFounderInvites(booking)).toEqual([{ sent: true }, { sent: true }]);
+    expect(await sendFounderInvites(booking)).toEqual([]);
+    expect(printed).toHaveLength(2);
+    // The cancel is a different email: it goes once.
+    expect(await sendFounderCancellations(booking, { by: 'host' })).toEqual([{ sent: true }, { sent: true }]);
+    expect(await sendFounderCancellations(booking, { by: 'guest', reason: 'Retry with other words.' })).toEqual([]);
+    expect(printed).toHaveLength(4);
+    expect(printed.join('')).not.toContain('Retry with other words.');
+    // A founder the earlier sends did not reach still hears, and only they do.
+    const third = { name: 'Third Founder', email: 'third@itqanstudio.com', isHost: false };
+    expect(await sendFounderCancellations({ ...booking, team: [...booking.team, third] }, { by: 'host' })).toEqual([{ sent: true }]);
+    expect(printed[4]).toContain('to=third@itqanstudio.com');
+    // Another booking is its own event.
+    expect(await sendFounderInvites({ ...booking, id: 'b3c1d2e4-0000-4000-8000-000000000002' })).toHaveLength(2);
+  });
+
+  it('counts an address once whatever its case', async () => {
+    await sendFounderInvites(booking);
+    const shouted = booking.team.map((t) => ({ ...t, email: t.email.toUpperCase() }));
+    expect(await sendFounderInvites({ ...booking, team: shouted })).toEqual([]);
+  });
+
+  it('forgets a send that did not go, so the next call tries again', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('CONTACT_FROM_EMAIL', '');
+    expect(await sendFounderInvites(booking)).toEqual([
+      { sent: false, reason: 'not_configured' },
+      { sent: false, reason: 'not_configured' },
+    ]);
+    const broken = { ...booking, start: 'not a date' };
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('CONTACT_FROM_EMAIL', ORGANIZER);
+    expect(await sendFounderInvites(broken)).toEqual([
+      { sent: false, reason: 'failed' },
+      { sent: false, reason: 'failed' },
+    ]);
+    expect(founderMemorySize()).toBe(0);
+    expect(await sendFounderInvites(booking)).toEqual([{ sent: true }, { sent: true }]);
+  });
+
+  it('remembers a send for 24 hours, then lets it go again', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-11T08:00:00Z'));
+    await sendFounderCancellations(booking, { by: 'host' });
+    vi.setSystemTime(new Date('2026-10-12T07:59:59Z'));
+    expect(await sendFounderCancellations(booking, { by: 'host' })).toEqual([]);
+    vi.setSystemTime(new Date('2026-10-12T08:00:00Z'));
+    expect(await sendFounderCancellations(booking, { by: 'host' })).toEqual([{ sent: true }, { sent: true }]);
+  });
+
+  it('stays bounded: when full, the oldest send is forgotten first', async () => {
+    const one = { ...booking, team: [booking.team[0]] };
+    const id = (n: number) => `b3c1d2e4-0000-4000-8000-${String(n).padStart(12, '0')}`;
+    for (let n = 0; n < FOUNDER_MEMORY_MAX; n += 1) await sendFounderInvites({ ...one, id: id(n) });
+    expect(founderMemorySize()).toBe(FOUNDER_MEMORY_MAX);
+    await sendFounderInvites({ ...one, id: id(FOUNDER_MEMORY_MAX) });
+    expect(founderMemorySize()).toBe(FOUNDER_MEMORY_MAX);
+    printed = [];
+    // The first one was pushed out and would go again; the newest are still remembered.
+    expect(await sendFounderInvites({ ...one, id: id(0) })).toHaveLength(1);
+    expect(await sendFounderInvites({ ...one, id: id(FOUNDER_MEMORY_MAX) })).toEqual([]);
   });
 });

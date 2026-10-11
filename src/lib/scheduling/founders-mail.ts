@@ -1,7 +1,8 @@
 import { formatWhen } from '@/content/v3/booking';
 import type { BookingForEmail } from '@/lib/crm/contract';
-import { buildIcs, type IcsAttendee } from './ics';
+import { buildIcs, type IcsAttendee, type IcsMethod } from './ics';
 import { callMinutes, meetingLink, sendMail, type MailResult } from './mail';
+import { BIDI_CONTROLS } from './validation';
 
 /*
  * The founders' calendar invite. Every booking sends each active founder (the
@@ -11,6 +12,19 @@ import { callMinutes, meetingLink, sendMail, type MailResult } from './mail';
  * From), never a founder: a calendar treats an invite organized by its own
  * owner as their own event, not as an invitation. These emails are best effort:
  * nothing here throws, and a failure never touches the booking or the cancel.
+ *
+ * Once per founder (W5): the CRM and the guest may retry a cancel, and each
+ * retry reaches this file again. A calendar takes a repeated CANCEL as a no-op,
+ * but each one is another email, so this process remembers every REQUEST and
+ * CANCEL that went (booking, method, address) for 24 hours and does not send
+ * it again. A send that did not go is forgotten at once, so a retry tries it.
+ * The memory is bounded (the oldest is dropped first); the site is one
+ * long-lived Node process (same assumption as lib/rate-limit.ts).
+ *
+ * In order: both sends run in the background, so a quick cancel could reach a
+ * founder before the invite it withdraws, and a calendar would then ignore the
+ * CANCEL and keep the later REQUEST. A cancel therefore waits for that
+ * booking's invite send to finish.
  */
 
 /** Where hosts manage bookings. A fixed public URL, never CRM_API_ORIGIN (which can be an internal address). */
@@ -28,6 +42,68 @@ type Founder = BookingForEmail['team'][number];
 export interface CancelNote {
   by: 'guest' | 'host';
   reason?: string;
+}
+
+/** How long a founder's sent REQUEST or CANCEL is remembered. */
+const SENT_MEMORY_MS = 24 * 60 * 60 * 1000;
+/** The most sends remembered: two founders, two methods, so about 500 bookings a day. */
+export const FOUNDER_MEMORY_MAX = 2_000;
+
+/** "<booking id>|<method>|<address>" -> when this process started sending it. */
+const sentAt = new Map<string, number>();
+/** Per booking, the invite send still running: a cancel for that booking waits for it. */
+const pendingInvites = new Map<string, Promise<unknown>>();
+
+function memoryKey(bookingId: string, method: IcsMethod, email: string): string {
+  return `${bookingId}|${method}|${email.toLowerCase()}`;
+}
+
+/**
+ * Takes a send for this process: false when it went (or is going) within the
+ * last 24 hours. Marked before sending, so two calls at once send it once.
+ */
+function claimSend(key: string, now: number): boolean {
+  const at = sentAt.get(key);
+  if (at !== undefined && now - at < SENT_MEMORY_MS) return false;
+  sentAt.delete(key);
+  while (sentAt.size >= FOUNDER_MEMORY_MAX) {
+    const oldest = sentAt.keys().next();
+    if (oldest.done) break;
+    sentAt.delete(oldest.value);
+  }
+  sentAt.set(key, now);
+  return true;
+}
+
+/** A send that did not go: forgotten (only while it is still this claim), so a retry sends it. */
+function releaseSend(key: string, at: number): void {
+  if (sentAt.get(key) === at) sentAt.delete(key);
+}
+
+/** Test hook: forget every send and every running invite. */
+export function clearFounderMemory(): void {
+  sentAt.clear();
+  pendingInvites.clear();
+}
+
+/** Test hook: how many sends are remembered. */
+export function founderMemorySize(): number {
+  return sentAt.size;
+}
+
+/**
+ * Text the guest typed (or the CRM passed on), made safe for the founders'
+ * calendar title and description: Google Calendar shows a description as HTML,
+ * so < and > become the single angle quotes and & the full-width ampersand
+ * (no tag, link or entity survives), and bidi overrides are removed.
+ */
+function calendarText(value: string): string {
+  return value.replace(BIDI_CONTROLS, '').replace(/</g, '‹').replace(/>/g, '›').replace(/&/g, '＆');
+}
+
+/** Text for the founders' plain email (subject and body): bidi overrides removed. */
+function plainText(value: string): string {
+  return value.replace(BIDI_CONTROLS, '');
 }
 
 /** CONTACT_FROM_EMAIL (the address SES sends from) as a bare address, or null when it is missing or not one. */
@@ -78,18 +154,20 @@ export function shortWhen(iso: string): string {
 
 function subjectFor(b: BookingForEmail, cancel?: CancelNote): string {
   const tag = !cancel ? '[briefing]' : cancel.by === 'guest' ? '[briefing cancelled by guest]' : '[briefing cancelled]';
-  return `${tag} ${b.guestName}, ${b.company}, ${shortWhen(b.start)}`;
+  return plainText(`${tag} ${b.guestName}, ${b.company}, ${shortWhen(b.start)}`);
 }
 
 function cancelLines(cancel: CancelNote): string[] {
   const who = cancel.by === 'guest' ? 'Cancelled by the guest.' : 'Cancelled from the CRM.';
-  return cancel.reason ? [who, `Their reason: ${cancel.reason}`, ''] : [who, ''];
+  return cancel.reason ? [who, `Their reason: ${calendarText(cancel.reason)}`, ''] : [who, ''];
 }
 
 /**
  * The founders' event: one VEVENT for all of them, the host required and
  * anyone else optional. REQUEST with sequence 0 on booking; CANCEL with
- * sequence 1, the same UID, organizer and attendees on any cancel.
+ * sequence 1, the same UID, organizer and attendees on any cancel. Every typed
+ * value in the title and description goes through calendarText; the video and
+ * CRM links stay plain text (both are https links this site or the CRM made).
  */
 export function foundersIcs(b: BookingForEmail, organizerEmail: string, cancel?: CancelNote): string {
   const link = meetingLink(b);
@@ -100,10 +178,10 @@ export function foundersIcs(b: BookingForEmail, organizerEmail: string, cancel?:
   }));
   const description = [
     ...(cancel ? cancelLines(cancel) : []),
-    `Guest: ${b.guestName} <${b.guestEmail}>`,
-    `Company: ${b.company}`,
-    `Notes: ${b.message.trim() || 'none'}`,
-    `Host: ${hostName(b)}`,
+    `Guest: ${calendarText(b.guestName)} (${calendarText(b.guestEmail)})`,
+    `Company: ${calendarText(b.company)}`,
+    `Notes: ${calendarText(b.message.trim()) || 'none'}`,
+    `Host: ${calendarText(hostName(b))}`,
     ...(link ? [`Video call: ${link}`] : []),
     `Open in the CRM: ${crmLink(b)}`,
   ].join('\n');
@@ -111,7 +189,7 @@ export function foundersIcs(b: BookingForEmail, organizerEmail: string, cancel?:
     uid: `${b.id}@itqanstudio.com`,
     start: new Date(b.start),
     end: new Date(b.end),
-    summary: `Itqan briefing: ${b.guestName}, ${b.company}`,
+    summary: calendarText(`Itqan briefing: ${b.guestName}, ${b.company}`),
     description,
     location: link,
     organizerEmail,
@@ -152,7 +230,7 @@ function founderText(b: BookingForEmail, to: Founder, cancel?: CancelNote): stri
     '',
     ...(link && !cancel ? [`Video call: ${link}`] : []),
     `Open in the CRM: ${crmLink(b)}`,
-  ].join('\n');
+  ].map(plainText).join('\n');
 }
 
 /** The organizer for this run, or null when none can be used (logged). */
@@ -168,7 +246,28 @@ function organizerFor(b: BookingForEmail): string | null {
   return organizer;
 }
 
+/** One founder's email; a throw counts as not sent, and anything not sent is forgotten for a retry. */
+async function sendOne(key: string, claimedAt: number, send: () => Promise<MailResult>): Promise<MailResult> {
+  let result: MailResult;
+  try {
+    // Called at once (no extra tick), and a throw before or after the send counts the same.
+    result = await send();
+  } catch (err) {
+    console.error('[mail] a founder calendar email threw:', err instanceof Error ? err.message : String(err));
+    result = { sent: false, reason: 'failed' };
+  }
+  if (!result.sent) releaseSend(key, claimedAt);
+  return result;
+}
+
+/**
+ * Each founder on the team who has not had this booking's REQUEST (or CANCEL)
+ * from this process gets it; the answer lists only those sends, so a repeat
+ * answers []. Never throws.
+ */
 async function sendToFounders(b: BookingForEmail, cancel?: CancelNote): Promise<MailResult[]> {
+  const method: IcsMethod = cancel ? 'CANCEL' : 'REQUEST';
+  const claimed: Array<{ key: string; at: number }> = [];
   try {
     if (b.team.length === 0) {
       console.error('[mail] no founders on booking', b.id, '; no calendar email sent');
@@ -176,26 +275,52 @@ async function sendToFounders(b: BookingForEmail, cancel?: CancelNote): Promise<
     }
     const organizer = organizerFor(b);
     if (!organizer) return b.team.map((): MailResult => ({ sent: false, reason: 'not_configured' }));
+    const now = Date.now();
+    const due = b.team.filter((to) => {
+      const key = memoryKey(b.id, method, to.email);
+      if (!claimSend(key, now)) return false;
+      claimed.push({ key, at: now });
+      return true;
+    });
+    if (due.length === 0) return [];
     const content = foundersIcs(b, organizer, cancel);
     const subject = subjectFor(b, cancel);
-    const method = cancel ? 'CANCEL' : 'REQUEST';
     return await Promise.all(
-      b.team.map((to) => sendMail({ to: to.email, replyTo: b.guestEmail, subject, text: founderText(b, to, cancel), ics: { method, content } }))
+      due.map((to, i) =>
+        sendOne(claimed[i].key, claimed[i].at, () =>
+          sendMail({ to: to.email, replyTo: b.guestEmail, subject, text: founderText(b, to, cancel), ics: { method, content } })
+        )
+      )
     );
   } catch (err) {
+    claimed.forEach(({ key, at }) => releaseSend(key, at));
     console.error('[mail] the founders\' calendar emails threw for booking', b.id, err instanceof Error ? err.message : String(err));
     return b.team.map((): MailResult => ({ sent: false, reason: 'failed' }));
   }
 }
 
-/** A new booking: each founder gets the invitation. Never throws. */
+/** A new booking: each founder gets the invitation, once. Never throws. */
 export function sendFounderInvites(b: BookingForEmail): Promise<MailResult[]> {
-  return sendToFounders(b);
+  const sends = sendToFounders(b);
+  // A second call for the same booking must not hide a first one that is still sending.
+  const prior = pendingInvites.get(b.id);
+  const settled: Promise<unknown> = prior ? Promise.allSettled([prior, sends]) : sends;
+  pendingInvites.set(b.id, settled);
+  void settled.finally(() => {
+    if (pendingInvites.get(b.id) === settled) pendingInvites.delete(b.id);
+  });
+  return sends;
 }
 
-/** Any cancel: each founder gets the CANCEL for the same event. Never throws. */
+/**
+ * Any cancel: each founder gets the CANCEL for the same event, once, and never
+ * before this booking's invite send has finished (sent or not). Never throws.
+ */
 export function sendFounderCancellations(b: BookingForEmail, cancel: CancelNote): Promise<MailResult[]> {
-  return sendToFounders(b, cancel);
+  const invite = pendingInvites.get(b.id);
+  if (!invite) return sendToFounders(b, cancel);
+  const send = () => sendToFounders(b, cancel);
+  return invite.then(send, send);
 }
 
 /** Logs the founders' sends that did not go (counts only); they never change an answer. */
