@@ -6,7 +6,7 @@ import { POST as postBook } from '@/app/api/book/route';
 import { POST as postCancel } from '@/app/api/book/cancel/route';
 import { POST as postNotify } from '@/app/api/crm/notify/route';
 import { clearFounderMemory } from '@/lib/scheduling/founders-mail';
-import { CANCEL_BODY_MAX_BYTES, CANCEL_REASON_RAW_MAX } from '@/lib/scheduling/limits';
+import { CANCEL_BODY_MAX_BYTES, CANCEL_REASON_RAW_MAX, NOTIFY_BODY_MAX_BYTES } from '@/lib/scheduling/limits';
 import { bookingIcs } from '@/lib/scheduling/mail';
 import type { BookingForEmail } from './contract';
 import { signatureHeader, verifySignature } from './hmac';
@@ -689,6 +689,44 @@ describe('POST /api/crm/notify', () => {
     expect(to('sara@example.com')).toHaveLength(1);
     expect(to('ibrahim@itqanstudio.com')).toHaveLength(1);
     expect(to('bisma@itqanstudio.com')).toHaveLength(1);
+  });
+
+  it('takes the largest booking the CRM can send: every text field at its longest, 20 founders (security review L8)', async () => {
+    // JSON.stringify writes a control character as a six-byte escape, its longest spelling.
+    const ctl = '\u0001';
+    const address = (local: string) => `${local}${'a'.repeat(200 - local.length - '@example.com'.length)}@example.com`;
+    const team = Array.from({ length: 20 }, (_, i) => ({ name: ctl.repeat(80), email: address(`f${i}-`), isHost: i === 0 }));
+    const largest: BookingForEmail = {
+      ...booking,
+      id: 'b'.repeat(100),
+      guestName: ctl.repeat(200),
+      guestEmail: address('guest-'),
+      company: ctl.repeat(200),
+      role: ctl.repeat(200),
+      industry: ctl.repeat(40),
+      message: ctl.repeat(4_000),
+      topic: ctl.repeat(40),
+      guestTimezone: 'America/Argentina/Buenos_Aires',
+      host: { slug: `h${'a'.repeat(30)}`, name: ctl.repeat(80), email: team[0].email, meetingUrl: `https://meet.example.com/${'m'.repeat(475)}` },
+      team,
+    };
+    const body = JSON.stringify({ type: 'booking.cancelled', by: 'host', notifyGuest: true, booking: largest, requestId: '0b6f3a52-6c1e-4d3f-9a4e-2f1d8c7b6a50' });
+    const res = await notify(body, signatureHeader(SECRET, 'POST', path, body));
+    expect(res.status).toBe(200);
+    const size = new TextEncoder().encode(body).byteLength;
+    expect(size).toBeGreaterThan(40_000);
+    expect(size).toBeLessThanOrEqual(NOTIFY_BODY_MAX_BYTES);
+    expect(to(team[19].email)[0]).toContain('ics=CANCEL');
+  });
+
+  it('reads a body of exactly the cap and refuses one byte more with 413, before the signature (security review L8)', async () => {
+    const base = payload(false);
+    const atCap = `${base}${' '.repeat(NOTIFY_BODY_MAX_BYTES - new TextEncoder().encode(base).byteLength)}`;
+    expect((await notify(atCap, signatureHeader(SECRET, 'POST', path, atCap))).status).toBe(200);
+    const over = `${atCap} `;
+    const res = await notify(over, signatureHeader(SECRET, 'POST', path, over));
+    expect(res.status).toBe(413);
+    expect(await res.json()).toEqual({ ok: false, error: 'invalid' });
   });
 
   it('refuses a missing, wrong, stale or replayed signature', async () => {

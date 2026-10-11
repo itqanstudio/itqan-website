@@ -7,6 +7,7 @@ import { notifyRequestSchema } from '@/lib/crm/schemas';
 import { finishInBackground, sendFounderCancellations } from '@/lib/scheduling/founders-mail';
 import { sendGuestCancellation } from '@/lib/scheduling/mail';
 import { clientIp, json, readBody } from '@/lib/scheduling/http';
+import { NOTIFY_BODY_MAX_BYTES } from '@/lib/scheduling/limits';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
 
   let body: Uint8Array;
   try {
-    body = await readBody(req);
+    body = await readBody(req, NOTIFY_BODY_MAX_BYTES);
   } catch (err) {
     const tooLarge = err instanceof Error && err.message === 'too_large';
     return json(tooLarge ? 413 : 400, { ok: false, error: 'invalid' });

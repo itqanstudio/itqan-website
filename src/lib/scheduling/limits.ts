@@ -18,3 +18,13 @@ export const CANCEL_REASON_RAW_MAX = CANCEL_REASON_MAX * 4;
  * take fits, so a long reason is answered reason_too_long, never unreadable.
  */
 export const CANCEL_BODY_MAX_BYTES = 6 * (CANCEL_TOKEN_MAX + CANCEL_REASON_RAW_MAX) + 1_024;
+
+/**
+ * The CRM's notify call's body cap (security review L8). The largest booking
+ * the schema takes (a 4,000-character message, every other text field at its
+ * longest, 20 founders) is about 44 KB as the CRM's JSON.stringify writes it,
+ * when every character it may escape is a control character (six bytes each,
+ * the longest it writes). The default 16 KB cap refused a valid booking, which
+ * read as "founders not notified" in the CRM.
+ */
+export const NOTIFY_BODY_MAX_BYTES = 64 * 1_024;
