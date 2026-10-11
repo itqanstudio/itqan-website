@@ -27,6 +27,8 @@ import "@/styles/v3/magnet.css";
  */
 
 type Status = "idle" | "submitting" | "success" | "error";
+/** The two capture forms on the page: the sticky bar and the final section. */
+type CaptureSource = "bar" | "final";
 
 interface CaptureState {
   email: string;
@@ -34,8 +36,12 @@ interface CaptureState {
   status: Status;
   downloadUrl: string | null;
   onSubmit: (e: FormEvent) => void;
-  /** Shown in whichever form was used, so a failed submit from the sticky bar is never silent. */
+  /**
+   * Shown only in the form that was used (see errorSource), so a failed submit
+   * from the sticky bar is never silent and is announced once, not twice.
+   */
   errorMsg: string;
+  errorSource: CaptureSource | null;
 }
 
 export function MagnetLanding({ magnet }: { magnet: LeadMagnet }) {
@@ -43,6 +49,7 @@ export function MagnetLanding({ magnet }: { magnet: LeadMagnet }) {
   const [firstName, setFirstName] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [errorSource, setErrorSource] = useState<CaptureSource | null>(null);
   // PDF URL confirmed by the capture API on success, used for the instant
   // on-page download button. Falls back to the magnet's own pdfUrl.
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
@@ -50,10 +57,11 @@ export function MagnetLanding({ magnet }: { magnet: LeadMagnet }) {
   const featuredProject = useMemo(() => pickFeaturedProject(magnet.topicSlug), [magnet.topicSlug]);
   const testimonial = useMemo(() => pickTestimonial(magnet.topicSlug), [magnet.topicSlug]);
 
-  async function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent, source: CaptureSource) {
     e.preventDefault();
     setStatus("submitting");
     setErrorMsg("");
+    setErrorSource(source);
     try {
       // No `pdfUrl` is sent: the delivered link is built SERVER-SIDE from our own
       // origin, so the client can never choose the URL we email (open-relay
@@ -83,11 +91,12 @@ export function MagnetLanding({ magnet }: { magnet: LeadMagnet }) {
     }
   }
 
-  const capture: CaptureState = { email, setEmail, status, downloadUrl, onSubmit: handleSubmit, errorMsg };
+  const capture = { email, setEmail, status, downloadUrl, errorMsg, errorSource };
+  const submitFrom = (source: CaptureSource) => (e: FormEvent) => void handleSubmit(e, source);
 
   return (
     <div className="mg">
-      <CaptureBar {...capture} />
+      <CaptureBar {...capture} onSubmit={submitFrom("bar")} />
 
       <section className="mg-hero" aria-labelledby="mg-title">
         <div className="wrap">
@@ -158,12 +167,12 @@ export function MagnetLanding({ magnet }: { magnet: LeadMagnet }) {
         </div>
       </section>
 
-      <FinalCapture {...capture} firstName={firstName} setFirstName={setFirstName} errorMsg={errorMsg} />
+      <FinalCapture {...capture} onSubmit={submitFrom("final")} firstName={firstName} setFirstName={setFirstName} />
     </div>
   );
 }
 
-function CaptureBar({ email, setEmail, status, downloadUrl, onSubmit, errorMsg }: CaptureState) {
+function CaptureBar({ email, setEmail, status, downloadUrl, onSubmit, errorMsg, errorSource }: CaptureState) {
   let action: ReactNode;
   if (status !== "success") {
     action = (
@@ -180,7 +189,7 @@ function CaptureBar({ email, setEmail, status, downloadUrl, onSubmit, errorMsg }
         <button type="submit" className="btn pri" disabled={status === "submitting"}>
           {status === "submitting" ? "Sending" : "Get the guide"}
         </button>
-        {status === "error" && errorMsg && (
+        {status === "error" && errorSource === "bar" && errorMsg && (
           <p className="mg-bar-err" role="alert">
             {errorMsg}
           </p>
@@ -209,10 +218,9 @@ function CaptureBar({ email, setEmail, status, downloadUrl, onSubmit, errorMsg }
 interface FinalCaptureProps extends CaptureState {
   firstName: string;
   setFirstName: (v: string) => void;
-  errorMsg: string;
 }
 
-function FinalCapture({ email, setEmail, firstName, setFirstName, status, downloadUrl, errorMsg, onSubmit }: FinalCaptureProps) {
+function FinalCapture({ email, setEmail, firstName, setFirstName, status, downloadUrl, errorMsg, errorSource, onSubmit }: FinalCaptureProps) {
   return (
     <section className="cta" aria-labelledby="mg-get-title">
       <div className="wrap">
@@ -249,7 +257,7 @@ function FinalCapture({ email, setEmail, firstName, setFirstName, status, downlo
             <button type="submit" className="btn pri" disabled={status === "submitting"}>
               {status === "submitting" ? "Sending" : "Send me the guide"} <Arrow />
             </button>
-            {status === "error" && (
+            {status === "error" && errorSource === "final" && (
               <p className="err" role="alert">
                 {errorMsg}
               </p>

@@ -28,8 +28,10 @@ export function CopyButton({ text, label = 'Copy', what }: CopyButtonProps) {
   };
 
   return (
-    <button type="button" className="pt-copybtn" onClick={() => void copy()} aria-label={what ? `${label} ${what}` : undefined}>
+    // No aria-label: it would override the live text, so "Copied" would never be read out.
+    <button type="button" className="pt-copybtn" onClick={() => void copy()}>
       <span aria-live="polite">{state === 'done' ? 'Copied' : state === 'failed' ? 'Copy blocked, select the text' : label}</span>
+      {what && state === 'idle' && <span className="sr-only"> {what}</span>}
     </button>
   );
 }
