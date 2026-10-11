@@ -29,3 +29,17 @@ would still be caught.
 """
 regexTarget = "match"
 regexes = ['''(?i)linkedinlogo''']
+
+[[allowlists]]
+description = """
+The published HMAC test vector for the website <-> CRM booking integration, not \
+a credential. REBUILD-SPEC section 8 (itqan-crm docs/v3) defines the secret \
+"test-secret-0123456789abcdef0123456789abcdef" so that both repos can prove \
+they compute the same signature; the unit tests in src/lib/crm/*.test.ts use it. \
+The real ITQAN_BOOKING_SECRET lives only in Coolify env and is never in git.
+
+Scoped to that exact literal, so any other value assigned to a secret is still \
+caught.
+"""
+regexTarget = "match"
+regexes = ['''test-secret-0123456789abcdef0123456789abcdef''']

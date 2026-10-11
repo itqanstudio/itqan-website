@@ -91,7 +91,7 @@ export function DetailsForm({ t, lang, value, busy, error, onChange, onSubmit }:
         <span>{f.industry}</span>
         <select id="bk-industry" value={value.industry} onChange={(e) => set('industry')(e.target.value)} required {...invalid('industry')}>
           <option value="" disabled>
-            {lang === 'en' ? 'Choose one' : 'اختر'}
+            {t.chooseOne}
           </option>
           {(Object.keys(t.industries) as (keyof BookingCopy['industries'])[]).map((k) => (
             <option key={k} value={k}>

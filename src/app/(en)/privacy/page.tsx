@@ -102,9 +102,10 @@ export default function PrivacyPage() {
         as required by applicable law.
       </p>
       <p>
-        Briefing bookings are stored in a database on our own server in the EU
-        (Ireland) and deleted 12 months after the booked time. Booking confirmations
-        are sent through Amazon SES.
+        Briefing bookings are stored in Itqan&rsquo;s CRM on our own server in the EU
+        (Ireland), and the booking record is deleted 12 months after the booked time.
+        A booking also saves your name, email and company as a business contact in
+        that CRM. Booking confirmations are sent through Amazon SES.
       </p>
 
       <h2>6. Your rights</h2>

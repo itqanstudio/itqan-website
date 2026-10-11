@@ -15,20 +15,26 @@ deploys production, so push only with Ibrahim's go.
 
 ### How the v3 site is built (8 Oct 2026)
 
-- **One root layout per area.** `src/app/(en)/` (lang en), `src/app/ar/` (lang ar, dir rtl),
-  `src/app/(brand)/` (the brand portal) and `src/app/(admin)/`. There is no `app/layout.tsx`; each
-  `[...missing]` catch-all renders that language's 404. Moving between layouts is a full page load.
+- **One root layout per area.** `src/app/(en)/` (lang en), `src/app/ar/` (lang ar, dir rtl) and
+  `src/app/(brand)/` (the brand portal). There is no `app/layout.tsx`; each `[...missing]`
+  catch-all renders that language's 404. Moving between layouts is a full page load.
 - **Copy** lives in `src/content/v3/` (`en.ts`, `ar.ts`, `booking.ts`), typed by `types.ts` so a missing
   Arabic string fails the typecheck. Voice rules: no em or en dashes, no banned words, a fact in
   every sentence, never an invented number. Headings are `[before, highlighted, after]`.
 - **Components** in `src/components/v3/` and `src/components/portal/`, styles in `src/styles/v3/`
   (plain CSS with logical properties, no Tailwind; the symbol never mirrors). The hero canvas and
   every animation honour reduced motion.
-- **Booking**: `src/lib/scheduling/` (SQLite via `node:sqlite` at `/app/.data/itqan.db` on a Coolify
-  persistent volume, slot engine, zod validation, SES mail, ics). Public `/book`, `/ar/book`, cancel
-  links `/book/cancel/<token>`. Admin at `/admin`: emailed one-time sign-in link for addresses in
-  `ADMIN_EMAILS` (default ibrahim@itqanstudio.com), weekly hours, rules, days off, bookings.
-  Optional env: `BOOKING_MEETING_URL` (video link in confirmations), `BOOKING_NOTIFY_EMAIL`.
+- **Booking** (CRM v3 link, 11 Oct 2026): the CRM owns hours, days off, hosts and bookings. Public
+  `/book`, `/ar/book` (optional `?with=<slug>` for one host), cancel links `/book/cancel/<token>`.
+  The site's `/api/book/*` routes keep the public guards and call the CRM's signed endpoints through
+  `src/lib/crm/` (contract copied verbatim from the CRM, HMAC in `hmac.ts`, client in `client.ts`);
+  `POST /api/crm/notify` lets the CRM ask the site to email a guest after a host cancels. Emails and
+  .ics stay here (`src/lib/scheduling/mail.ts`, host-aware). Env: `ITQAN_BOOKING_SECRET` (32+ chars,
+  same as the CRM), `CRM_API_ORIGIN` (default https://portal.itqanstudio.com; https, or plain http
+  only on loopback; a refused value logs a `[startup]` error from `src/instrumentation.ts` and pauses
+  booking). There is no site
+  admin: `/admin` redirects to the CRM's availability page. `scripts/mock-crm.mjs` stands in for the
+  CRM locally; `scripts/export-bookings-to-crm.mjs` moves the old SQLite data once.
 - **Feedback, support, thank-you, magnet** pages run in the `(en)` layout; feedback.itqanstudio.com
   shows the feedback form without the site nav (host header from middleware).
 - **Brand assets** for the portal's library are synced from source folders outside the repo by

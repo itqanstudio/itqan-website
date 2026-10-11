@@ -1,6 +1,9 @@
+import { createHash, createHmac } from 'node:crypto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
-import { adminEmails, clientIp, ipKey, isAllowedOrigin, json, linkOrigin, readJson } from './http';
+import { clientIp, ipKey, isAllowedOrigin, json, readBody, readJson } from './http';
+
+const SECRET = 'test-secret-0123456789abcdef0123456789abcdef';
 
 function req(url: string, init: { method?: string; headers?: Record<string, string>; body?: BodyInit } = {}): NextRequest {
   // `duplex` is required by Node for streamed bodies but missing from Next's RequestInit type.
@@ -27,13 +30,6 @@ describe('origin rules', () => {
     expect(isAllowedOrigin('http://127.0.0.1:3000')).toBe(true);
     expect(isAllowedOrigin('http://localhost.evil.example')).toBe(false);
   });
-  it('pins emailed links to the production origin unless developing on localhost', () => {
-    vi.stubEnv('NODE_ENV', 'production');
-    expect(linkOrigin(req('http://evil.example/api/admin/login'))).toBe('https://itqanstudio.com');
-    vi.stubEnv('NODE_ENV', 'development');
-    expect(linkOrigin(req('http://localhost:3001/api/admin/login'))).toBe('http://localhost:3001');
-    expect(linkOrigin(req('http://evil.example/api/admin/login'))).toBe('https://itqanstudio.com');
-  });
 });
 
 describe('client identity', () => {
@@ -43,21 +39,35 @@ describe('client identity', () => {
     expect(clientIp(req('http://x/'))).toBe('unknown');
   });
   it('hashes addresses one way and stably', () => {
-    expect(ipKey('203.0.113.9')).toBe(ipKey('203.0.113.9'));
-    expect(ipKey('203.0.113.9')).not.toContain('203');
-    expect(ipKey('203.0.113.9')).not.toBe(ipKey('203.0.113.10'));
+    expect(ipKey('203.0.113.9', SECRET)).toBe(ipKey('203.0.113.9', SECRET));
+    expect(ipKey('203.0.113.9', SECRET)).not.toContain('203');
+    expect(ipKey('203.0.113.9', SECRET)).not.toBe(ipKey('203.0.113.10', SECRET));
   });
-  it('reads admins from ADMIN_EMAILS, lower-cased, with a default', () => {
-    vi.stubEnv('ADMIN_EMAILS', '');
-    expect(adminEmails()).toEqual(['ibrahim@itqanstudio.com']);
-    vi.stubEnv('ADMIN_EMAILS', ' Ibrahim@ItqanStudio.com , bisma@example.com,');
-    expect(adminEmails()).toEqual(['ibrahim@itqanstudio.com', 'bisma@example.com']);
+  it('keys the hash with the shared secret, so nobody can rebuild it by hashing every IPv4 address (SW-4)', () => {
+    const key = ipKey('203.0.113.9', SECRET);
+    expect(key).toMatch(/^[0-9a-f]{64}$/);
+    expect(key).toBe(createHmac('sha256', SECRET).update('itqan-booking-ip:203.0.113.9').digest('hex'));
+    // The old unkeyed form anyone could recompute from the public prefix.
+    expect(key).not.toBe(createHash('sha256').update('itqan-booking:203.0.113.9').digest('hex'));
+    expect(key).not.toBe(ipKey('203.0.113.9', `${SECRET}-other`));
+  });
+  it('reads the secret from the environment and gives no key without a usable one', () => {
+    vi.stubEnv('ITQAN_BOOKING_SECRET', SECRET);
+    expect(ipKey('203.0.113.9')).toBe(ipKey('203.0.113.9', SECRET));
+    vi.stubEnv('ITQAN_BOOKING_SECRET', 'short');
+    expect(ipKey('203.0.113.9')).toBeNull();
+    expect(ipKey('203.0.113.9', 'short')).toBeNull();
+    expect(ipKey('203.0.113.9', null)).toBeNull();
   });
 });
 
 describe('readJson', () => {
   it('parses a small body', async () => {
     expect(await readJson(req('http://x/', { body: '{"a":1}' }))).toEqual({ a: 1 });
+  });
+  it('returns the raw bytes unchanged, for signature checks', async () => {
+    const bytes = await readBody(req('http://x/', { body: '{"n":"إتقان"}' }));
+    expect(new TextDecoder().decode(bytes)).toBe('{"n":"إتقان"}');
   });
   it('rejects a declared length over the cap', async () => {
     await expect(readJson(req('http://x/', { body: '{}', headers: { 'content-length': '999999' } }), 100)).rejects.toThrow('too_large');
@@ -70,6 +80,14 @@ describe('readJson', () => {
       },
     });
     await expect(readJson(req('http://x/', { body: big }), 4096)).rejects.toThrow('too_large');
+  });
+  it('accepts a body of exactly the cap and refuses one byte more (panel run 4)', async () => {
+    const atCap = `"${'a'.repeat(16_382)}"`;
+    expect(Buffer.byteLength(atCap)).toBe(16_384);
+    expect(await readJson(req('http://x/', { body: atCap }))).toHaveLength(16_382);
+    const overCap = `"${'a'.repeat(16_383)}"`;
+    await expect(readJson(req('http://x/', { body: overCap }))).rejects.toThrow('too_large');
+    await expect(readJson(req('http://x/', { body: overCap, headers: { 'content-length': '16385' } }))).rejects.toThrow('too_large');
   });
   it('counts bytes, not characters', async () => {
     const arabic = JSON.stringify({ n: 'إتقان'.repeat(10) });

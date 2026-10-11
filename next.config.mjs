@@ -2,6 +2,8 @@
 const nextConfig = {
   // Do not advertise the framework in a response header.
   poweredByHeader: false,
+  // Runs src/instrumentation.ts once at server start: it logs a CRM_API_ORIGIN the site refuses.
+  experimental: { instrumentationHook: true },
   images: {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 31536000,
@@ -26,6 +28,9 @@ const nextConfig = {
       { source: '/work', destination: '/#work', permanent: true },
       // Only Millow and Nexilink have case pages now; every other old case lands on the work section.
       { source: '/work/:slug((?!millow$|nexilink$)[^/]+)', destination: '/#work', permanent: true },
+      // CRM v3 (Oct 2026): hours, days off and bookings are managed in the CRM; the site admin is gone.
+      { source: '/admin', destination: 'https://portal.itqanstudio.com/calendar/availability', permanent: true },
+      { source: '/admin/:path*', destination: 'https://portal.itqanstudio.com/calendar/availability', permanent: true },
       // Brand v3 in the portal (11 Oct 2026): the old static brand pack now points at the v3 pack built at prebuild.
       {
         source: '/brands/downloads/itqan-studio-brand-pack.zip',
@@ -104,34 +109,6 @@ const nextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()',
           },
-        ],
-      },
-      /*
-       * The booking admin shows every guest's details, so it gets a strict CSP:
-       * same-origin everything, no framing, no form posts elsewhere. Next 14
-       * inlines its bootstrap scripts and styles, hence 'unsafe-inline'; dev
-       * mode also needs 'unsafe-eval' for fast refresh.
-       */
-      {
-        source: '/admin/:path*',
-        headers: [
-          {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data:",
-              "font-src 'self'",
-              "connect-src 'self'",
-              "frame-ancestors 'none'",
-              "base-uri 'none'",
-              "form-action 'self'",
-              "object-src 'none'",
-            ].join('; '),
-          },
-          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
-          { key: 'Cache-Control', value: 'no-store' },
         ],
       },
     ];

@@ -1,5 +1,115 @@
 # Itqan Studio Website — Handover
 
+## 2026-10-11: /book now runs on the CRM (CRM v3 rebuild, workstream W). Deploying 11 Oct evening (Ibrahim's go)
+
+Branch `feat/crm-booking-link` (worktree `itqan-website-crm-link`), local commits only, nothing pushed.
+Contract: `itqan-crm-v3/docs/v3/REBUILD-SPEC.md` section 8. Tracked work:
+`agent-work/completed/20261010202954_website_crm_booking_link.md` (gitignored, local to this worktree).
+
+### What changed
+- The CRM owns hours, days off, hosts (Ibrahim, Bisma) and bookings. The site keeps the public booking
+  UI, its guards and the emails, and calls the CRM's signed endpoints through `src/lib/crm/`
+  (`contract.ts` is a verbatim copy of the CRM's `src/lib/integrations/website-contract.ts`).
+- `/api/book/slots`, `/api/book`, `/api/book/cancel` proxy to the CRM with the same response shapes
+  (plus `hosts` on slots and `hostName` on a booking). `?with=<slug>` on `/book` narrows to one host.
+  CRM unreachable, 5xx or misconfigured: 503 `paused`, the widget says "Booking is paused for a moment.
+  Email hello@itqanstudio.com and we will find a time." (Arabic too).
+- `/book` fetches the free times while rendering (3 s timeout, 20 s cache, per-connection cap) so the
+  heading can say "{n}-minute" from the CRM's call length; on a miss the widget loads them itself.
+- Emails are host-aware: host name and call length in the guest mail, host as reply-to and .ics
+  organizer, host meeting link, host notice to the host's address. No visitor-typed text in guest mail.
+- New `POST /api/crm/notify` (signature required, replay refused): the CRM calls it after a host
+  cancels and the site emails the guest.
+- Removed: `/admin`, `/api/admin/*`, the admin components and CSS, `scripts/admin-login-link.mjs`, the
+  SQLite slot engine and repo. `/admin` and `/admin/*` redirect (308) to
+  https://portal.itqanstudio.com/calendar/availability. `ADMIN_EMAILS`, `BOOKING_NOTIFY_EMAIL` and
+  `BOOKING_MEETING_URL` are no longer read.
+- Copy: "A video call with Ibrahim or Bisma, the founders."; privacy policy names the CRM, the
+  12-month deletion of the booking record, and the business contact a booking creates.
+- New env (names only, values in Coolify): `ITQAN_BOOKING_SECRET` (32+ chars, same value on the CRM),
+  `CRM_API_ORIGIN` (optional, default https://portal.itqanstudio.com).
+
+### Deploy order (only with Ibrahim's go; a push to main deploys)
+1. The CRM side ships first: section 6 SQL applied, `/api/integrations/website/*` deployed, both
+   hosts seeded, `ITQAN_BOOKING_SECRET` set on the CRM app.
+2. Set `ITQAN_BOOKING_SECRET` (same value) on the Coolify app `itqanstudio`. Keep the
+   `itqanstudio-booking-data` volume mounted.
+3. Push and deploy this branch, then straight away run the one-time export in the NEW container (the
+   volume still holds `/app/.data/itqan.db`; the site no longer writes to it):
+   `node scripts/export-bookings-to-crm.mjs --dry-run` (counts only), then without `--dry-run`.
+   Re-running is safe (idempotent on the booking id). Until it has run, the CRM does not know the old
+   upcoming bookings and could offer those times again, so keep that gap to minutes.
+4. Check `/book`, `/ar/book`, a test booking and its cancel link, the `/admin` redirect, and that the
+   old upcoming bookings show in the CRM calendar.
+5. Old guests' cancel links stop working after the move (only a hash of their token exists); the
+   page tells them to reply to their confirmation email.
+6. After a week with no problems, the `itqanstudio-booking-data` volume can be backed up and removed
+   (Ibrahim's call).
+
+### Verified locally (11 Oct)
+- `npm run typecheck`, `npm test` (105 vitest tests in 10 files plus the 3 node script suites),
+  `npm run build` green. Coverage on the new code: `src/lib/crm` 97%, `src/lib/scheduling` 92%,
+  `scripts/lib` 98% (lines). gitleaks over the branch commits: clean.
+- The whole flow with `scripts/mock-crm.mjs` on :3999 and `next dev` on :3101, driven in Chrome by
+  `scripts/smoke-booking.mjs` (15/15): book, confirm naming the host, cancel via the token link, an
+  Arabic booking with `?with=bisma`, a host cancel through `/api/crm/notify`, the paused state in
+  English and Arabic, the `/admin` redirect, no console errors. Screenshots in the session scratchpad
+  `website-shots/`.
+- The export script against a synthetic SQLite file and the mock: dry run counts, 3 requests under
+  the cap, a second run skips all 30, a wrong secret is refused.
+
+### Review fixes (11 Oct, SW-1 to SW-4; local commits ab3c4a4, c016203, 3cb529f, 744989b)
+- SW-1: POST bookings waits 15 s (see the open item below); timeout or unreadable success answer is
+  `unconfirmed`, not `paused`.
+- SW-2 (narrowed by W4, v3.1 review): plain http to the CRM only for loopback (`localhost`, `::1` or
+  a whole `127.x.x.x` literal); a private address or a Docker service name such as `itqan-crm` now
+  needs https, and `127.0.0.1.nip.io` stays refused. Same rule in `scripts/lib/crm-export.mjs`.
+- SW-3: `/api/book` returns `ics`, the exact guest calendar file the confirmation email attaches (host
+  as organizer, full text, video link); "Add to calendar" downloads that.
+- SW-4: `ipHash` is HMAC-SHA256 keyed by `ITQAN_BOOKING_SECRET` (label `itqan-booking-ip:`), not a
+  plain sha256. Rotating the secret resets the per-connection count. Upcoming CRM bookings made before
+  this deploy keep their old hash, so for those visitors the "2 per connection" cap starts fresh once.
+- Checks after the fixes: typecheck, 122 vitest tests, `npm run build` green. `npm run lint` is not
+  set up in this repo (next lint asks to create a config). The browser smoke run was not repeated.
+
+### v3.1 review round 2 fixes (11 Oct, branch fix/v31-web-r2, fast-forwarded to 7d07724)
+- Founders' calendar CANCEL that failed is retried in-process at 1 and 5 minutes; a booking whose
+  cancel has started gets no later founders' REQUEST; the send memory never drops a send still
+  going; a CANCEL waits for its REQUEST send at most 32 s.
+- One guest cancel per link at a time (`key-lock.ts`), so a double submit emails the guest once.
+- Calendar text writes U+0085, U+2028 and U+2029 as spaces; the cancel page has its own sentences
+  for a rate limit and an unreadable request; the cancel body cap fits the reason's raw maximum.
+- `src/instrumentation.ts` (experimental.instrumentationHook) logs one `[startup] CRM_API_ORIGIN is
+  set but refused` line at boot when the value is refused (never the value). After a deploy the
+  Coolify log must not show it.
+- Checks: typecheck, 231 vitest tests (16 files), `next build` green. Production steps unchanged:
+  `itqan-crm-v3/docs/v31/GO-LIVE.md` and `docs/v31/scheduling.md` in the CRM repo.
+
+### Open items
+- The CRM side (workstream C) must answer exactly the section 8 shapes; `scripts/mock-crm.mjs` is the
+  reference the site was tested against.
+- For imported bookings, the host-cancel email's .ics CANCEL uses the CRM booking id as the UID. If
+  the CRM gives imported rows a new id instead of the legacy one, calendar apps will not match it to
+  the old invite (the email itself still arrives).
+- The home page still says "30-minute briefing" in `src/content/v3/en.ts` (lines 39, 185, 275) and
+  `ar.ts` (36, 182, 271). True while the CRM rule is 30 minutes; change them with the rule.
+- Review fix SW-1 (11 Oct): the 8 s budget equalled the CRM's own Google timeout, so a Google stall
+  showed "paused" while the CRM could still commit the booking. POST bookings now waits 15 s (slots
+  and cancel stay 8 s; the CRM lowers its Google timeout to 4 s in a parallel fix). If the answer
+  still does not arrive, or a success answer cannot be read, `/api/book` answers 504/502
+  `unconfirmed` and the widget says the briefing may already be booked: check your email before
+  trying again, else write to hello@. No guest email goes out in that case (the site never got the
+  booking), so the host finds it in the CRM calendar (the site logs the start time) and emails the
+  guest. A retry after a booking that did commit answers "limit" or "taken"; an idempotency key on
+  the CRM's POST bookings would let a retry return the same booking (CRM contract change, not done).
+- `src/lib/crm/contract.ts` still says ipHash is "sha256 of the visitor IP". It is a verbatim copy of
+  the CRM's `website-contract.ts`, so the comment changes in the CRM first and is copied here.
+
+### Monetization angle
+- The pattern built here (public booking page on the client's site, signed server-to-server calls,
+  bookings landing as contacts in the client's own CRM, a mock for local testing) is a reusable module
+  for client sites that run their own CRM.
+
 ## 2026-10-11 — The old brand removed everywhere: portal, pages, assets, signatures, templates
 
 Ibrahim: "brand.itqanstudio.com still has the old brand. Fix that immediately and make sure that
