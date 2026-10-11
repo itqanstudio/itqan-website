@@ -168,6 +168,14 @@ export interface NotifyRequest {
   by: "host";
   notifyGuest: boolean;
   booking: BookingForEmail;
+  /**
+   * A fresh random id per call. The website accepts each signature once, and the
+   * signature covers the body and the second it was made, so without it two
+   * identical calls in one second (two cancels of one booking) would share one
+   * and the second would be refused as a replay. The CRM sends one on every
+   * call; the website ignores it, and a CRM from before it leaves it out.
+   */
+  requestId?: string;
 }
 
 export interface NotifyData {

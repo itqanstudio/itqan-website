@@ -142,6 +142,7 @@ export const guestNoticeSentDataSchema: z.ZodType<GuestNoticeSentData> = z.objec
   recorded: z.boolean(),
 });
 
+/** The CRM's requestId only makes each signed body unique; the site has no use for it, so the parse drops it. */
 export const notifyRequestSchema: z.ZodType<NotifyRequest, z.ZodTypeDef, unknown> = z.object({
   type: z.literal('booking.cancelled'),
   by: z.literal('host'),

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SIGNATURE_MAX_SKEW_SECONDS, type BookingForEmail, type SlotsData } from './contract';
+import { SIGNATURE_MAX_SKEW_SECONDS, type BookingForEmail, type NotifyRequest, type SlotsData } from './contract';
 import { computeV1, verifySignature } from './hmac';
 import { clearInitialSlotsCache, initialSlots } from './initial-slots';
 import { cachedSlots, peekSlots } from './slots-cache';
@@ -205,6 +205,12 @@ describe('schemas', () => {
     expect(notifyRequestSchema.safeParse({ type: 'booking.created', by: 'host', notifyGuest: true, booking }).success).toBe(false);
     expect(notifyRequestSchema.safeParse({ type: 'booking.cancelled', by: 'guest', notifyGuest: true, booking }).success).toBe(false);
     expect(notifyRequestSchema.safeParse({ type: 'booking.cancelled', by: 'host', notifyGuest: 'yes', booking }).success).toBe(false);
+  });
+  it("takes the CRM's requestId as the contract types it, and a CRM from before it (code review L3)", () => {
+    const fromCrm: NotifyRequest = { type: 'booking.cancelled', by: 'host', notifyGuest: false, booking, requestId: '0b6f3a52-6c1e-4d3f-9a4e-2f1d8c7b6a50' };
+    const older: NotifyRequest = { type: 'booking.cancelled', by: 'host', notifyGuest: false, booking };
+    expect(notifyRequestSchema.safeParse(fromCrm).success).toBe(true);
+    expect(notifyRequestSchema.safeParse(older).success).toBe(true);
   });
   it('bounds the slot list', () => {
     expect(slotsDataSchema.safeParse(slotsData).success).toBe(true);
