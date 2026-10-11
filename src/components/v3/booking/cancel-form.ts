@@ -26,3 +26,37 @@ export function reasonTooLong(reason: string): boolean {
 export function keepHref(lang: 'en' | 'ar'): string {
   return lang === 'ar' ? '/ar' : '/';
 }
+
+/** Which sentence a failed cancel shows: cancel-page copy, or the shared paused and server errors. */
+export type CancelFailureMessage = 'past' | 'notFound' | 'reasonTooLong' | 'reasonRejected' | 'unreadable' | 'paused' | 'server';
+
+export interface CancelFailure {
+  /** True when the link cannot work again: the form is replaced by the message and a rebook link. */
+  final: boolean;
+  message: CancelFailureMessage;
+}
+
+/**
+ * What an error code from POST /api/book/cancel means for the page. Only a
+ * call that already took place or a link that failed is final; a reason the
+ * CRM refused, one that is too long, or a request that arrived broken keep the
+ * form so the guest can fix it and send again.
+ */
+export function cancelFailure(code: string | undefined): CancelFailure {
+  switch (code) {
+    case 'past':
+      return { final: true, message: 'past' };
+    case 'not_found':
+      return { final: true, message: 'notFound' };
+    case 'reason_rejected':
+      return { final: false, message: 'reasonRejected' };
+    case 'reason_too_long':
+      return { final: false, message: 'reasonTooLong' };
+    case 'unreadable':
+      return { final: false, message: 'unreadable' };
+    case 'paused':
+      return { final: false, message: 'paused' };
+    default:
+      return { final: false, message: 'server' };
+  }
+}

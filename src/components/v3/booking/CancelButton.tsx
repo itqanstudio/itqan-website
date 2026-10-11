@@ -5,7 +5,7 @@ import type { BookingCopy } from '@/content/v3/booking';
 import { fill, formatWhen } from '@/content/v3/booking-format';
 import type { Lang } from '@/content/v3/types';
 import { CANCEL_REASON_MAX } from '@/lib/scheduling/limits';
-import { cancelRequestBody, keepHref, reasonTooLong } from './cancel-form';
+import { cancelFailure, cancelRequestBody, keepHref, reasonTooLong, type CancelFailureMessage } from './cancel-form';
 
 interface CancelButtonProps {
   token: string;
@@ -38,12 +38,19 @@ function cancelledMessage(t: BookingCopy['cancel'], lang: Lang, data: NonNullabl
   }
 }
 
-/** What a failed answer means for the page: a link that cannot work again is final; anything else may be retried. */
+/** What a failed answer means for the page (cancelFailure): a link that cannot work again is final; anything else may be retried. */
 function failureState(body: Answer, t: BookingCopy['cancel'], errors: CancelButtonProps['errors']): State {
-  if (body.error === 'past') return { kind: 'final', message: t.past };
-  if (body.error === 'not_found') return { kind: 'final', message: t.notFound };
-  if (body.error === 'invalid') return { kind: 'error', message: t.reasonTooLong };
-  return { kind: 'error', message: body.error === 'paused' ? errors.paused : errors.server };
+  const failure = cancelFailure(body.error);
+  const text: Record<CancelFailureMessage, string> = {
+    past: t.past,
+    notFound: t.notFound,
+    reasonTooLong: t.reasonTooLong,
+    reasonRejected: t.reasonRejected,
+    unreadable: t.unreadable,
+    paused: errors.paused,
+    server: errors.server,
+  };
+  return { kind: failure.final ? 'final' : 'error', message: text[failure.message] };
 }
 
 /**

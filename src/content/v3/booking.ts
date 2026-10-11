@@ -68,6 +68,10 @@ export interface BookingCopy {
     reasonHint: string;
     reasonCount: string;
     reasonTooLong: string;
+    /** The CRM refused the reason: fix it or leave it out, then send again. */
+    reasonRejected: string;
+    /** The request arrived broken (not the reason's fault): send again. */
+    unreadable: string;
     /** The quiet way out: back to the site with the booking kept. */
     keep: string;
     button: string;
@@ -171,6 +175,8 @@ export const bookingCopy: Record<Lang, BookingCopy> = {
       reasonHint: 'Only the Itqan team sees it.',
       reasonCount: '{n} of 500 characters',
       reasonTooLong: 'Keep the reason to 500 characters.',
+      reasonRejected: 'We could not take this reason. Change it or leave it empty, then try again.',
+      unreadable: 'Your request did not reach us in one piece. Try again.',
       keep: 'Keep my booking',
       button: 'Cancel the briefing',
       working: 'Cancelling…',
@@ -270,6 +276,8 @@ export const bookingCopy: Record<Lang, BookingCopy> = {
       reasonHint: 'لا يطّلع عليه إلا فريق إتقان.',
       reasonCount: '{n} من 500 حرف',
       reasonTooLong: 'يجب ألا يتجاوز السبب 500 حرف.',
+      reasonRejected: 'لم نتمكن من قبول هذا السبب. عدّله أو اتركه فارغاً، ثم حاول مرة أخرى.',
+      unreadable: 'لم يصلنا طلبك كاملاً. حاول مرة أخرى.',
       keep: 'احتفظ بحجزي',
       button: 'ألغِ الجلسة',
       working: 'جارٍ الإلغاء…',

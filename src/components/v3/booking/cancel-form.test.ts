@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { bookingCopy } from '@/content/v3/booking';
 import { fill } from '@/content/v3/booking-format';
 import { cancelRequestSchema } from '@/lib/scheduling/validation';
-import { cancelRequestBody, keepHref, reasonTooLong } from './cancel-form';
+import { cancelFailure, cancelRequestBody, keepHref, reasonTooLong } from './cancel-form';
 
 const TOKEN = 'A'.repeat(43);
 
@@ -25,6 +25,18 @@ describe('the cancel form', () => {
     expect(keepHref('en')).toBe('/');
     expect(keepHref('ar')).toBe('/ar');
   });
+
+  it('reads a failed answer: only a dead link or a past call is final, every reason problem can be fixed and sent again (W7)', () => {
+    expect(cancelFailure('past')).toEqual({ final: true, message: 'past' });
+    expect(cancelFailure('not_found')).toEqual({ final: true, message: 'notFound' });
+    expect(cancelFailure('reason_rejected')).toEqual({ final: false, message: 'reasonRejected' });
+    expect(cancelFailure('reason_too_long')).toEqual({ final: false, message: 'reasonTooLong' });
+    expect(cancelFailure('unreadable')).toEqual({ final: false, message: 'unreadable' });
+    expect(cancelFailure('paused')).toEqual({ final: false, message: 'paused' });
+    expect(cancelFailure('invalid')).toEqual({ final: false, message: 'server' });
+    expect(cancelFailure('rate')).toEqual({ final: false, message: 'server' });
+    expect(cancelFailure(undefined)).toEqual({ final: false, message: 'server' });
+  });
 });
 
 describe('the cancel page copy', () => {
@@ -36,5 +48,17 @@ describe('the cancel page copy', () => {
     expect(bookingCopy.ar.cancel.reasonLabel).toBe('سبب الإلغاء (اختياري)');
     expect(bookingCopy.ar.cancel.keep).toBe('احتفظ بحجزي');
     expect(fill(bookingCopy.ar.cancel.reasonCount, { n: 12 })).toBe('12 من 500 حرف');
+  });
+
+  it('says a refused reason and an unreadable request in their own words, both asking to try again', () => {
+    for (const lang of ['en', 'ar'] as const) {
+      const t = bookingCopy[lang].cancel;
+      expect(new Set([t.reasonTooLong, t.reasonRejected, t.unreadable, t.notFound]).size).toBe(4);
+      // House style: no em or en dashes (built from code points, so none sits in this file).
+      const dashes = new RegExp(`[${String.fromCodePoint(0x2013, 0x2014)}]`);
+      [t.reasonRejected, t.unreadable].forEach((s) => expect(s).not.toMatch(dashes));
+    }
+    expect(bookingCopy.en.cancel.reasonRejected).toBe('We could not take this reason. Change it or leave it empty, then try again.');
+    expect(bookingCopy.en.cancel.unreadable).toBe('Your request did not reach us in one piece. Try again.');
   });
 });
