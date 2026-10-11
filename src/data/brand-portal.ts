@@ -1,5 +1,5 @@
 /**
- * Portal information architecture — Itqan Studio.
+ * Portal information architecture, Itqan brand v3.
  *
  * Modelled on brand.uber.com (a Frontify STYLEGUIDE): a three-level tree —
  * CATEGORY → section → page — where every topic owns a URL instead of being an
@@ -35,7 +35,7 @@ export interface PortalCategory {
  */
 export const PORTAL_BRAND = {
   brand: 'itqan-studio',
-  markSlug: 'white-logo',
+  markSlug: 'itqan-symbol-dusk',
   siteUrl: 'https://itqanstudio.com',
   siteLabel: 'itqanstudio.com',
 } as const;
@@ -44,9 +44,9 @@ export const PORTAL_NAV: PortalCategory[] = [
   {
     label: 'Foundations',
     items: [
-      { href: '/brand', label: 'Overview', summary: 'What the Itqan Studio brand is, and how to use this portal.' },
-      { href: '/brand/story', label: 'Story & principles', summary: 'What itqan means, and the four principles the brand protects.' },
-      { href: '/brand/positioning', label: 'Positioning', summary: 'Who Itqan Studio is for, and what it refuses to be.' },
+      { href: '/brand', label: 'Overview', summary: 'What the Itqan brand is, and how to use this portal.' },
+      { href: '/brand/story', label: 'Story & principles', summary: 'What itqan means, and the idea behind the signal i.' },
+      { href: '/brand/positioning', label: 'Positioning', summary: 'Who Itqan builds AI for, and the line we say it in.' },
     ],
   },
   {
@@ -55,7 +55,7 @@ export const PORTAL_NAV: PortalCategory[] = [
       {
         href: '/brand/logo',
         label: 'Logo',
-        summary: 'The mark and the wordmark: which version goes where.',
+        summary: 'The signal i, the wordmark and the lockups: which version goes where.',
         children: [
           { href: '/brand/logo/library', label: 'Logo library', summary: 'Every approved mark, downloadable in each format.' },
           { href: '/brand/logo/clear-space', label: 'Clear space & sizing', summary: 'Minimum sizes and the space the mark needs.' },
@@ -65,7 +65,7 @@ export const PORTAL_NAV: PortalCategory[] = [
       {
         href: '/brand/colour',
         label: 'Colour',
-        summary: 'The plum ground, the two accents, and when each one applies.',
+        summary: 'Ink and bone, Itqan Rose, and the dusk gradient.',
         children: [
           { href: '/brand/colour/pairings', label: 'Pairings & contrast', summary: 'Approved combinations with measured contrast, and the banned ones.' },
         ],
@@ -73,7 +73,7 @@ export const PORTAL_NAV: PortalCategory[] = [
       {
         href: '/brand/typography',
         label: 'Typography',
-        summary: 'Manrope for everything, Playfair italic for one phrase.',
+        summary: 'Geist for Latin, Readex Pro for Arabic, Geist Mono for data.',
         children: [
           { href: '/brand/typography/specimens', label: 'Specimens', summary: 'Live specimens of every role in the scale.' },
         ],
@@ -83,15 +83,15 @@ export const PORTAL_NAV: PortalCategory[] = [
   {
     label: 'Expression',
     items: [
-      { href: '/brand/composition', label: 'Composition', summary: 'Alternating light and dark sections, and the rhythm between them.' },
-      { href: '/brand/imagery', label: 'Imagery', summary: 'Client work, process shots, and what the pictures are for.' },
+      { href: '/brand/composition', label: 'Composition', summary: 'Dark grounds, cell-ruled grids and one highlight per view.' },
+      { href: '/brand/imagery', label: 'Imagery', summary: 'Rose gel light, pixel bokeh, and the twenty pixel icons.' },
       { href: '/brand/motion', label: 'Motion', summary: 'How things move, and the specs that keep it consistent.' },
       {
         href: '/brand/voice',
         label: 'Voice',
-        summary: 'Confident and premium, never corporate. How Itqan writes.',
+        summary: 'Plain sentences with a fact in each. How Itqan writes.',
         children: [
-          { href: '/brand/voice/library', label: 'Copy library', summary: 'Approved lines: boilerplate, taglines, service descriptions.' },
+          { href: '/brand/voice/library', label: 'Copy library', summary: 'Approved lines: the line, boilerplate, descriptions, Arabic.' },
         ],
       },
     ],

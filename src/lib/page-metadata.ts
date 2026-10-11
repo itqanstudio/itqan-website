@@ -31,7 +31,7 @@ const DEFAULT_OG_IMAGE = '/v3/og-en.png';
  * Suffix the brand-portal layout's title template appends. Shared so a portal
  * page's og:title / twitter:title always equal its rendered <title>.
  */
-export const PORTAL_TITLE_SUFFIX = ' — Itqan Studio Brand';
+export const PORTAL_TITLE_SUFFIX = ' · Itqan brand';
 
 interface ShareInput {
   path: string;

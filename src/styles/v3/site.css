@@ -51,6 +51,8 @@ html[dir='rtl'] .arr { transform: scaleX(-1); }
 .wm .ii { display: inline-block; width: 0.104em; height: 0.52em; background: currentColor; position: relative; margin-inline-end: 0.075em; }
 .wm .ii::before { content: ''; position: absolute; inset-inline-start: -0.012em; bottom: 0.66em; width: 0.13em; height: 0.13em; background: var(--rose); }
 .wm-ar { font-family: var(--ar); font-weight: 600; line-height: 1; }
+/* One-colour lockup for rose and dusk grounds: the tittle follows the text colour. */
+.lock.mono .wm .ii::before { background: currentColor; }
 .lock { display: inline-flex; align-items: flex-end; gap: 0.3em; text-decoration: none; }
 .lock .sym { width: 0.8em; margin-bottom: 0.02em; line-height: 0; flex: none; }
 .lock .sym svg, .sym svg { width: 100%; height: auto; display: block; }
