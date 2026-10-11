@@ -56,6 +56,11 @@ export function settleSend(key: string, at: number, sent: boolean): void {
   if (sent) remember(went, key, at);
 }
 
+/** True when this send went within the last 24 hours; one still going or one that failed is false. */
+export function hasSent(key: string, now: number): boolean {
+  return isFresh(went.get(key), now);
+}
+
 /**
  * Notes that a cancel for this booking has started (review r2). A booking id
  * never comes back once cancelled, and its invite goes right after it is

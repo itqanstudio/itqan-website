@@ -180,4 +180,13 @@ export interface NotifyRequest {
 
 export interface NotifyData {
   emailed: boolean;
+  /**
+   * True only when every founder on the booking has had the calendar CANCEL,
+   * from this call or an earlier one the website still remembers (24 hours).
+   * False when one failed, could not be sent, or is still going after the
+   * website's short wait (it keeps trying in the background); the CRM then
+   * keeps offering Send calendar cancel again. A website from before this field
+   * leaves it out, and the CRM counts its answer as sent, as before.
+   */
+  foundersSent?: boolean;
 }

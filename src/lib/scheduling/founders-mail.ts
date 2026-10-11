@@ -1,6 +1,6 @@
 import { formatWhen } from '@/content/v3/booking';
 import type { BookingForEmail } from '@/lib/crm/contract';
-import { claimSend, clearSendMemory, isCancelled, markCancelled, sendMemorySize, settleSend } from './founders-memory';
+import { claimSend, clearSendMemory, hasSent, isCancelled, markCancelled, sendMemorySize, settleSend } from './founders-memory';
 import { buildIcs, type IcsAttendee, type IcsMethod } from './ics';
 import { SMTP_TIMEOUT_MS, callMinutes, meetingLink, sendMail, type MailResult } from './mail';
 import { BIDI_CONTROLS } from './validation';
@@ -15,6 +15,8 @@ export { FOUNDER_MEMORY_MAX } from './founders-memory';
  * From), never a founder: a calendar treats an invite organized by its own
  * owner as their own event, not as an invitation. These emails are best effort:
  * nothing here throws, and a failure never touches the booking or the cancel.
+ * The CRM hears whether a host cancel's CANCEL went (foundersCancelWent), so it
+ * keeps offering Send calendar cancel again until it has.
  *
  * Once per founder (W5): the CRM and the guest may retry a cancel, and each
  * retry reaches this file again. A calendar takes a repeated CANCEL as a no-op,
@@ -64,6 +66,14 @@ export const INVITE_WAIT_MS = 4 * SMTP_TIMEOUT_MS;
 export const CANCEL_RETRY_DELAYS_MS: readonly number[] = [60_000, 300_000];
 /** The most bookings with a cancel retry waiting at once (far above two founders' day). */
 const CANCEL_RETRY_MAX = 500;
+
+/**
+ * How long the CRM's notify call waits for the founders' CANCEL (code review
+ * M2). The CRM gives the whole call 8 seconds and the guest's email runs at
+ * the same time, so a slow founders' send still leaves about 3 seconds for the
+ * network and the checks around it. A normal SES send takes about a second.
+ */
+export const FOUNDERS_CANCEL_WAIT_MS = 5_000;
 
 /** Per booking, the invite send still running: a cancel for that booking waits for it. */
 const pendingInvites = new Map<string, Promise<unknown>>();
@@ -406,6 +416,31 @@ export function sendFounderCancellations(b: BookingForEmail, cancel: CancelNote)
   return sends;
 }
 
+/**
+ * Whether every founder on the booking has had its CANCEL from this process,
+ * read once `sends` ends or `waitMs` runs out, whichever comes first (code
+ * review M2). A CANCEL that failed, could not be sent, or is still going (this
+ * call's or an earlier one's) makes it false; the send and its retries carry
+ * on in the background. A repeat after every CANCEL went is true without
+ * sending again, and so is an empty team (nobody is owed one). Read from the
+ * send memory, not from `sends`, which lists only this call's new sends.
+ * Never rejects, and leaves no timer behind.
+ */
+export async function foundersCancelWent(b: BookingForEmail, sends: Promise<unknown>, waitMs = FOUNDERS_CANCEL_WAIT_MS): Promise<boolean> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const ranOut = new Promise<void>((resolve) => {
+    timer = later(waitMs, () => resolve());
+  });
+  const ended = sends.then(
+    () => undefined,
+    () => undefined,
+  );
+  await Promise.race([ended, ranOut]);
+  clearTimeout(timer);
+  const now = Date.now();
+  return b.team.every((to) => hasSent(memoryKey(b.id, 'CANCEL', to.email), now));
+}
+
 /** Logs the founders' sends that did not go (counts only); they never change an answer. */
 export function logFounderSends(label: string, bookingId: string, results: readonly MailResult[]): void {
   const failed = results.filter((r) => !r.sent).length;
@@ -414,9 +449,10 @@ export function logFounderSends(label: string, bookingId: string, results: reado
 
 /**
  * Lets the founders' sends finish on their own (the site runs as a long-lived
- * Node server) and logs what did not go. A route never waits on them, so a slow
- * mail server cannot hold up the visitor's answer, or the answer a CRM lease
- * waits on (the guest's email is the only one that decides it).
+ * Node server) and logs what did not go. The visitor's routes never wait on
+ * them; the CRM's notify route waits for the CANCEL at most
+ * FOUNDERS_CANCEL_WAIT_MS (foundersCancelWent), so a slow mail server cannot
+ * hold up an answer for long.
  */
 export function finishInBackground(label: string, bookingId: string, sends: Promise<MailResult[]>): void {
   void sends

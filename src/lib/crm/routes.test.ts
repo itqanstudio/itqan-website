@@ -658,7 +658,7 @@ describe('POST /api/crm/notify', () => {
     const body = payload(true);
     const res = await notify(body, signatureHeader(SECRET, 'POST', path, body));
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true, data: { emailed: true } });
+    expect(await res.json()).toEqual({ ok: true, data: { emailed: true, foundersSent: true } });
     expect(printed).toHaveLength(3);
     expect(to('sara@example.com')[0]).toContain('We had to cancel your briefing on');
     expect(to('ibrahim@itqanstudio.com')[0]).toContain('[briefing cancelled]');
@@ -667,15 +667,40 @@ describe('POST /api/crm/notify', () => {
 
   it('with notifyGuest false sends the guest nothing, and still sends the founders the calendar cancel', async () => {
     const body = payload(false);
-    expect(await (await notify(body, signatureHeader(SECRET, 'POST', path, body))).json()).toEqual({ ok: true, data: { emailed: false } });
+    expect(await (await notify(body, signatureHeader(SECRET, 'POST', path, body))).json()).toEqual({ ok: true, data: { emailed: false, foundersSent: true } });
     expect(to('sara@example.com')).toHaveLength(0);
     expect(to('ibrahim@itqanstudio.com')).toHaveLength(1);
     expect(to('bisma@itqanstudio.com')).toHaveLength(1);
   });
 
+  it("answers foundersSent false when a founder's calendar cancel did not go, and true once a later call finds it sent (code review M2)", async () => {
+    vi.useFakeTimers();
+    try {
+      let bismaFails = 1;
+      vi.spyOn(console, 'info').mockImplementation((msg: string) => {
+        if (msg.includes('to=bisma@itqanstudio.com ') && bismaFails > 0) {
+          bismaFails -= 1;
+          throw new Error('smtp down');
+        }
+        printed.push(msg);
+      });
+      const body = payload(true);
+      expect(await (await notify(body, signatureHeader(SECRET, 'POST', path, body))).json()).toEqual({ ok: true, data: { emailed: true, foundersSent: false } });
+      // The website's own retry sends it a minute later; Send calendar cancel again then hears it went, and nobody is emailed twice.
+      await vi.advanceTimersByTimeAsync(60_000);
+      const again = payload(false);
+      expect(await (await notify(again, signatureHeader(SECRET, 'POST', path, again))).json()).toEqual({ ok: true, data: { emailed: false, foundersSent: true } });
+      expect(to('bisma@itqanstudio.com')).toHaveLength(1);
+      expect(to('ibrahim@itqanstudio.com')).toHaveLength(1);
+    } finally {
+      clearFounderMemory();
+      vi.useRealTimers();
+    }
+  });
+
   it('answers emailed from the guest email alone, and an empty team sends no founder the calendar cancel (code review M1)', async () => {
     const body = JSON.stringify({ type: 'booking.cancelled', by: 'host', notifyGuest: true, booking: { ...booking, team: [] } });
-    expect(await (await notify(body, signatureHeader(SECRET, 'POST', path, body))).json()).toEqual({ ok: true, data: { emailed: true } });
+    expect(await (await notify(body, signatureHeader(SECRET, 'POST', path, body))).json()).toEqual({ ok: true, data: { emailed: true, foundersSent: true } });
     expect(printed).toHaveLength(1);
     expect(to('sara@example.com')).toHaveLength(1);
     expect(to('ibrahim@itqanstudio.com')).toHaveLength(0);
@@ -685,7 +710,7 @@ describe('POST /api/crm/notify', () => {
     const first = payload(false);
     await notify(first, signatureHeader(SECRET, 'POST', path, first));
     const retry = payload(true);
-    expect(await (await notify(retry, signatureHeader(SECRET, 'POST', path, retry))).json()).toEqual({ ok: true, data: { emailed: true } });
+    expect(await (await notify(retry, signatureHeader(SECRET, 'POST', path, retry))).json()).toEqual({ ok: true, data: { emailed: true, foundersSent: true } });
     expect(to('sara@example.com')).toHaveLength(1);
     expect(to('ibrahim@itqanstudio.com')).toHaveLength(1);
     expect(to('bisma@itqanstudio.com')).toHaveLength(1);
