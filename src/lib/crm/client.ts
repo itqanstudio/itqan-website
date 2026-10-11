@@ -53,15 +53,25 @@ export function isCrmDown(f: CrmFailure): boolean {
   return f.status === 0 || f.status >= 500 || f.error === 'server' || f.error === 'unauthorized';
 }
 
+/** No answer because the connection never opened: nothing reached the CRM. */
+const NOT_SENT = 'unreachable';
+/** Connection errors (on the fetch error's cause) that happen before a request is sent. */
+const CONNECT_CODES = new Set(['ECONNREFUSED', 'ENOTFOUND', 'EAI_AGAIN', 'ENETUNREACH', 'EHOSTUNREACH', 'UND_ERR_CONNECT_TIMEOUT']);
+
 /**
- * True when the request reached the CRM but this site cannot tell whether it
- * acted: no answer before the timeout, or a success status with a body that
- * could not be read. For a booking that means it may exist, so the visitor is
- * told to check before trying again instead of "paused". Check this before
- * isCrmDown, which is also true for a timeout.
+ * True when the request may have reached the CRM but this site cannot tell
+ * whether it acted: no answer before the timeout, a connection that dropped
+ * after the request went out, or a success status with a body that could not
+ * be read. For a booking that means it may exist, so the visitor is told to
+ * check before trying again instead of "paused". Only a connection that never
+ * opened proves nothing was sent. Check this before isCrmDown, which is also
+ * true for these.
  */
 export function isOutcomeUnknown(f: CrmFailure): boolean {
-  return f.message === 'timeout' || (f.status >= 200 && f.status < 300 && f.error === 'server');
+  if (f.message === 'timeout') return true;
+  if (f.error !== 'server') return false;
+  if (f.status >= 200 && f.status < 300) return true;
+  return f.status === 0 && f.message !== NOT_SENT && f.message !== 'bad_origin';
 }
 
 /**
@@ -158,9 +168,23 @@ export function interpret<T>(status: number, bodyText: string, schema: z.ZodType
   return fail('server', status, 'unexpected_answer');
 }
 
+/** The error code on a fetch failure's cause (undici puts it there, sometimes inside an AggregateError). */
+function causeCode(err: Error): string | undefined {
+  const cause: unknown = err.cause;
+  if (!cause || typeof cause !== 'object') return undefined;
+  const code = (cause as { code?: unknown }).code;
+  if (typeof code === 'string') return code;
+  const first = (cause as { errors?: unknown }).errors;
+  const inner: unknown = Array.isArray(first) ? first[0] : undefined;
+  const innerCode = inner && typeof inner === 'object' ? (inner as { code?: unknown }).code : undefined;
+  return typeof innerCode === 'string' ? innerCode : undefined;
+}
+
 function reasonOf(err: unknown): string {
-  if (err instanceof Error) return err.name === 'AbortError' ? 'timeout' : err.message.slice(0, 200);
-  return 'unknown';
+  if (!(err instanceof Error)) return 'unknown';
+  if (err.name === 'AbortError') return 'timeout';
+  const code = causeCode(err);
+  return code && CONNECT_CODES.has(code) ? NOT_SENT : err.message.slice(0, 200);
 }
 
 async function call<T>(method: 'GET' | 'POST', path: string, payload: unknown, schema: z.ZodType<T>, opts: CallOptions = {}): Promise<CrmResult<T>> {
@@ -184,6 +208,8 @@ async function call<T>(method: 'GET' | 'POST', path: string, payload: unknown, s
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? CRM_TIMEOUT_MS);
+  // The status once the CRM answered, so a body that breaks off after a 2xx stays "may have acted".
+  let status = 0;
   try {
     const res = await fetch(`${origin}${path}`, {
       method,
@@ -194,14 +220,15 @@ async function call<T>(method: 'GET' | 'POST', path: string, payload: unknown, s
       // A redirect would change the signed path and could hand the request to another host.
       redirect: 'error',
     });
+    status = res.status;
     const result = interpret(res.status, await readCapped(res, MAX_RESPONSE_BYTES), schema);
     if (!result.ok && isCrmDown(result)) {
       console.error('[crm] call failed', { path: path.split('?')[0], status: res.status, error: result.error, detail: result.message });
     }
     return result;
   } catch (err) {
-    console.error('[crm] no answer', { path: path.split('?')[0], reason: reasonOf(err) });
-    return fail('server', 0, reasonOf(err));
+    console.error('[crm] no answer', { path: path.split('?')[0], status, reason: reasonOf(err) });
+    return fail('server', status, reasonOf(err));
   } finally {
     clearTimeout(timer);
   }

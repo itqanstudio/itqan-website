@@ -266,7 +266,10 @@ describe('answers', () => {
     expect(isOutcomeUnknown({ ok: false, error: 'server', status: 0, message: 'timeout' })).toBe(true);
     expect(isOutcomeUnknown({ ok: false, error: 'server', status: 201, message: 'bad_shape' })).toBe(true);
     expect(isOutcomeUnknown({ ok: false, error: 'server', status: 200, message: 'not_json' })).toBe(true);
-    expect(isOutcomeUnknown({ ok: false, error: 'server', status: 0, message: 'fetch failed' })).toBe(false);
+    // A dropped connection after the request went out may have booked; only one that never opened did not.
+    expect(isOutcomeUnknown({ ok: false, error: 'server', status: 0, message: 'fetch failed' })).toBe(true);
+    expect(isOutcomeUnknown({ ok: false, error: 'server', status: 0, message: 'unreachable' })).toBe(false);
+    expect(isOutcomeUnknown({ ok: false, error: 'server', status: 0, message: 'bad_origin' })).toBe(false);
     expect(isOutcomeUnknown({ ok: false, error: 'unauthorized', status: 0, message: 'no_secret' })).toBe(false);
     expect(isOutcomeUnknown({ ok: false, error: 'server', status: 503 })).toBe(false);
     expect(isOutcomeUnknown({ ok: false, error: 'unavailable', status: 409 })).toBe(false);
@@ -281,7 +284,39 @@ describe('answers', () => {
       },
     });
     vi.stubGlobal('fetch', vi.fn(async () => new Response(huge, { status: 200 })));
-    expect(await fetchSlots()).toMatchObject({ ok: false, error: 'server', status: 0, message: 'response_too_large' });
+    expect(await fetchSlots()).toMatchObject({ ok: false, error: 'server', status: 200, message: 'response_too_large' });
+  });
+
+  it('keeps the 2xx status when the answer breaks off, so a booking reads as "may exist" (panel run 4)', async () => {
+    const broken = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('{"ok":true,'));
+        controller.error(new Error('socket reset'));
+      },
+    });
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(broken, { status: 201 })));
+    const result = await createCrmBooking(request);
+    expect(result).toMatchObject({ ok: false, error: 'server', status: 201, message: 'socket reset' });
+    expect(!result.ok && isOutcomeUnknown(result)).toBe(true);
+  });
+
+  it('reads a connection that never opened as "nothing sent" and any other network failure as "may have acted"', async () => {
+    const refused = Object.assign(new TypeError('fetch failed'), { cause: Object.assign(new Error('connect'), { code: 'ECONNREFUSED' }) });
+    vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(refused)));
+    const notSent = await createCrmBooking(request);
+    expect(notSent).toMatchObject({ ok: false, status: 0, message: 'unreachable' });
+    expect(!notSent.ok && isOutcomeUnknown(notSent)).toBe(false);
+    expect(!notSent.ok && isCrmDown(notSent)).toBe(true);
+
+    const inAggregate = Object.assign(new TypeError('fetch failed'), { cause: { errors: [{ code: 'ENOTFOUND' }] } });
+    vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(inAggregate)));
+    expect(await createCrmBooking(request)).toMatchObject({ message: 'unreachable' });
+
+    const reset = Object.assign(new TypeError('fetch failed'), { cause: Object.assign(new Error('other side closed'), { code: 'UND_ERR_SOCKET' }) });
+    vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(reset)));
+    const maybe = await createCrmBooking(request);
+    expect(maybe).toMatchObject({ ok: false, status: 0, message: 'fetch failed' });
+    expect(!maybe.ok && isOutcomeUnknown(maybe)).toBe(true);
   });
 });
 

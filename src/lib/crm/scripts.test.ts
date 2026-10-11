@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -120,6 +121,19 @@ describe('scripts/lib/crm-export.mjs', () => {
     const data = readLegacyData(db);
     db.close();
     expect(buildBatches(data, 15_000).oversized).toBe(1);
+  });
+
+  it('refuses a live export that would leave an item behind, before sending anything (panel run 4)', () => {
+    const dbPath = path.join(dir, 'too-big-live.db');
+    makeDb('too-big-live.db', 2, 'x'.repeat(1_100_000)).close();
+    const run = spawnSync(process.execPath, ['scripts/export-bookings-to-crm.mjs'], {
+      encoding: 'utf8',
+      // Port 9 (discard): if the script tried to send, it would fail with "no answer", not this message.
+      env: { ...process.env, BOOKING_DB_PATH: dbPath, ITQAN_BOOKING_SECRET: SECRET, CRM_API_ORIGIN: 'http://127.0.0.1:9' },
+    });
+    expect(run.status).toBe(1);
+    expect(run.stderr).toContain('too big for one request. Nothing was sent');
+    expect(run.stderr).not.toContain('no answer');
   });
 
   it('posts over https, or plain http only to a local or private host', () => {

@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     console.warn('[crm/notify] signature refused:', check.reason);
     return json(401, { ok: false, error: 'unauthorized' });
   }
-  if (!firstUse(check.v1)) {
+  if (!firstUse(check.v1, check.t)) {
     console.warn('[crm/notify] replayed signature refused');
     return json(401, { ok: false, error: 'unauthorized' });
   }

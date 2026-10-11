@@ -9,6 +9,7 @@ import { bookingIcs } from '@/lib/scheduling/mail';
 import type { BookingForEmail } from './contract';
 import { signatureHeader, verifySignature } from './hmac';
 import { clearReplayMemory } from './replay';
+import { forgetSlots } from './slots-cache';
 
 /*
  * The public booking routes and the CRM callback, whole requests inside the
@@ -82,6 +83,7 @@ beforeEach(() => {
   printed = [];
   crmCalls = [];
   clearReplayMemory();
+  forgetSlots();
   vi.stubEnv('ITQAN_BOOKING_SECRET', SECRET);
   vi.stubEnv('CRM_API_ORIGIN', 'http://localhost:3999');
   vi.stubEnv('NODE_ENV', 'development');
@@ -123,6 +125,23 @@ describe('GET /api/book/slots', () => {
     vi.stubEnv('ITQAN_BOOKING_SECRET', '');
     const res = await getSlots(request('http://localhost/api/book/slots'));
     expect(await res.json()).toEqual({ ok: false, error: 'paused' });
+  });
+
+  it('serves many visitors from one CRM call per host filter, and asks again after a booking (panel run 4)', async () => {
+    crm(200, { ok: true, data: slots });
+    const visitors = ['10.0.0.1', '10.0.0.2', '10.0.0.3'].map((ip) =>
+      getSlots(request('http://localhost/api/book/slots', { headers: { 'x-forwarded-for': ip } })),
+    );
+    expect((await Promise.all(visitors)).map((r) => r.status)).toEqual([200, 200, 200]);
+    expect(crmCalls).toHaveLength(1);
+    await getSlots(request('http://localhost/api/book/slots?with=bisma'));
+    expect(crmCalls).toHaveLength(2);
+
+    crm(201, { ok: true, data: { booking, cancelToken: 'tok_abcdefghijklmnopqrstuvwxyz' } });
+    await postBook(bookRequest({ ...form, email: 'cache@example.com' }, { origin: ORIGIN, 'x-forwarded-for': '10.0.0.9' }));
+    crm(200, { ok: true, data: slots });
+    await getSlots(request('http://localhost/api/book/slots'));
+    expect(crmCalls.filter((c) => c.url.endsWith('/slots'))).toHaveLength(2);
   });
 });
 
@@ -255,11 +274,19 @@ describe('POST /api/book', () => {
     expect(printed).toHaveLength(0);
   });
 
-  it('a refused connection (no answer at all) is still paused', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new TypeError('fetch failed'))));
+  it('a refused connection (nothing reached the CRM) is still paused', async () => {
+    const refused = Object.assign(new TypeError('fetch failed'), { cause: Object.assign(new Error('connect'), { code: 'ECONNREFUSED' }) });
+    vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(refused)));
     const res = await postBook(bookRequest({ ...form, email: 'refused@example.com' }));
     expect(res.status).toBe(503);
     expect(await res.json()).toEqual({ ok: false, error: 'paused' });
+  });
+
+  it('a connection that drops after the request went out is unconfirmed, not paused (panel run 4)', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new TypeError('fetch failed'))));
+    const res = await postBook(bookRequest({ ...form, email: 'dropped@example.com' }));
+    expect(res.status).toBe(502);
+    expect(await res.json()).toEqual({ ok: false, error: 'unconfirmed' });
   });
 });
 

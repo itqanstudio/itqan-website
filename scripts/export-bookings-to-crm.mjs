@@ -93,6 +93,8 @@ async function main() {
     console.log('export: dry run, nothing sent.');
     return;
   }
+  // A partial move would look complete, so nothing is sent until every item fits.
+  if (oversized > 0) fail(`${oversized} item(s) are too big for one request. Nothing was sent; shorten or remove them and run again.`);
   if (batches.length === 0) {
     console.log('export: nothing to send.');
     return;

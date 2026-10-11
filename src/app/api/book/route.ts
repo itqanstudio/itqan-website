@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { localHostName } from '@/content/v3/booking-format';
 import { rateLimit } from '@/lib/rate-limit';
 import { createCrmBooking, isCrmDown, isOutcomeUnknown, type CrmFailure } from '@/lib/crm/client';
+import { forgetSlots } from '@/lib/crm/slots-cache';
 import type { CreateBookingRequest } from '@/lib/crm/contract';
 import { bookingRequestSchema, firstIssue } from '@/lib/scheduling/validation';
 import { bookingIcs, sendGuestConfirmation, sendHostNotice } from '@/lib/scheduling/mail';
@@ -108,6 +109,8 @@ export async function POST(req: NextRequest) {
     ipHash,
   };
   const result = await createCrmBooking(request);
+  // Booked, taken by someone else, or maybe booked: the cached free times are out of date.
+  if (result.ok || result.error === 'unavailable' || isOutcomeUnknown(result)) forgetSlots();
   if (!result.ok) return failureAnswer(result, request);
 
   const { booking, cancelToken } = result.data;

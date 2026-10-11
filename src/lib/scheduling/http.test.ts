@@ -81,6 +81,14 @@ describe('readJson', () => {
     });
     await expect(readJson(req('http://x/', { body: big }), 4096)).rejects.toThrow('too_large');
   });
+  it('accepts a body of exactly the cap and refuses one byte more (panel run 4)', async () => {
+    const atCap = `"${'a'.repeat(16_382)}"`;
+    expect(Buffer.byteLength(atCap)).toBe(16_384);
+    expect(await readJson(req('http://x/', { body: atCap }))).toHaveLength(16_382);
+    const overCap = `"${'a'.repeat(16_383)}"`;
+    await expect(readJson(req('http://x/', { body: overCap }))).rejects.toThrow('too_large');
+    await expect(readJson(req('http://x/', { body: overCap, headers: { 'content-length': '16385' } }))).rejects.toThrow('too_large');
+  });
   it('counts bytes, not characters', async () => {
     const arabic = JSON.stringify({ n: 'إتقان'.repeat(10) });
     await expect(readJson(req('http://x/', { body: arabic }), arabic.length + 5)).rejects.toThrow('too_large');

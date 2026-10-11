@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { BookingForEmail, SlotsData } from './contract';
+import { SIGNATURE_MAX_SKEW_SECONDS, type BookingForEmail, type SlotsData } from './contract';
+import { computeV1, verifySignature } from './hmac';
 import { clearInitialSlotsCache, initialSlots } from './initial-slots';
-import { clearReplayMemory, firstUse } from './replay';
+import { clearReplayMemory, firstUse, replayMemorySize, signatureExpiry } from './replay';
 import { bookingForEmailSchema, notifyRequestSchema, slotsDataSchema } from './schemas';
 import { parseHostSlug } from './slug';
 import { toWidgetSlots } from './widget-slots';
@@ -45,12 +46,30 @@ describe('parseHostSlug', () => {
 });
 
 describe('firstUse', () => {
+  const SECRET = 'test-secret-0123456789abcdef0123456789abcdef';
   beforeEach(() => clearReplayMemory());
   it('accepts a signature once inside its window and again after it', () => {
-    expect(firstUse('a'.repeat(64), 0)).toBe(true);
-    expect(firstUse('a'.repeat(64), 1000)).toBe(false);
-    expect(firstUse('b'.repeat(64), 1000)).toBe(true);
-    expect(firstUse('a'.repeat(64), 600_001)).toBe(true);
+    expect(firstUse('a'.repeat(64), 0, 0)).toBe(true);
+    expect(firstUse('a'.repeat(64), 0, 1000)).toBe(false);
+    expect(firstUse('b'.repeat(64), 0, 1000)).toBe(true);
+    expect(firstUse('a'.repeat(64), 0, signatureExpiry(0))).toBe(true);
+  });
+
+  it('remembers a signature through the last second verification still accepts (panel run 4)', () => {
+    const t = 1000;
+    const v1 = 'c'.repeat(64);
+    // First seen at the earliest instant it verifies: 300 seconds before its stamp.
+    expect(firstUse(v1, t, (t - SIGNATURE_MAX_SKEW_SECONDS) * 1000)).toBe(true);
+    // Whole-second verification still accepts it anywhere in second t + 300.
+    const lastAccepted = (t + SIGNATURE_MAX_SKEW_SECONDS) * 1000 + 999;
+    expect(verifySignature({ secret: SECRET, header: `t=${t},v1=${computeV1(SECRET, t, 'POST', '/x', '')}`, method: 'POST', pathWithQuery: '/x', body: '', now: Math.floor(lastAccepted / 1000) }).ok).toBe(true);
+    expect(firstUse(v1, t, lastAccepted)).toBe(false);
+    expect(signatureExpiry(t)).toBe(lastAccepted + 1);
+  });
+
+  it('never grows past its cap', () => {
+    for (let i = 0; i < 10_005; i += 1) firstUse(i.toString(16).padStart(64, '0'), 2_000_000_000, 0);
+    expect(replayMemorySize()).toBe(10_000);
   });
 });
 

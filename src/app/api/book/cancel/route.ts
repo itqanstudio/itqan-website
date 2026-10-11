@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { rateLimit } from '@/lib/rate-limit';
 import { cancelCrmBooking, isCrmDown } from '@/lib/crm/client';
+import { forgetSlots } from '@/lib/crm/slots-cache';
 import { cancelRequestSchema } from '@/lib/scheduling/validation';
 import { sendGuestCancelledNotices } from '@/lib/scheduling/mail';
 import { clientIp, isAllowedOrigin, json, readJson } from '@/lib/scheduling/http';
@@ -38,6 +39,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { changed, booking } = result.data;
+  if (changed) forgetSlots();
   if (changed && booking) {
     const sent = await sendGuestCancelledNotices(booking);
     if (!sent.host.sent) console.error('[book/cancel] host notice not sent for booking', booking.id);
