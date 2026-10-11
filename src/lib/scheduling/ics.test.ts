@@ -23,6 +23,14 @@ describe('escapeText (RFC 5545 TEXT)', () => {
     expect(escapeText('a\\b;c,d')).toBe('a\\\\b\\;c\\,d');
     expect(escapeText('one\r\ntwo\rthree\nfour')).toBe('one\\ntwo\\nthree\\nfour');
   });
+  it('writes the Unicode line breaks (NEL, line and paragraph separators) as \\n too, so no parser can split a value on them', () => {
+    // Built from code points, so the source file holds no invisible characters.
+    const nel = String.fromCodePoint(0x85);
+    const ls = String.fromCodePoint(0x2028);
+    const ps = String.fromCodePoint(0x2029);
+    expect(escapeText(`one${nel}two${ls}three${ps}four`)).toBe('one\\ntwo\\nthree\\nfour');
+    expect([nel, ls, ps].some((ch) => escapeText(`x${ch}DTSTART:20990101T000000Z`).includes(ch))).toBe(false);
+  });
   it('drops control characters a TEXT value may not hold, and keeps a tab', () => {
     expect(escapeText('bell\u0007 null\u0000 esc\u001b del\u007f tab\there')).toBe('bell null esc del tab\there');
   });

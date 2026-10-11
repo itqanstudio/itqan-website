@@ -35,12 +35,21 @@ function stamp(d: Date): string {
 }
 
 /**
+ * NEL (U+0085), LINE SEPARATOR (U+2028) and PARAGRAPH SEPARATOR (U+2029): RFC
+ * 5545 ends a line only at CRLF, but a parser that splits on Unicode line
+ * breaks would start a new property there. Built from code points, so this file
+ * holds no invisible characters.
+ */
+const UNICODE_BREAKS = new RegExp(`[${String.fromCodePoint(0x85, 0x2028, 0x2029)}]`, 'g');
+
+/**
  * A TEXT value (RFC 5545 3.3.11): backslash, semicolon and comma escaped, every
- * line break (CRLF, CR or LF) written as \n, and the control characters TEXT
- * may not hold removed (a tab is allowed).
+ * line break (CRLF, CR, LF, or a Unicode one) written as \n, and the control
+ * characters TEXT may not hold removed (a tab is allowed).
  */
 export function escapeText(value: string): string {
   return value
+    .replace(UNICODE_BREAKS, '\n')
     .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '')
     .replace(/\\/g, '\\\\')
     .replace(/;/g, '\\;')
