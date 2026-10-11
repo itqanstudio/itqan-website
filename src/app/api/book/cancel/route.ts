@@ -5,6 +5,7 @@ import { cancelCrmBooking, isCrmDown, isOutcomeUnknown, recordCancelNotice, type
 import type { BookingForEmail, CancelBookingData } from '@/lib/crm/contract';
 import { forgetSlots } from '@/lib/crm/slots-cache';
 import { finishInBackground, sendFounderCancellations } from '@/lib/scheduling/founders-mail';
+import { createKeyLock } from '@/lib/scheduling/key-lock';
 import { CANCEL_BODY_MAX_BYTES } from '@/lib/scheduling/limits';
 import { cancelRequestSchema } from '@/lib/scheduling/validation';
 import { sendGuestCancellation, type MailResult } from '@/lib/scheduling/mail';
@@ -75,6 +76,32 @@ async function sendCancelEmails(token: string, booking: BookingForEmail, reason:
   else await recordSent(token, booking.id);
 }
 
+/**
+ * One cancel per link at a time in this process (review r2). The CRM keeps
+ * reporting the guest's notice as owed until this site records it, so two
+ * requests at once (a double submit, a retry while the first is running) could
+ * both send the guest's email. The second now waits for the first, then asks
+ * the CRM, which by then has the record.
+ */
+const cancelsInFlight = createKeyLock();
+
+/** The cancel itself, once the request is known good: the CRM, then the emails it says are owed. */
+async function cancelAndNotify(token: string, reason: string | undefined): Promise<ReturnType<typeof json>> {
+  const result = await cancelCrmBooking(token, reason);
+  if (!result.ok) return failureAnswer(result, reason);
+
+  const { changed, booking, noticeOwed } = result.data;
+  if (changed) forgetSlots();
+  // Owed, not just changed: a retry after a lost answer still sends the emails, and
+  // once this site records them the CRM stops asking, so the guest's never goes twice.
+  if (noticeOwed && booking) await sendCancelEmails(token, booking, foundersReason(result.data, reason));
+  else if (noticeOwed) console.error('[book/cancel] the CRM cancelled a booking but sent no details; no emails went out');
+  return json<Cancelled>(200, {
+    ok: true,
+    data: booking ? { changed, start: booking.start, timezone: booking.guestTimezone } : { changed },
+  });
+}
+
 /** POST /api/book/cancel: the guest cancels with the secret link from their email, with an optional reason. */
 export async function POST(req: NextRequest) {
   if (!isAllowedOrigin(req.headers.get('origin'))) return json(403, { ok: false, error: 'Bad origin' });
@@ -92,18 +119,5 @@ export async function POST(req: NextRequest) {
   const parsed = cancelRequestSchema.safeParse(raw);
   if (!parsed.success) return parseFailure(parsed.error.issues);
   const { token, reason } = parsed.data;
-
-  const result = await cancelCrmBooking(token, reason);
-  if (!result.ok) return failureAnswer(result, reason);
-
-  const { changed, booking, noticeOwed } = result.data;
-  if (changed) forgetSlots();
-  // Owed, not just changed: a retry after a lost answer still sends the emails, and
-  // once this site records them the CRM stops asking, so the guest's never goes twice.
-  if (noticeOwed && booking) await sendCancelEmails(token, booking, foundersReason(result.data, reason));
-  else if (noticeOwed) console.error('[book/cancel] the CRM cancelled a booking but sent no details; no emails went out');
-  return json<Cancelled>(200, {
-    ok: true,
-    data: booking ? { changed, start: booking.start, timezone: booking.guestTimezone } : { changed },
-  });
+  return cancelsInFlight.run(token, () => cancelAndNotify(token, reason));
 }

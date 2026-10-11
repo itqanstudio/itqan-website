@@ -470,6 +470,36 @@ describe('POST /api/book/cancel', () => {
     expect(to('bisma@itqanstudio.com')[0]).not.toContain('Their reason');
   });
 
+  it('a double submit of one link emails the guest once: the second waits for the first and its record (review r2)', async () => {
+    // A CRM that owes the notice until the site records it, and answers after a short delay.
+    let recorded = false;
+    let cancels = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init: RequestInit) => {
+        crmCalls.push({ url, init });
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        if (url.endsWith('/bookings/notice-sent')) {
+          recorded = true;
+          return new Response(JSON.stringify({ ok: true, data: { recorded: true } }), { status: 200 });
+        }
+        cancels += 1;
+        const data = { changed: cancels === 1, booking, noticeOwed: !recorded };
+        return new Response(JSON.stringify({ ok: true, data }), { status: 200 });
+      }),
+    );
+    const [first, second] = await Promise.all([cancel('B'.repeat(43)), cancel('B'.repeat(43))]);
+    expect([first.status, second.status]).toEqual([200, 200]);
+    expect(to('sara@example.com')).toHaveLength(1);
+    expect(to('bisma@itqanstudio.com')).toHaveLength(1);
+    expect(crmCalls.map((c) => c.url.split('/').pop())).toEqual(['cancel', 'notice-sent', 'cancel']);
+    // Another link never waits for this one.
+    crmCalls = [];
+    const others = await Promise.all([cancel('C'.repeat(43)), cancel('D'.repeat(43))]);
+    expect(others.map((r) => r.status)).toEqual([200, 200]);
+    expect(crmCalls.slice(0, 2).map((c) => c.url.split('/').pop())).toEqual(['cancel', 'cancel']);
+  });
+
   it('sends each founder the cancel once from this process, while the guest email still follows the CRM (W5)', async () => {
     crmCancel({ changed: false, booking, noticeOwed: true });
     await cancel('A'.repeat(43));
