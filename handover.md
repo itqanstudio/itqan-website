@@ -3,7 +3,7 @@
 ## 2026-10-11 — The old brand removed everywhere: portal, pages, assets, signatures, templates
 
 Ibrahim: "brand.itqanstudio.com still has the old brand. Fix that immediately and make sure that
-everything else is fixed as well." **Tracked work:** `agent-work/20261011162045_brand_portal_v3.md`,
+everything else is fixed as well." **Tracked work:** `agent-work/completed/20261011162045_brand_portal_v3.md`,
 branch `feat/v3-brand-portal`.
 
 ### What was done
@@ -36,6 +36,15 @@ branch `feat/v3-brand-portal`.
 - **Checks:** tsc clean, 77 unit + 63 script tests pass, `next build` green. No ESLint config in this
   repo (`next lint` only offers to set one up).
 - itqan-brand README 54-module fix committed and pushed (8317b93).
+- **LIVE 11 Oct 17:18 UTC, main = 37865f2** (fast-forward of feat/v3-brand-portal; built in ~6 min, box
+  held). Verified live: brand.itqanstudio.com root and /brand/* pages, /brand on the apex, home, /ar,
+  feedback (both hosts), support, thank-you, terms, privacy, cookies, /book all 200 with no old
+  colours, fonts or tagline in the HTML; favicon, BIMI logo, /v3 lockups, the brand pack zip and every
+  old-asset redirect resolve to v3 files; no console errors on the portal. Note: on the brand
+  subdomain only the root is rewritten, so deep pages are `brand.itqanstudio.com/brand/<page>`
+  (short paths like `/logo` 404, as before; nothing published links to them).
+- `founder-rebuild/restart/build-gdoc.py` now loads the hosted v3 lockup
+  (`https://itqanstudio.com/v3/itqan-lockup-ink.png`); smoke-tested.
 
 ### Prod box incident, 11 Oct ~16:30 to 17:09 UTC (not caused by this branch)
 The CRM portal (`portal.itqanstudio.com`, Coolify app l54vb5ni1n8pw4klia6xvxbu) deployed from another
@@ -54,6 +63,11 @@ no headroom for a Next build: two deploys at once will wedge it. Deploy one app 
   v3 library; not run against the live server yet.
 - Gmail signatures: Ibrahim and Bisma re-paste from the install pages for the v3 layout; the old
   installed ones already show v3 images.
+- **Open questions for Ibrahim (11 Oct):** (1) `src/data/testimonials.ts` still holds pre-v3 clients
+  (Medacs, ShadowFly, Avidnote) and the magnet pages show them; keep as real past proof or narrow to
+  Millow and Nexilink? (2) The Terms contact line says Dubai while the v3 structured data gives the
+  RAKEZ address in Ras Al Khaimah; which is the legal address to print? (3) Add short paths on the brand
+  subdomain (`brand.itqanstudio.com/logo` → `/brand/logo`)? Not needed today.
 
 ## 2026-10-08 — Brand v3 site built, booking platform + admin, shipping to production
 
