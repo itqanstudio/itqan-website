@@ -7,7 +7,7 @@ import { LegalPageLayout } from '@/components/v3/LegalPage';
 export const metadata: Metadata = pageMetadata({
   title: 'Privacy Policy',
   description:
-    'How Itqan Studio FZ LLC collects, uses, stores, and protects your personal data. Read our commitments to data privacy and your rights under UAE law.',
+    'How Itqan Studio FZ-LLC collects, uses, stores, and protects your personal data. Read our commitments to data privacy and your rights under UAE law.',
   path: '/privacy',
 });
 
@@ -15,7 +15,7 @@ export default function PrivacyPage() {
   return (
     <LegalPageLayout title="Privacy Policy" lastUpdated="11 October 2026">
       <p>
-        This Privacy Policy explains how <strong>Itqan Studio FZ LLC</strong> (&ldquo;Itqan Studio,&rdquo; &ldquo;we,&rdquo; &ldquo;us&rdquo;), a UAE Free Zone
+        This Privacy Policy explains how <strong>Itqan Studio FZ-LLC</strong> (&ldquo;Itqan Studio,&rdquo; &ldquo;we,&rdquo; &ldquo;us&rdquo;), a UAE Free Zone
         entity, collects, uses, and protects personal information when you visit
         itqanstudio.com or engage our services. We are committed to processing data in
         accordance with UAE Federal Decree-Law No. 45 of 2021 on the Protection of
@@ -144,7 +144,7 @@ export default function PrivacyPage() {
 
       <h2>10. Contact</h2>
       <p>
-        Itqan Studio FZ LLC, Dubai, United Arab Emirates.
+        Itqan Studio FZ-LLC, Ras Al Khaimah, United Arab Emirates.
         <br />
         Email: <a href="mailto:info@itqanstudio.com">info@itqanstudio.com</a>
       </p>

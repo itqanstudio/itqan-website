@@ -8,12 +8,14 @@ import { ITQAN_PORTAL_HOST } from './brand-routing.ts';
  *
  * WHY THIS CANNOT BE A CLIENT-SIDE PATHNAME CHECK
  * -----------------------------------------------
- * The portal is served from a subdomain and REWRITTEN:
+ * The portal is served from a subdomain, and its root is REWRITTEN:
  *
- *     brand.itqanstudio.com/positioning  →  (internally) /brand/positioning
+ *     brand.itqanstudio.com/  →  (internally) /brand
  *
- * A rewrite deliberately leaves the browser URL alone, so `usePathname()` in a
- * client component returns `/positioning` — NOT `/brand/positioning`. Every
+ * (Deeper pages live at brand.itqanstudio.com/brand/<page>; a short path such
+ * as /positioning redirects there since 11 Oct 2026.) A rewrite deliberately
+ * leaves the browser URL alone, so `usePathname()` in a client component
+ * returns `/` on the portal root, NOT `/brand`. Every
  * guard of the shape `pathname.startsWith('/brand/')` therefore evaluates
  * FALSE on the live portal, even though the server is rendering a portal page.
  *

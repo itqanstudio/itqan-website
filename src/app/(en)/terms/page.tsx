@@ -7,7 +7,7 @@ import { LegalPageLayout } from '@/components/v3/LegalPage';
 export const metadata: Metadata = pageMetadata({
   title: 'Terms & Conditions',
   description:
-    'The terms that govern your use of itqanstudio.com and any services provided by Itqan Studio FZ LLC.',
+    'The terms that govern your use of itqanstudio.com and any services provided by Itqan Studio FZ-LLC.',
   path: '/terms',
 });
 
@@ -16,7 +16,7 @@ export default function TermsPage() {
     <LegalPageLayout title="Terms & Conditions" lastUpdated="11 October 2026">
       <p>
         These Terms &amp; Conditions (&ldquo;Terms&rdquo;) govern your use of itqanstudio.com (the
-        &ldquo;Site&rdquo;) and any services provided by <strong>Itqan Studio FZ LLC</strong> (&ldquo;Itqan
+        &ldquo;Site&rdquo;) and any services provided by <strong>Itqan Studio FZ-LLC</strong> (&ldquo;Itqan
         Studio,&rdquo; &ldquo;we,&rdquo; &ldquo;us&rdquo;), a UAE Free Zone entity. By accessing the Site or
         engaging our services, you agree to be bound by these Terms.
       </p>
@@ -116,7 +116,7 @@ export default function TermsPage() {
 
       <h2>11. Contact</h2>
       <p>
-        Itqan Studio FZ LLC, Dubai, United Arab Emirates.
+        Itqan Studio FZ-LLC, Ras Al Khaimah, United Arab Emirates.
         <br />
         Email: <a href="mailto:info@itqanstudio.com">info@itqanstudio.com</a>
       </p>

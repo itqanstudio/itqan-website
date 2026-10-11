@@ -2,12 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { SITE_URL } from '@/lib/seo';
 import { resolveBrandRoute } from '@/lib/brand-routing';
 import { PORTAL_HEADER, isPortalRequest } from '@/lib/portal-chrome';
+import { PORTAL_PAGES } from '@/data/brand-portal';
+
+/** Portal page hrefs, so brand.itqanstudio.com/logo can redirect to /brand/logo. */
+const PORTAL_PATHS: ReadonlySet<string> = new Set(PORTAL_PAGES.map((p) => p.href));
 
 /**
  * Brand-portal host routing — the brand.uber.com model.
  *
- *   brand.itqanstudio.com  →  /brand            (rewritten, served here)
- *   brand.shareefi.co      →  shareefi.co/brand (redirected, served elsewhere)
+ *   brand.itqanstudio.com/       →  /brand             (rewritten, served here)
+ *   brand.itqanstudio.com/logo   →  /brand/logo        (307, portal pages only)
+ *   brand.shareefi.co            →  shareefi.co/brand  (redirected, served elsewhere)
  *
  * All URL decisions live in `@/lib/brand-routing` so they can be tested without
  * a mocked NextRequest (`npm run test:routing`). This file only turns a
@@ -16,7 +21,7 @@ import { PORTAL_HEADER, isPortalRequest } from '@/lib/portal-chrome';
 export function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
   const host = req.headers.get('host');
-  const route = resolveBrandRoute(host, pathname, search);
+  const route = resolveBrandRoute(host, pathname, search, PORTAL_PATHS);
 
   /*
    * Flag portal requests for the root layout, which uses it to skip the site
@@ -39,7 +44,7 @@ export function middleware(req: NextRequest) {
 
   switch (route.kind) {
     case 'redirect-external':
-      return NextResponse.redirect(route.to, 308);
+      return NextResponse.redirect(route.to, route.temporary ? 307 : 308);
 
     /*
      * Internal redirects are built against a PINNED origin, never `req.nextUrl`.
@@ -55,8 +60,8 @@ export function middleware(req: NextRequest) {
     case 'rewrite': {
       // Safe to clone: a rewrite is resolved server-side and never sends an
       // origin back to the client. This is also the ONLY place the portal host
-      // is still visible — after the rewrite the client sees "/positioning"
-      // and cannot tell it is on the portal.
+      // is still visible — after the rewrite the client sees "/" and cannot
+      // tell it is on the portal.
       const url = req.nextUrl.clone();
       url.pathname = route.path;
       return NextResponse.rewrite(url, withPortalFlag(true));

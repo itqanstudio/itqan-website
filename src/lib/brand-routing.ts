@@ -52,18 +52,27 @@ const LEGACY_PATHS: Record<string, string> = {
 };
 
 export type BrandRoute =
-  /** Send the client to another origin. `to` is always absolute. */
-  | { kind: 'redirect-external'; to: string }
+  /**
+   * Send the client to an absolute URL. Permanent (308) unless `temporary`, which
+   * is used where the target can change, so browsers do not cache it forever.
+   */
+  | { kind: 'redirect-external'; to: string; temporary?: true }
   /** Send the client to a path on THIS site. The origin is pinned by the caller. */
   | { kind: 'redirect-internal'; path: string }
   /** Serve a different route without changing the URL. */
   | { kind: 'rewrite'; path: string }
   | { kind: 'pass' };
 
+/**
+ * @param portalPaths every portal page href ("/brand/logo", ...). On the portal
+ *   host, a short path that names one of them ("/logo") redirects to it. Passed
+ *   in rather than imported so this module stays free of the portal data.
+ */
 export function resolveBrandRoute(
   rawHost: string | null,
   pathname: string,
   search = '',
+  portalPaths: ReadonlySet<string> = new Set(),
 ): BrandRoute {
   const host = (rawHost ?? '').toLowerCase().split(':')[0];
 
@@ -98,6 +107,26 @@ export function resolveBrandRoute(
   const target = BRAND_HOSTS[host];
   if (target && (pathname === '/' || pathname === '')) {
     return { kind: 'rewrite', path: target };
+  }
+
+  /*
+   * People type brand.itqanstudio.com/logo. Only the root is rewritten, so send
+   * a short path to its real page, /brand/logo, on the same host. A redirect
+   * rather than a rewrite keeps one URL per page. Only pages in the portal
+   * tree qualify, so an unknown path still 404s instead of being guessed, and
+   * the origin is the pinned constant, never the Host header. Temporary (307):
+   * a portal page can be renamed, and a cached 308 would outlive it.
+   */
+  const short = pathname.replace(/\/+$/, '');
+  if (host === ITQAN_PORTAL_HOST && short !== '') {
+    const full = `/brand${short}`;
+    if (portalPaths.has(full)) {
+      return {
+        kind: 'redirect-external',
+        to: `https://${ITQAN_PORTAL_HOST}${full}${search}`,
+        temporary: true,
+      };
+    }
   }
 
   return { kind: 'pass' };

@@ -63,11 +63,14 @@ no headroom for a Next build: two deploys at once will wedge it. Deploy one app 
   v3 library; not run against the live server yet.
 - Gmail signatures: Ibrahim and Bisma re-paste from the install pages for the v3 layout; the old
   installed ones already show v3 images.
-- **Open questions for Ibrahim (11 Oct):** (1) `src/data/testimonials.ts` still holds pre-v3 clients
-  (Medacs, ShadowFly, Avidnote) and the magnet pages show them; keep as real past proof or narrow to
-  Millow and Nexilink? (2) The Terms contact line says Dubai while the v3 structured data gives the
-  RAKEZ address in Ras Al Khaimah; which is the legal address to print? (3) Add short paths on the brand
-  subdomain (`brand.itqanstudio.com/logo` → `/brand/logo`)? Not needed today.
+- **Answered by Ibrahim (11 Oct, evening):** (1) keep the former clients' testimonials (Medacs,
+  ShadowFly, Avidnote); no change. (2) The legal address is Ras Al Khaimah: Terms and Privacy now read
+  "Itqan Studio FZ-LLC, Ras Al Khaimah". Terms clause 9 still names the courts of Dubai: that is a
+  jurisdiction choice, not an address, left for him or a lawyer. (3) "Do whatever is best": known
+  portal pages typed short on the brand host (`brand.itqanstudio.com/logo`) now 308 to `/brand/logo`
+  on the same host; unknown paths still 404 (`src/lib/brand-routing.ts`, set passed in from
+  `PORTAL_PAGES` by the middleware, 10 new routing tests).
+  Tracked in `agent-work/20261011184528_brand_short_paths_legal_address.md`.
 
 ## 2026-10-08 — Brand v3 site built, booking platform + admin, shipping to production
 

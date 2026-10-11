@@ -25,8 +25,13 @@ const { resolveBrandRoute, SHAREEFICO_PORTAL } = await import(
 // isPortalRequest lives with the chrome decision it feeds, not with the URL
 // table — but it is tested here because it shares the host-matching rules.
 const { isPortalRequest } = await import('../src/lib/portal-chrome.ts');
+// The same page list the middleware passes in, so the short-path cases test real pages.
+const { PORTAL_PAGES } = await import('../src/data/brand-portal.ts');
+const PORTAL_PATHS = new Set(PORTAL_PAGES.map((p) => p.href));
 
 const ITQAN_PORTAL = 'https://brand.itqanstudio.com';
+/** The temporary redirect a short portal path gets, e.g. /logo → /brand/logo. */
+const shortTo = (path) => ({ kind: 'redirect-external', to: `${ITQAN_PORTAL}${path}`, temporary: true });
 
 const cases = [
   // [host, pathname, search, expected]
@@ -59,6 +64,25 @@ const cases = [
   ['brand.itqanstudio.com', '/brand/colour', '', { kind: 'pass' }],
   ['brand.itqanstudio.com', '/brands', '', { kind: 'redirect-internal', path: '/brand' }],
   ['BRAND.ITQANSTUDIO.COM:443', '/', '', { kind: 'rewrite', path: '/brand' }],
+
+  /* ── Short portal paths on the portal host go to their /brand page (307) ─ */
+  ['brand.itqanstudio.com', '/logo', '', shortTo('/brand/logo')],
+  ['brand.itqanstudio.com', '/colour/pairings', '', shortTo('/brand/colour/pairings')],
+  ['brand.itqanstudio.com', '/logo/', '', shortTo('/brand/logo')],
+  ['brand.itqanstudio.com', '/assets', '?type=logo', shortTo('/brand/assets?type=logo')],
+  ['BRAND.ITQANSTUDIO.COM:443', '/press', '', shortTo('/brand/press')],
+  // Only real portal pages: an unknown path is not guessed into a /brand URL.
+  ['brand.itqanstudio.com', '/nope', '', { kind: 'pass' }],
+  ['brand.itqanstudio.com', '/privacy', '', { kind: 'pass' }],
+  // Routes are case-sensitive, so the short form is too.
+  ['brand.itqanstudio.com', '/Logo', '', { kind: 'pass' }],
+  // A path of only slashes is not a short path for the overview.
+  ['brand.itqanstudio.com', '//', '', { kind: 'pass' }],
+  // `/brand` itself is the overview, not a short path for `/brand/brand`.
+  ['brand.itqanstudio.com', '/brand', '', { kind: 'pass' }],
+  // Short paths are a portal-host convenience only; the apex and the feedback host are untouched.
+  ['itqanstudio.com', '/logo', '', { kind: 'pass' }],
+  ['feedback.itqanstudio.com', '/logo', '', { kind: 'pass' }],
 
   /* ── The plural is superseded: 308 to the singular, path preserved ────── */
   ['brands.itqanstudio.com', '/', '', { kind: 'redirect-external', to: ITQAN_PORTAL }],
@@ -138,7 +162,7 @@ for (const [host, pathname, expected] of portalCases) {
 }
 
 for (const [host, pathname, search, expected] of cases) {
-  const actual = resolveBrandRoute(host, pathname, search);
+  const actual = resolveBrandRoute(host, pathname, search, PORTAL_PATHS);
   try {
     assert.deepEqual(actual, expected);
     console.log(`  ok   ${host ?? '(no host)'}${pathname}${search}`);
@@ -150,6 +174,16 @@ for (const [host, pathname, search, expected] of cases) {
   }
 }
 
-const total = cases.length + portalCases.length;
+// Without the page set (its default), no short path redirects.
+const withoutSet = resolveBrandRoute('brand.itqanstudio.com', '/logo', '');
+try {
+  assert.deepEqual(withoutSet, { kind: 'pass' });
+  console.log('  ok   brand.itqanstudio.com/logo without the page set passes');
+} catch {
+  failed += 1;
+  console.error(`  FAIL brand.itqanstudio.com/logo without the page set: ${JSON.stringify(withoutSet)}`);
+}
+
+const total = cases.length + portalCases.length + 1;
 console.log(`\n${total - failed}/${total} passed`);
 process.exit(failed === 0 ? 0 : 1);
