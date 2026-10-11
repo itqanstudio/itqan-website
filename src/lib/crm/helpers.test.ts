@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SIGNATURE_MAX_SKEW_SECONDS, type BookingForEmail, type SlotsData } from './contract';
 import { computeV1, verifySignature } from './hmac';
 import { clearInitialSlotsCache, initialSlots } from './initial-slots';
+import { cachedSlots, peekSlots } from './slots-cache';
 import { clearReplayMemory, firstUse, replayMemorySize, signatureExpiry } from './replay';
 import { bookingForEmailSchema, notifyRequestSchema, slotsDataSchema } from './schemas';
 import { parseHostSlug } from './slug';
@@ -118,6 +119,41 @@ describe('schemas', () => {
     expect(slotsDataSchema.safeParse(slotsData).success).toBe(true);
     expect(slotsDataSchema.safeParse({ ...slotsData, slotMinutes: 0 }).success).toBe(false);
     expect(slotsDataSchema.safeParse({ ...slotsData, slots: [{ start: 'tomorrow', hosts: [] }] }).success).toBe(false);
+  });
+});
+
+describe('cachedSlots (final review fixes)', () => {
+  beforeEach(() => clearInitialSlotsCache());
+  const ok = (data: SlotsData) => async () => ({ ok: true as const, data });
+
+  it('never caches a filter that names no host, so made-up filters cannot push the real entries out', async () => {
+    await cachedSlots(undefined, ok(slotsData), 1_000);
+    for (let i = 0; i < 60; i += 1) await cachedSlots(`nobody-${i}`, ok({ ...slotsData, hosts: [], slots: [] }), 1_000);
+    expect(peekSlots(undefined, 1_000)).not.toBeNull();
+    expect(peekSlots('nobody-0', 1_000)).toBeNull();
+  });
+
+  it('drops the oldest entry when full, not all of them', async () => {
+    await cachedSlots(undefined, ok(slotsData), 1_000);
+    for (let i = 0; i < 50; i += 1) await cachedSlots(`host-${i}`, ok(slotsData), 1_000);
+    expect(peekSlots(undefined, 1_000)).toBeNull();
+    expect(peekSlots('host-49', 1_000)).not.toBeNull();
+    expect(peekSlots('host-1', 1_000)).not.toBeNull();
+  });
+
+  it('keeps callers with different time limits on separate calls', async () => {
+    let calls = 0;
+    const slow = () =>
+      new Promise<{ ok: true; data: SlotsData }>((resolve) => {
+        calls += 1;
+        setTimeout(() => resolve({ ok: true, data: slotsData }), 0);
+      });
+    await Promise.all([cachedSlots(undefined, slow, 1_000, 'page'), cachedSlots(undefined, slow, 1_000, 'widget')]);
+    expect(calls).toBe(2);
+    clearInitialSlotsCache();
+    calls = 0;
+    await Promise.all([cachedSlots(undefined, slow, 1_000), cachedSlots(undefined, slow, 1_000)]);
+    expect(calls).toBe(1);
   });
 });
 

@@ -25,6 +25,6 @@ export async function initialSlots(withSlug: string | undefined, ip: string, now
   if (hit) return hit;
   if (!rateLimit(`book-page:${ip}`, PER_IP_PER_MINUTE, 60_000).allowed) return null;
 
-  const result = await cachedSlots(withSlug, () => fetchSlots(withSlug, { timeoutMs: PAGE_TIMEOUT_MS }), now);
+  const result = await cachedSlots(withSlug, () => fetchSlots(withSlug, { timeoutMs: PAGE_TIMEOUT_MS }), now, 'page');
   return result.ok ? result.data : null;
 }

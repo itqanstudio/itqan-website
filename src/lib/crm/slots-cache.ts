@@ -36,16 +36,33 @@ export function peekSlots(withSlug: string | undefined, now: number = Date.now()
   return hit && now - hit.at < SLOTS_TTL_MS ? hit.value : null;
 }
 
-/** Fresh cached times, or one shared call to `load` (only successes are cached). */
+/** Room for one more entry: the oldest goes, so a burst of odd filters can never flush the common ones. */
+function makeRoom(): void {
+  while (cache.size >= MAX_KEYS) {
+    const oldest = cache.keys().next().value;
+    if (oldest === undefined) return;
+    cache.delete(oldest);
+  }
+}
+
+/**
+ * Fresh cached times, or one shared call to `load` (only successes are cached).
+ * `lane` keeps callers with different time limits (the page's 3 s, the widget's
+ * 8 s) from sharing one call and inheriting the other's limit. A filter that
+ * names no host (an unknown slug) is never cached, so made-up filters cost a
+ * CRM call each but cannot push the real entries out.
+ */
 export function cachedSlots(
   withSlug: string | undefined,
   load: () => Promise<CrmResult<SlotsData>>,
   now: number = Date.now(),
+  lane: string = 'widget',
 ): Promise<WidgetSlotsResult> {
   const key = keyOf(withSlug);
   const fresh = peekSlots(withSlug, now);
   if (fresh) return Promise.resolve({ ok: true, data: fresh });
-  const pending = inflight.get(key);
+  const flight = `${lane}|${key}`;
+  const pending = inflight.get(flight);
   if (pending) return pending;
 
   const startedIn = generation;
@@ -53,16 +70,18 @@ export function cachedSlots(
     .then((result): WidgetSlotsResult => {
       if (!result.ok) return result;
       const value = toWidgetSlots(result.data);
-      if (startedIn === generation) {
-        if (cache.size >= MAX_KEYS) cache.clear();
+      const unknownFilter = key !== '' && value.hosts.length === 0;
+      if (startedIn === generation && !unknownFilter) {
+        cache.delete(key);
+        makeRoom();
         cache.set(key, { at: now, value });
       }
       return { ok: true, data: value };
     })
     .finally(() => {
-      if (inflight.get(key) === run) inflight.delete(key);
+      if (inflight.get(flight) === run) inflight.delete(flight);
     });
-  inflight.set(key, run);
+  inflight.set(flight, run);
   return run;
 }
 

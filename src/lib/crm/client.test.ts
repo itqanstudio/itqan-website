@@ -274,6 +274,9 @@ describe('answers', () => {
     // A server error after the request went out may follow a committed booking (panel round 2).
     expect(isOutcomeUnknown({ ok: false, error: 'server', status: 503 })).toBe(true);
     expect(isOutcomeUnknown({ ok: false, error: 'server', status: 500, message: 'unexpected_answer' })).toBe(true);
+    // The CRM saying it certainly did not book (its database refused the call) is "paused", not "unconfirmed".
+    expect(isOutcomeUnknown({ ok: false, error: 'server', status: 503, message: 'not_booked' })).toBe(false);
+    expect(isCrmDown({ ok: false, error: 'server', status: 503, message: 'not_booked' })).toBe(true);
     // The CRM refusing the signature, or a 4xx business answer, means nothing was booked.
     expect(isOutcomeUnknown({ ok: false, error: 'unauthorized', status: 401 })).toBe(false);
     expect(isOutcomeUnknown({ ok: false, error: 'server', status: 404, message: 'not_json' })).toBe(false);

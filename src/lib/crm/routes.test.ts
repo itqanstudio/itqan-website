@@ -292,6 +292,13 @@ describe('POST /api/book', () => {
     expect(await res.json()).toEqual({ ok: false, error: 'unconfirmed' });
   });
 
+  it('a CRM that says it certainly did not book answers paused, and keeps the cached times (code review M1)', async () => {
+    crm(503, { ok: false, error: 'server', message: 'not_booked' });
+    const res = await postBook(bookRequest({ ...form, email: 'not-booked@example.com' }));
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ ok: false, error: 'paused' });
+  });
+
   it('a refused connection (nothing reached the CRM) is still paused', async () => {
     const refused = Object.assign(new TypeError('fetch failed'), { cause: Object.assign(new Error('connect'), { code: 'ECONNREFUSED' }) });
     vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(refused)));

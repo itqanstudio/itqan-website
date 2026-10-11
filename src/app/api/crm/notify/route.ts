@@ -62,7 +62,11 @@ export async function POST(req: NextRequest) {
   const { booking, notifyGuest } = parsed.data;
   if (!notifyGuest) return json<NotifyData>(200, { ok: true, data: { emailed: false } });
 
-  const sent = await sendGuestCancellation(booking, 'host');
+  // A throw counts as not emailed: the CRM then gives its lease back and can retry.
+  const sent = await sendGuestCancellation(booking, 'host').catch((err: unknown) => {
+    console.error('[crm/notify] guest cancellation threw for booking', booking.id, err instanceof Error ? err.message : String(err));
+    return { sent: false };
+  });
   if (!sent.sent) console.error('[crm/notify] guest cancellation not sent for booking', booking.id);
   return json<NotifyData>(200, { ok: true, data: { emailed: sent.sent } });
 }

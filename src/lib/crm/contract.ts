@@ -8,6 +8,12 @@
 export const SIGNATURE_HEADER = "x-itqan-signature";
 export const SIGNATURE_MAX_SKEW_SECONDS = 300;
 export const MIN_SECRET_LENGTH = 32;
+/**
+ * The message on a 503 "server" answer to POST bookings when the booking
+ * certainly did not happen (the database refused it, or nothing could be read).
+ * Any other 5xx may follow a committed booking, so the website says "unconfirmed".
+ */
+export const NOT_BOOKED = "not_booked";
 
 export type IntegrationErrorCode =
   | "unauthorized"

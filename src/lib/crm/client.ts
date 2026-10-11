@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import {
+  NOT_BOOKED,
   SIGNATURE_HEADER,
   type CancelBookingData,
   type CreateBookingData,
@@ -72,6 +73,8 @@ const CONNECT_CODES = new Set(['ECONNREFUSED', 'ENOTFOUND', 'EAI_AGAIN', 'ENETUN
 export function isOutcomeUnknown(f: CrmFailure): boolean {
   if (f.message === 'timeout') return true;
   if (f.error !== 'server') return false;
+  // The CRM says the booking certainly did not happen (its database refused it): "paused" is the truth.
+  if (f.status === 503 && f.message === NOT_BOOKED) return false;
   if ((f.status >= 200 && f.status < 300) || f.status >= 500) return true;
   return f.status === 0 && f.message !== NOT_SENT && f.message !== 'bad_origin';
 }

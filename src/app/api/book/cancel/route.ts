@@ -52,7 +52,11 @@ export async function POST(req: NextRequest) {
   // Owed, not just changed: a retry after a lost answer still sends the emails, and
   // once this site records them the CRM stops asking, so they never go twice.
   if (noticeOwed && booking) {
-    const sent = await sendGuestCancelledNotices(booking);
+    // The cancel has happened: an email that throws (not just fails) must not turn this into an error.
+    const sent = await sendGuestCancelledNotices(booking).catch((err: unknown) => {
+      console.error('[book/cancel] cancellation emails threw for booking', booking.id, err instanceof Error ? err.message : String(err));
+      return { guest: { sent: false }, host: { sent: false } };
+    });
     if (!sent.host.sent) console.error('[book/cancel] host notice not sent for booking', booking.id);
     if (!sent.guest.sent) console.error('[book/cancel] guest notice not sent for booking', booking.id);
     else await recordSent(parsed.data.token, booking.id);
