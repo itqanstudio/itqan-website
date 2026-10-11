@@ -206,6 +206,20 @@ describe('POST /api/book', () => {
     expect(to('bad@itqanstudio.com')).toHaveLength(0);
   });
 
+  it('invites the host even when the team leaves them out or every row fails the checks (W1)', async () => {
+    crm(201, { ok: true, data: { booking: { ...booking, team: [booking.team[1]] }, cancelToken: 'tok_abcdefghijklmnopqrstuvwxyz' } });
+    expect((await postBook(bookRequest({ ...form, email: 'no-host@example.com' }))).status).toBe(201);
+    expect(to('ibrahim@itqanstudio.com')).toHaveLength(1);
+    expect(to('ibrahim@itqanstudio.com')[0]).toContain('You host it.');
+    expect(to('bisma@itqanstudio.com')).toHaveLength(1);
+    printed = [];
+    const refused = [{ name: 'Bad\r\nBcc: x@y.z', email: 'bad@itqanstudio.com', isHost: true }];
+    crm(201, { ok: true, data: { booking: { ...booking, id: '4f9a2b1c-0000-4000-8000-000000000002', team: refused }, cancelToken: 'tok_abcdefghijklmnopqrstuvwxyz' } });
+    expect((await postBook(bookRequest({ ...form, email: 'bad-team@example.com' }))).status).toBe(201);
+    expect(to('ibrahim@itqanstudio.com')).toHaveLength(1);
+    expect(to('bad@itqanstudio.com')).toHaveLength(0);
+  });
+
   it('hands the widget the same calendar file the guest email attaches: full text, host as organizer (SW-3)', async () => {
     const withLink = { ...booking, host: { ...booking.host, meetingUrl: 'https://meet.google.com/abc-defg-hij' } };
     crm(201, { ok: true, data: { booking: withLink, cancelToken: 'tok_abcdefghijklmnopqrstuvwxyz' } });
@@ -413,10 +427,12 @@ describe('POST /api/book/cancel', () => {
     expect(JSON.parse(String(crmCalls[0].init.body)).reason).toHaveLength(500);
   });
 
-  it('records the send when only the guest email went, never because of the founders', async () => {
+  it('records the send because of the guest email, and an empty team still sends the host the calendar cancel (W1)', async () => {
     crmCancel({ changed: true, booking: { ...booking, team: [] }, noticeOwed: true });
     await cancel('A'.repeat(43));
-    expect(printed).toHaveLength(1);
+    expect(printed).toHaveLength(2);
+    expect(to('ibrahim@itqanstudio.com')[0]).toContain('ics=CANCEL');
+    expect(to('bisma@itqanstudio.com')).toHaveLength(0);
     expect(crmCalls.map((c) => c.url.split('/').pop())).toEqual(['cancel', 'notice-sent']);
   });
 
@@ -495,10 +511,11 @@ describe('POST /api/crm/notify', () => {
     expect(to('bisma@itqanstudio.com')).toHaveLength(1);
   });
 
-  it('answers emailed from the guest email alone: a founder email that fails changes nothing', async () => {
+  it('answers emailed from the guest email alone, and an empty team still sends the host the calendar cancel (W1)', async () => {
     const body = JSON.stringify({ type: 'booking.cancelled', by: 'host', notifyGuest: true, booking: { ...booking, team: [] } });
     expect(await (await notify(body, signatureHeader(SECRET, 'POST', path, body))).json()).toEqual({ ok: true, data: { emailed: true } });
-    expect(printed).toHaveLength(1);
+    expect(printed).toHaveLength(2);
+    expect(to('ibrahim@itqanstudio.com')[0]).toContain('ics=CANCEL');
   });
 
   it('refuses a missing, wrong, stale or replayed signature', async () => {

@@ -73,7 +73,8 @@ export interface BookingForEmail {
   /**
    * Every active founder (their booking_hosts row, taking bookings or not), the
    * host marked isHost. The website sends each one the calendar invite (REQUEST)
-   * and, on any cancel, its CANCEL.
+   * and, on any cancel, its CANCEL. The host is always on it: both sides add
+   * them when the list is empty or leaves them out, listed once by address.
    */
   team: Array<{ name: string; email: string; isHost: boolean }>;
 }
@@ -99,6 +100,13 @@ export interface CancelBookingData {
    * lost answer therefore still sends them, and a confirmed send is never repeated.
    */
   noticeOwed: boolean;
+  /**
+   * The guest's reason as the CRM stored it (the cancel that went through keeps
+   * it, a repeat never changes it), or null when they gave none. The founders'
+   * CANCEL carries this, never a retry's own text. A CRM from before this field
+   * leaves it out.
+   */
+  cancelReason?: string | null;
 }
 
 /** Website -> CRM after a guest cancel's emails went out: POST bookings/notice-sent */

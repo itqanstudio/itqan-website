@@ -4,7 +4,7 @@ import { computeV1, verifySignature } from './hmac';
 import { clearInitialSlotsCache, initialSlots } from './initial-slots';
 import { cachedSlots, peekSlots } from './slots-cache';
 import { clearReplayMemory, firstUse, replayMemorySize, signatureExpiry } from './replay';
-import { bookingForEmailSchema, notifyRequestSchema, slotsDataSchema } from './schemas';
+import { bookingForEmailSchema, cancelBookingDataSchema, notifyRequestSchema, slotsDataSchema } from './schemas';
 import { parseHostSlug } from './slug';
 import { toWidgetSlots } from './widget-slots';
 
@@ -129,9 +129,54 @@ describe('schemas', () => {
       ],
     });
     expect(mixed.success && mixed.data.team).toEqual(booking.team);
-    expect(bookingForEmailSchema.safeParse({ ...booking, team: [] }).success).toBe(true);
     expect(bookingForEmailSchema.safeParse({ ...booking, team: 'all' }).success).toBe(false);
     expect(bookingForEmailSchema.safeParse({ ...booking, team: Array.from({ length: 21 }, () => booking.team[0]) }).success).toBe(false);
+    vi.restoreAllMocks();
+  });
+  it('always lists the host, whatever the team says (W1): empty, all refused, or without the host', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const host = { name: 'Ibrahim Shareef', email: 'ibrahim@itqanstudio.com', isHost: true };
+    const bisma = { name: 'Bisma Aslam', email: 'bisma@itqanstudio.com', isHost: false };
+    const teamOf = (team: unknown) => {
+      const parsed = bookingForEmailSchema.safeParse({ ...booking, team });
+      return parsed.success ? parsed.data.team : 'refused';
+    };
+    // An empty list reads as missing: the host alone.
+    expect(teamOf([])).toEqual([host]);
+    // Every row refused: still the host.
+    expect(teamOf([{ name: 'Evil\r\nBcc: x@y.z', email: 'evil@example.com', isHost: true }, 'x'])).toEqual([host]);
+    // The host left out: put first, marked.
+    expect(teamOf([bisma])).toEqual([host, bisma]);
+    // The host listed but not marked, or someone else marked: the host's address decides, in the team's order.
+    expect(teamOf([{ ...bisma, isHost: true }, { ...host, name: 'Ibrahim', isHost: false }])).toEqual([bisma, { ...host, name: 'Ibrahim' }]);
+    // The host's address in another case counts as the host, once.
+    expect(teamOf([{ ...host, email: 'IBRAHIM@ItqanStudio.com', isHost: false }, bisma])).toEqual([
+      { ...host, email: 'IBRAHIM@ItqanStudio.com' },
+      bisma,
+    ]);
+    vi.restoreAllMocks();
+  });
+  it('refuses a null team cleanly: a parse failure, never a throw', () => {
+    expect(() => bookingForEmailSchema.safeParse({ ...booking, team: null })).not.toThrow();
+    expect(bookingForEmailSchema.safeParse({ ...booking, team: null }).success).toBe(false);
+  });
+  it("reads the CRM's stored cancel reason: kept as plain text, null when none, never failing the cancel over it", () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const reasonOf = (data: Record<string, unknown>) => {
+      const parsed = cancelBookingDataSchema.safeParse({ changed: false, booking, noticeOwed: true, ...data });
+      return parsed.success ? parsed.data.cancelReason : 'refused';
+    };
+    expect(reasonOf({ cancelReason: 'We chose another supplier.\nThanks.' })).toBe('We chose another supplier.\nThanks.');
+    expect(reasonOf({ cancelReason: null })).toBeNull();
+    // A CRM from before the field: undefined, so the site can tell "none" from "not sent".
+    expect(reasonOf({})).toBeUndefined();
+    // Bidi overrides and control characters go; an empty result is none.
+    const rlo = String.fromCodePoint(0x202e);
+    expect(reasonOf({ cancelReason: `${rlo}moved\u0007 ` })).toBe('moved');
+    expect(reasonOf({ cancelReason: `${rlo} ` })).toBeNull();
+    // One the site cannot use is dropped (logged), not a failed cancel.
+    expect(reasonOf({ cancelReason: 42 })).toBeNull();
+    expect(reasonOf({ cancelReason: 'x'.repeat(501) })).toBeNull();
     vi.restoreAllMocks();
   });
   it('checks the notify request exactly', () => {
