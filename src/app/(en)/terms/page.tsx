@@ -13,7 +13,7 @@ export const metadata: Metadata = pageMetadata({
 
 export default function TermsPage() {
   return (
-    <LegalPageLayout title="Terms & Conditions" lastUpdated="22 April 2026">
+    <LegalPageLayout title="Terms & Conditions" lastUpdated="11 October 2026">
       <p>
         These Terms &amp; Conditions (&ldquo;Terms&rdquo;) govern your use of itqanstudio.com (the
         &ldquo;Site&rdquo;) and any services provided by <strong>Itqan Studio FZ LLC</strong> (&ldquo;Itqan
@@ -23,9 +23,9 @@ export default function TermsPage() {
 
       <h2>1. Scope of services</h2>
       <p>
-        Itqan Studio provides brand identity design, UI/UX design, web and
-        application development, automation and systems setup, and related digital
-        services. The specific deliverables, timelines, and fees for any engagement
+        Itqan Studio designs, builds and runs AI agents and the software around
+        them for operations, supply chain and customer teams, together with related
+        digital services. The specific deliverables, timelines, and fees for any engagement
         are defined in a separate written proposal or statement of work, which,
         together with these Terms, forms the full agreement between the parties.
       </p>

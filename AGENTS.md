@@ -35,7 +35,7 @@ main`; a GitHub webhook rebuilds in Coolify. Env vars live in Coolify, not in a
 npm run dev          # localhost:3001
 npm run typecheck    # tsc --noEmit
 npm run build        # next build
-npm run verify:design # Apple-design checks
+npm test             # vitest + brand data, prune and routing script tests
 ```
 
 ---

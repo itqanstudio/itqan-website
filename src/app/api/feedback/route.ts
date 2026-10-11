@@ -9,8 +9,7 @@ export const dynamic = "force-dynamic";
  * POST /api/feedback
  *
  * Client-testimonial form (feedback.itqanstudio.com → /feedback). Emails the
- * submission to Ibrahim over the same SES SMTP transport as /api/contact —
- * the answers ARE the testimonial raw material, and his inbox is where every
+ * submission to Ibrahim over SES SMTP. The answers ARE the testimonial raw material, and his inbox is where every
  * other lead already lands, so v1 deliberately has no database.
  *
  * Body: { name, company?, role?, email?, rating, built, changed, quote,

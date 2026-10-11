@@ -9,14 +9,21 @@ import type { Heading } from '@/content/v3/types';
 
 interface SymbolProps {
   gid: string;
-  /** dusk: the full-colour symbol. bone: one-colour on dark, rose dot. */
-  tone?: 'dusk' | 'bone';
+  /**
+   * dusk: the full-colour symbol. bone: one colour on dark, rose dot.
+   * ink: one colour on light grounds, rose dot. ink-mono: all ink, dot included,
+   * for rose and dusk grounds where a rose dot would vanish.
+   */
+  tone?: 'dusk' | 'bone' | 'ink' | 'ink-mono';
   title?: string;
   className?: string;
 }
 
+const TONE_FILL: Record<Exclude<NonNullable<SymbolProps['tone']>, 'dusk'>, string> = { bone: BONE, ink: INK, 'ink-mono': INK };
+
 export function Symbol({ gid, tone = 'dusk', title, className }: SymbolProps) {
-  const fill = tone === 'dusk' ? `url(#${gid})` : BONE;
+  const fill = tone === 'dusk' ? `url(#${gid})` : TONE_FILL[tone];
+  const dot = tone === 'ink-mono' ? INK : ROSE;
   return (
     <svg
       viewBox="0 0 10 12"
@@ -38,7 +45,7 @@ export function Symbol({ gid, tone = 'dusk', title, className }: SymbolProps) {
         </defs>
       )}
       {SYMBOL_RECTS.map(([x, y, w], i) => (
-        <rect key={`${x}-${y}`} x={x} y={y} width={w} height={1} fill={i === 0 ? ROSE : fill} />
+        <rect key={`${x}-${y}`} x={x} y={y} width={w} height={1} fill={i === 0 ? dot : fill} />
       ))}
     </svg>
   );
@@ -58,14 +65,15 @@ interface LockupProps {
   gid: string;
   lang: 'en' | 'ar';
   className?: string;
+  tone?: SymbolProps['tone'];
 }
 
 /** Symbol plus name. In Arabic the name is إتقان, and the symbol still never mirrors. */
-export function Lockup({ gid, lang, className }: LockupProps) {
+export function Lockup({ gid, lang, className, tone = 'dusk' }: LockupProps) {
   return (
-    <span className={`lock ${className ?? ''}`}>
+    <span className={`lock ${tone === 'ink-mono' ? 'mono' : ''} ${className ?? ''}`}>
       <span className="sym">
-        <Symbol gid={gid} />
+        <Symbol gid={gid} tone={tone} />
       </span>
       {lang === 'ar' ? (
         <span className="wm-ar" aria-hidden="true">

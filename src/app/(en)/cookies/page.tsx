@@ -2,84 +2,58 @@ import type { Metadata } from 'next';
 import { pageMetadata } from '@/lib/page-metadata';
 import { LegalPageLayout } from '@/components/v3/LegalPage';
 
-// TODO: Review with legal counsel before going live
-
 export const metadata: Metadata = pageMetadata({
   title: 'Cookie Policy',
-  description:
-    'What cookies Itqan Studio uses, why we use them, and how you can control or opt out of non-essential cookies.',
+  description: 'The cookies itqanstudio.com sets (one, for staff sign-in), and how the site counts visits without any.',
   path: '/cookies',
 });
 
 export default function CookiesPage() {
   return (
-    <LegalPageLayout title="Cookie Policy" lastUpdated="22 April 2026">
+    <LegalPageLayout title="Cookie Policy" lastUpdated="11 October 2026">
       <p>
-        This Cookie Policy explains how <strong>Itqan Studio FZ LLC</strong> uses
-        cookies and similar technologies on itqanstudio.com. It should be read
-        alongside our <a href="/privacy">Privacy Policy</a>.
+        This Cookie Policy explains how <strong>Itqan Studio FZ-LLC</strong> uses cookies and similar technologies on
+        itqanstudio.com, brand.itqanstudio.com and feedback.itqanstudio.com. Read it with our <a href="/privacy">Privacy Policy</a>.
       </p>
 
-      <h2>1. What are cookies</h2>
+      <h2>1. What cookies are</h2>
       <p>
-        Cookies are small text files placed on your device when you visit a website.
-        They allow the site to remember your actions and preferences (such as
-        consent state) over a period of time, so you do not have to re-enter them on
-        every visit.
+        Cookies are small text files a website stores in your browser. Similar technologies, such as local storage, keep
+        data on your device in the same way.
       </p>
 
-      <h2>2. Types of cookies we use</h2>
-
-      <h3>Essential cookies</h3>
+      <h2>2. What we set</h2>
       <p>
-        These are strictly necessary for the site to function. They cannot be
-        disabled. They include the cookie that stores your consent preference
-        (<strong>itqan_cookie_consent</strong>) so we do not repeatedly show the
-        banner.
+        <strong>Visitors:</strong> nothing. Reading the site, booking a briefing and sending a form set no cookies and
+        write nothing to local storage.
+      </p>
+      <p>
+        <strong>Staff:</strong> when someone from Itqan signs in to manage bookings, the site sets one strictly necessary
+        cookie that keeps them signed in. It is secure, not readable by scripts, and expires after 14 days or on sign-out.
       </p>
 
-      <h3>Analytics cookies</h3>
+      <h2>3. How we count visits</h2>
       <p>
-        We may use aggregated analytics to understand how visitors use the site
-        (for example, pages viewed, approximate region, referring source). These
-        cookies do not identify you individually and are only set if you accept
-        cookies via our consent banner.
+        We use Umami, a self-hosted analytics tool that sets no cookies and stores nothing on your device. It counts page
+        views with a daily rotating hash, so it cannot follow you across days or sites. If your browser sends Do Not Track
+        or Global Privacy Control, the counter does not load at all. Because nothing is stored on your device, there is
+        no consent banner.
       </p>
 
-      <h2>3. Third-party cookies</h2>
+      <h2>4. Third parties</h2>
       <p>
-        Some pages may embed content from third parties (for example, video or
-        social embeds). Those third parties may set their own cookies, which are
-        governed by their respective privacy policies.
+        Links to other sites, such as LinkedIn or a client&rsquo;s website, take you to pages with their own cookie
+        policies.
       </p>
-
-      <h2>4. Managing and opting out</h2>
-      <ul>
-        <li>
-          You can accept or decline non-essential cookies via the consent banner
-          displayed on your first visit.
-        </li>
-        <li>
-          You can clear cookies and local storage at any time through your browser
-          settings. Doing so will prompt the consent banner again on your next
-          visit.
-        </li>
-        <li>
-          Declining non-essential cookies will not affect your ability to use the
-          site; some features, such as analytics, simply will not be activated.
-        </li>
-      </ul>
 
       <h2>5. Changes to this policy</h2>
       <p>
-        We may update this Cookie Policy from time to time. The &ldquo;Last updated&rdquo;
-        date at the top of this page reflects the most recent revision.
+        If we add a cookie, we update this page first. The date at the top shows the latest change.
       </p>
 
       <h2>6. Contact</h2>
       <p>
-        Questions about our use of cookies can be sent to{' '}
-        <a href="mailto:info@itqanstudio.com">info@itqanstudio.com</a>.
+        Questions about cookies: <a href="mailto:ibrahim@itqanstudio.com">ibrahim@itqanstudio.com</a>.
       </p>
     </LegalPageLayout>
   );

@@ -18,7 +18,7 @@ export function json<T>(status: number, body: ApiBody<T>, headers?: Record<strin
 
 /**
  * Trust only the LAST x-forwarded-for hop (single Traefik hop in production);
- * earlier entries are client supplied. Same rule as /api/contact.
+ * earlier entries are client supplied. Same rule as /api/feedback.
  */
 export function clientIp(req: NextRequest): string {
   return ipFromHeaders(req.headers);

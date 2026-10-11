@@ -1,8 +1,9 @@
 # Itqan Studio — Brand System
 
-> **Retired on 7 Oct 2026.** This file describes the old brand (plum, mauve, Manrope and Playfair).
-> The brand is now v3, "Resolve, the signal i"; its spec and assets live in the private repo
-> `itqanstudio/itqan-brand`. Keep this file only as the reference for the live site until it is rebuilt.
+> **SUPERSEDED. History only.** This file describes the old brand (plum, mauve, Manrope and
+> Playfair), retired on 7 Oct 2026 and removed from every page of the site on 11 Oct 2026. The brand
+> is v3, "Resolve, the signal i": the public manual is /brand (brand.itqanstudio.com, data in
+> `src/data/brand-spec.ts`), and the full spec lives in the private repo `itqanstudio/itqan-brand`.
 
 **Company:** Itqan Studio FZ LLC
 **Meaning:** "Itqan" = Excellence (Arabic)

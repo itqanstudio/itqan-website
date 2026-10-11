@@ -1,0 +1,86 @@
+/*
+ * The small one-job pages on the v3 site: client feedback, client support and
+ * the thank-you page. Uses the tokens from site.css; the form controls follow
+ * book.css so every form on the site reads as one system. Logical properties
+ * throughout. Reduced motion is handled once, in site.css.
+ */
+/* overflow-x: clip, not hidden: hidden would make .pg a scroll container and stop the aside from sticking. */
+.pg { position: relative; overflow-x: clip; padding-block: clamp(40px, 6vw, 88px) clamp(64px, 9vw, 120px); border-bottom: 1px solid var(--line); }
+.pg::before { content: ''; position: absolute; inset: 0; background: var(--glow); pointer-events: none; }
+.pg .wrap { position: relative; }
+.pg .wrap.narrow { max-width: 760px; }
+.pg h1 { font-size: clamp(38px, 5vw, 68px); letter-spacing: -0.05em; line-height: 0.98; }
+.pg-head { display: grid; gap: 18px; margin-bottom: clamp(28px, 4vw, 48px); }
+.pg-head .note-line { color: var(--dim); font-size: 14px; }
+.pg-head .note-line a, .pg-aside a { color: var(--bone); text-underline-offset: 3px; }
+.pg-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: clamp(28px, 4vw, 56px); align-items: start; }
+@media (max-width: 960px) { .pg-grid { grid-template-columns: 1fr; } }
+.pg-aside { border: 1px solid var(--line2); background: var(--ink2); padding: 24px; display: grid; gap: 18px; position: sticky; top: 100px; }
+@media (max-width: 960px) { .pg-aside { position: static; } }
+.pg-aside h2 { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); font-weight: 400; }
+.pg-aside ul { list-style: none; padding: 0; display: grid; gap: 16px; }
+.pg-aside b { display: block; color: var(--bone); font-weight: 500; font-size: 15px; }
+.pg-aside p { color: var(--mute); font-size: 14px; margin-top: 4px; }
+
+/* The standalone bar on feedback.itqanstudio.com, where the site nav and footer are hidden. */
+.fb-bar { border-bottom: 1px solid var(--line); }
+.fb-bar .wrap { display: flex; align-items: center; height: 68px; }
+.fb-bar .home { font-size: 26px; color: var(--bone); }
+
+/* form card + controls */
+.fm-card { border: 1px solid var(--line2); background: rgba(20, 18, 23, 0.92); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: clamp(18px, 3vw, 28px); }
+.fm { display: grid; gap: 18px; position: relative; }
+.fm-field { display: grid; gap: 6px; }
+.fm-field > label, .fm-legend { font-size: 14px; color: var(--mute); }
+.fm-field > label em, .fm-legend em { font-style: normal; color: var(--dim); }
+.fm input:not([type='checkbox']), .fm select, .fm textarea {
+  font: inherit; font-size: 15px; color: var(--bone); background: var(--ink); border: 1px solid var(--line2); border-radius: 6px; padding: 10px 12px; width: 100%;
+}
+.fm textarea { resize: vertical; line-height: 1.5; }
+.fm ::placeholder { color: var(--dim); opacity: 1; }
+.fm :is(input, select, textarea):focus { outline: 2px solid var(--rose); outline-offset: 1px; border-color: transparent; }
+.fm [aria-invalid='true'] { border-color: var(--err); }
+.fm-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 560px) { .fm-row { grid-template-columns: 1fr; } }
+.fm-err { color: var(--err); font-size: 12.5px; }
+.fm-msg { font-size: 14px; padding: 10px 12px; border: 1px solid var(--err); color: var(--bone); background: rgba(255, 138, 128, 0.08); }
+.fm-hp { position: absolute; inset-inline-start: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.fm-check { display: grid; grid-template-columns: 18px 1fr; gap: 12px; align-items: start; font-size: 14px; color: var(--mute); cursor: pointer; line-height: 1.5; }
+.fm-check input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--rose); cursor: pointer; }
+.fm-submit { justify-self: start; min-width: 200px; }
+.fm-foot { color: var(--dim); font-size: 13px; }
+
+/* star rating: pixel stars, rose when picked */
+.rate { display: flex; gap: 8px; flex-wrap: wrap; }
+.rate button { width: 48px; height: 48px; display: grid; place-items: center; background: var(--ink); border: 1px solid var(--line2); border-radius: 8px; color: var(--line2); cursor: pointer; touch-action: manipulation; transition: border-color 0.16s, color 0.16s, transform 0.2s var(--spring); }
+.rate button:hover { border-color: var(--bone); }
+.rate button:active { transform: scale(0.94); }
+.rate button.on { color: var(--rose); border-color: var(--rose); }
+.rate svg { width: 26px; height: 26px; display: block; }
+
+/* sent states */
+.fm-done { display: grid; gap: 14px; padding-block: clamp(24px, 4vw, 48px); justify-items: start; animation: fm-in 0.5s var(--spring) both; }
+.fm-done h2 { font-size: clamp(32px, 4vw, 52px); }
+/* Focus lands here by script after sending, so screen readers announce it; no ring needed. */
+.fm-done h2:focus { outline: none; }
+.fm-done p { color: var(--mute); font-size: 17px; max-width: 52ch; }
+.fm-done b { color: var(--bone); font-weight: 500; }
+.fm-done code { font-family: var(--mono); color: var(--bone); }
+@keyframes fm-in { from { opacity: 0; transform: translateY(8px); } }
+
+/* thank-you */
+.ty { position: relative; overflow: hidden; min-height: 72vh; display: grid; place-items: center; text-align: center; padding: clamp(56px, 8vw, 112px) 0; border-bottom: 1px solid var(--line); }
+.ty::before { content: ''; position: absolute; inset: 0; background: radial-gradient(70% 90% at 50% 120%, rgba(239, 58, 120, 0.45), rgba(155, 63, 160, 0.18) 45%, rgba(11, 10, 13, 0) 75%); pointer-events: none; }
+.ty .wrap { position: relative; display: grid; gap: 22px; justify-items: center; }
+.ty h1 { font-size: clamp(44px, 7vw, 96px); letter-spacing: -0.055em; line-height: 0.95; }
+.ty .lead { text-align: center; }
+.ty .btns { justify-content: center; }
+.ty-check { width: 56px; height: 56px; color: var(--rose); }
+.ty-check circle, .ty-check path { fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: square; stroke-linejoin: miter; }
+.ty-check circle { stroke-dasharray: 164; stroke-dashoffset: 164; animation: ty-draw 0.7s var(--spring) 0.1s forwards; }
+.ty-check path { stroke-dasharray: 34; stroke-dashoffset: 34; animation: ty-draw 0.45s var(--spring) 0.55s forwards; }
+@keyframes ty-draw { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .ty-check circle, .ty-check path { stroke-dashoffset: 0; animation: none; }
+  .fm-done { animation: none; }
+}

@@ -1,5 +1,5 @@
 import manifest from "./brand-assets.json";
-import type { AssetBundle, BrandAsset } from "@/components/brand/AssetLibrary";
+import type { AssetBundle, BrandAsset } from "@/components/portal/types";
 
 /**
  * Typed accessors over the generated manifest.

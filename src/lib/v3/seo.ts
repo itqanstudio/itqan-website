@@ -5,14 +5,23 @@ export const SITE_URL = 'https://itqanstudio.com';
 export const STUDIO_EMAIL = 'ibrahim@itqanstudio.com';
 export const OG_IMAGE: Record<Lang, string> = { en: '/v3/og-en.png', ar: '/v3/og-ar.png' };
 
-/** Pages that exist in English only (legal text). The language switch sends Arabic readers to /ar. */
-const EN_ONLY = new Set(['/privacy', '/terms', '/cookies']);
+/**
+ * Pages that exist in English only: legal text, the client feedback and support
+ * forms, the thank-you page and the lead-magnet pages. The language switch sends
+ * Arabic readers to /ar instead of a 404.
+ */
+const EN_ONLY = new Set(['/privacy', '/terms', '/cookies', '/feedback', '/support', '/thank-you']);
+const EN_ONLY_PREFIXES = ['/magnet/'];
+
+function isEnglishOnly(path: string): boolean {
+  return EN_ONLY.has(path) || EN_ONLY_PREFIXES.some((prefix) => path.startsWith(prefix));
+}
 
 /** The same page in the other language. Paths are site-relative, without a hash. */
 export function counterpartPath(path: string, from: Lang): string {
   const clean = path.split(/[?#]/)[0] || '/';
   if (from === 'en') {
-    if (EN_ONLY.has(clean)) return '/ar';
+    if (isEnglishOnly(clean)) return '/ar';
     return clean === '/' ? '/ar' : `/ar${clean}`;
   }
   const rest = clean.replace(/^\/ar(?=\/|$)/, '');

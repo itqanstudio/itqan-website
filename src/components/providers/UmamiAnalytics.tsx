@@ -5,11 +5,10 @@ import { useEffect } from 'react';
 /**
  * Self-hosted Umami analytics loader.
  *
- * WHY UMAMI RUNS WITHOUT A CONSENT GATE (and PostHog does not)
- * -----------------------------------------------------------
- * PostHogProvider is deliberately blocked behind CookieBanner acceptance,
- * because PostHog sets cookies and localStorage identifiers and persists them
- * across sessions — that needs opt-in consent under GDPR/PECR.
+ * WHY UMAMI RUNS WITHOUT A CONSENT GATE
+ * -------------------------------------
+ * It is the site's only analytics since brand v3 (PostHog and the cookie
+ * banner were removed on 11 Oct 2026), and the cookie policy says so.
  *
  * Umami is different by design: it sets NO cookies, writes NO localStorage, and
  * assigns no persistent cross-session identifier. Visitors are counted with a
@@ -79,10 +78,8 @@ export function UmamiAnalytics() {
         script.src = config.scriptUrl;
         script.defer = true;
         script.setAttribute('data-website-id', config.websiteId);
-        // Umami tracks SPA route changes on its own via the History API, which
-        // is what next-view-transitions navigation uses — so no manual
-        // pageview call is needed here (unlike the PostHog provider, which
-        // captures route changes explicitly).
+        // Umami tracks client-side route changes on its own through the
+        // History API, so no manual pageview call is needed here.
         document.head.appendChild(script);
       })
       .catch(() => {

@@ -1,8 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useForm } from 'react-hook-form';
-import { Star } from '@phosphor-icons/react';
 
 type FormValues = {
   name: string;
@@ -17,16 +16,20 @@ type FormValues = {
   website: string; // honeypot
 };
 
-// Same field language as ContactForm so both forms read as one system.
-const inputClass =
-  'w-full bg-white dark:bg-[rgba(255,251,245,0.04)] border border-black/[0.12] dark:border-[rgba(255,251,245,0.15)] rounded-xl px-4 py-3 text-sm text-[#1a1a1a] dark:text-[#fffbf5] placeholder:text-[#9a9a9a] dark:placeholder:text-[rgba(255,251,245,0.4)] transition-colors duration-300';
-const labelClass =
-  'block text-xs font-semibold text-text-secondary dark:text-[rgba(255,251,245,0.75)] tracking-wide mb-2';
-const errorClass = 'text-red-500 dark:text-red-400 text-xs mt-1.5';
-
 interface FeedbackFormProps {
-  /** Project slug from ?p= — travels with the submission so Ibrahim knows which engagement. */
+  /** Project slug from ?p=, travels with the submission so Ibrahim knows which engagement. */
   project?: string;
+}
+
+const RATINGS = [1, 2, 3, 4, 5] as const;
+
+/** A five-point pixel star on a 7 by 7 grid, drawn like the v3 icons. */
+function PixelStar() {
+  return (
+    <svg viewBox="0 0 7 7" xmlns="http://www.w3.org/2000/svg" shapeRendering="crispEdges" aria-hidden="true" focusable="false">
+      <path fill="currentColor" d="M3 0h1v2H3zM0 2h7v1H0zM1 3h5v1H1zM2 4h3v1H2zM1 5h2v1H1zM4 5h2v1H4zM1 6h1v1H1zM5 6h1v1H5z" />
+    </svg>
+  );
 }
 
 export function FeedbackForm({ project }: FeedbackFormProps) {
@@ -35,11 +38,34 @@ export function FeedbackForm({ project }: FeedbackFormProps) {
   const [rating, setRating] = useState(0);
   const [hovered, setHovered] = useState(0);
   const [ratingError, setRatingError] = useState(false);
+  const starRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const doneRef = useRef<HTMLHeadingElement>(null);
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>();
+
+  // The form unmounts on success; move focus to the thank-you so it is announced.
+  useEffect(() => {
+    if (done) doneRef.current?.focus();
+  }, [done]);
+
+  const pick = (n: number) => {
+    setRating(n);
+    setRatingError(false);
+  };
+
+  /* Radio-group keys: arrows move and select, Home and End jump. One tab stop for the group. */
+  const onStarKey = (e: KeyboardEvent<HTMLButtonElement>, n: number) => {
+    const moves: Record<string, number> = { ArrowRight: n + 1, ArrowUp: n + 1, ArrowLeft: n - 1, ArrowDown: n - 1, Home: 1, End: RATINGS.length };
+    const target = moves[e.key];
+    if (target === undefined) return;
+    e.preventDefault();
+    const next = Math.min(RATINGS.length, Math.max(1, target));
+    pick(next);
+    starRefs.current[next - 1]?.focus();
+  };
 
   const onValid = async (values: FormValues) => {
     if (rating === 0) {
@@ -63,159 +89,166 @@ export function FeedbackForm({ project }: FeedbackFormProps) {
 
   if (done) {
     return (
-      <div className="text-center py-16" role="status" aria-live="polite">
-        <p className="font-display text-3xl md:text-4xl font-semibold text-text-primary dark:text-brand-cream">
+      <div className="fm-done" role="status" aria-live="polite">
+        <h2 ref={doneRef} tabIndex={-1}>
           Thank you. Truly.
-        </p>
-        <p className="mt-4 text-text-secondary dark:text-[rgba(255,251,245,0.7)] max-w-md mx-auto leading-relaxed">
-          Your words mean a lot to a small studio. If we publish them, we will show you
-          exactly how they appear first.
+        </h2>
+        <p>
+          Your words mean a lot to a small studio. If we publish them, we will show you exactly how
+          they appear first.
         </p>
       </div>
     );
   }
 
+  const shown = hovered || rating;
+
   return (
-    <form onSubmit={handleSubmit(onValid)} className="space-y-7" noValidate>
-      {/* Rating first — one tap, sets the tone, feels effortless. */}
-      <div>
-        <label className={labelClass}>How was working with us?</label>
-        <div className="flex gap-2" role="radiogroup" aria-label="Rating from 1 to 5 stars">
-          {[1, 2, 3, 4, 5].map((n) => (
+    <form onSubmit={handleSubmit(onValid)} className="fm" noValidate>
+      {/* Rating first: one tap, sets the tone. */}
+      <div className="fm-field">
+        <span className="fm-legend" id="fb-rating-label">
+          How was working with us?
+        </span>
+        <div
+          className="rate"
+          role="radiogroup"
+          aria-labelledby="fb-rating-label"
+          aria-required="true"
+          aria-invalid={ratingError ? true : undefined}
+          aria-describedby={ratingError ? 'fb-rating-err' : undefined}
+        >
+          {RATINGS.map((n) => (
             <button
               key={n}
+              ref={(el) => {
+                starRefs.current[n - 1] = el;
+              }}
               type="button"
               role="radio"
               aria-checked={rating === n}
               aria-label={`${n} of 5 stars`}
-              onClick={() => {
-                setRating(n);
-                setRatingError(false);
-              }}
+              tabIndex={rating === n || (rating === 0 && n === 1) ? 0 : -1}
+              className={shown >= n ? 'on' : undefined}
+              onClick={() => pick(n)}
+              onKeyDown={(e) => onStarKey(e, n)}
               onMouseEnter={() => setHovered(n)}
               onMouseLeave={() => setHovered(0)}
-              className="p-1 -m-1 transition-transform duration-150 hover:scale-110"
             >
-              <Star
-                size={38}
-                weight={(hovered || rating) >= n ? 'fill' : 'regular'}
-                className={
-                  (hovered || rating) >= n
-                    ? 'text-brand-accent-on-light dark:text-brand-accent'
-                    : 'text-black/25 dark:text-[rgba(255,251,245,0.3)]'
-                }
-              />
+              <PixelStar />
             </button>
           ))}
         </div>
-        {ratingError && <p className={errorClass}>Please pick a rating.</p>}
+        {ratingError && (
+          <p className="fm-err" id="fb-rating-err">
+            Please pick a rating.
+          </p>
+        )}
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-5">
-        <div>
-          <label htmlFor="fb-name" className={labelClass}>Your name *</label>
+      <div className="fm-row">
+        <div className="fm-field">
+          <label htmlFor="fb-name">
+            Your name <em>(required)</em>
+          </label>
           <input
             id="fb-name"
-            className={inputClass}
             autoComplete="name"
+            aria-required="true"
+            aria-invalid={errors.name ? true : undefined}
+            aria-describedby={errors.name ? 'fb-name-err' : undefined}
             {...register('name', { required: 'Please add your name' })}
           />
-          {errors.name && <p className={errorClass}>{errors.name.message}</p>}
+          {errors.name && (
+            <p className="fm-err" id="fb-name-err">
+              {errors.name.message}
+            </p>
+          )}
         </div>
-        <div>
-          <label htmlFor="fb-company" className={labelClass}>Company & role</label>
-          <input
-            id="fb-company"
-            className={inputClass}
-            placeholder="e.g. Founder, Lemon Garden"
-            {...register('company')}
-          />
+        <div className="fm-field">
+          <label htmlFor="fb-company">Company and role</label>
+          <input id="fb-company" placeholder="e.g. Head of operations, company name" {...register('company')} />
         </div>
       </div>
 
-      <div>
-        <label htmlFor="fb-quote" className={labelClass}>
-          What would you tell someone thinking about working with Itqan? *
+      <div className="fm-field">
+        <label htmlFor="fb-quote">
+          What would you tell someone thinking about working with Itqan? <em>(required)</em>
         </label>
         <textarea
           id="fb-quote"
           rows={4}
-          className={inputClass}
           placeholder="Write it the way you would say it. A few honest sentences beat a polished paragraph."
+          aria-required="true"
+          aria-invalid={errors.quote ? true : undefined}
+          aria-describedby={errors.quote ? 'fb-quote-err' : undefined}
           {...register('quote', { required: 'This is the one we really need' })}
         />
-        {errors.quote && <p className={errorClass}>{errors.quote.message}</p>}
+        {errors.quote && (
+          <p className="fm-err" id="fb-quote-err">
+            {errors.quote.message}
+          </p>
+        )}
       </div>
 
-      <div>
-        <label htmlFor="fb-changed" className={labelClass}>
-          What changed for you since we shipped?
-        </label>
+      <div className="fm-field">
+        <label htmlFor="fb-changed">What changed for you since we shipped?</label>
         <textarea
           id="fb-changed"
           rows={3}
-          className={inputClass}
-          placeholder="Before vs after — time saved, calls that stopped, things that just work now…"
+          placeholder="Before and after: time saved, calls that stopped, things that just work now."
           {...register('changed')}
         />
       </div>
 
-      <div>
-        <label htmlFor="fb-improve" className={labelClass}>
-          Anything we should do better?
-        </label>
+      <div className="fm-field">
+        <label htmlFor="fb-improve">Anything we should do better?</label>
         <textarea
           id="fb-improve"
           rows={2}
-          className={inputClass}
-          placeholder="Straight talk welcome — this one is just for us."
+          placeholder="Straight talk is welcome. Only the team reads this one."
           {...register('improve')}
         />
       </div>
 
-      <div>
-        <label htmlFor="fb-email" className={labelClass}>Your email (optional)</label>
+      <div className="fm-field">
+        <label htmlFor="fb-email">
+          Your email <em>(optional)</em>
+        </label>
         <input
           id="fb-email"
           type="email"
-          className={inputClass}
           autoComplete="email"
           placeholder="Only so we can say thank you"
           {...register('email')}
         />
       </div>
 
-      <label className="flex items-start gap-3 cursor-pointer text-sm text-text-secondary dark:text-[rgba(255,251,245,0.75)] leading-relaxed">
-        <input
-          type="checkbox"
-          className="mt-1 h-4 w-4 accent-current"
-          {...register('publishOk')}
-        />
+      <label className="fm-check">
+        <input type="checkbox" {...register('publishOk')} />
         <span>
-          Itqan Studio may publish my words with my name and company on their website and
-          portfolio. (Leave unticked and your feedback stays private to the team.)
+          Itqan Studio may publish my words with my name and company on their website and portfolio.
+          (Leave unticked and your feedback stays private to the team.)
         </span>
       </label>
 
-      {/* Honeypot — humans never see it. */}
-      <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+      {/* Honeypot: humans never see it. */}
+      <div aria-hidden="true" className="fm-hp">
         <label htmlFor="fb-website">Leave empty</label>
         <input id="fb-website" tabIndex={-1} autoComplete="off" {...register('website')} />
       </div>
 
-      {submitError && <p className={errorClass} role="alert">{submitError}</p>}
+      {submitError && (
+        <p className="fm-msg" role="alert">
+          {submitError}
+        </p>
+      )}
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full rounded-full bg-[#1a1a1a] dark:bg-brand-cream text-white dark:text-[#1a1a1a] font-semibold py-4 text-sm tracking-wide transition-opacity disabled:opacity-60"
-      >
+      <button type="submit" disabled={isSubmitting} className="btn pri fm-submit">
         {isSubmitting ? 'Sending…' : 'Send my feedback'}
       </button>
 
-      <p className="text-xs text-center text-text-secondary/70 dark:text-[rgba(255,251,245,0.5)]">
-        Takes about two minutes. Thank you for making the studio better.
-      </p>
+      <p className="fm-foot">Takes about two minutes. Thank you for making the studio better.</p>
     </form>
   );
 }

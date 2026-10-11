@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { SITE_NAME, absoluteUrl } from './seo';
 
 interface PageMetadataInput {
-  /** Page title without the site name; the root template appends " | Itqan Studio". */
+  /** Page title without the site name; the root template appends " · Itqan". */
   title: string;
   description: string;
   /** Site-relative path, e.g. "/services". Becomes the canonical and og:url. */
@@ -17,9 +17,8 @@ interface PageMetadataInput {
   /** og:type. Case studies are articles; everything else is a website page. */
   ogType?: 'website' | 'article';
   /**
-   * Use `title` as the whole title, with no " | Itqan Studio" suffix. For a
-   * title that already names the brand (the "Itqan Studio CRM" case study), so
-   * the tab does not read "Itqan Studio ... | Itqan Studio".
+   * Use `title` as the whole title, with no " · Itqan" suffix. For a title
+   * that already names the brand, so the tab does not read "Itqan ... · Itqan".
    */
   absoluteTitle?: boolean;
 }
@@ -31,7 +30,9 @@ const DEFAULT_OG_IMAGE = '/v3/og-en.png';
  * Suffix the brand-portal layout's title template appends. Shared so a portal
  * page's og:title / twitter:title always equal its rendered <title>.
  */
-export const PORTAL_TITLE_SUFFIX = ' — Itqan Studio Brand';
+export const PORTAL_TITLE_SUFFIX = ' · Itqan brand';
+/** Matches the "%s · Itqan" title template in src/lib/v3/seo.ts, so og:title reads like the tab. */
+const SITE_TITLE_SUFFIX = ` · ${SITE_NAME}`;
 
 interface ShareInput {
   path: string;
@@ -106,7 +107,7 @@ export function pageMetadata({
     description,
     ...shareMetadata({
       path,
-      fullTitle: absoluteTitle ? title : `${title} | ${SITE_NAME}`,
+      fullTitle: absoluteTitle ? title : `${title}${SITE_TITLE_SUFFIX}`,
       description,
       image,
       ogType,

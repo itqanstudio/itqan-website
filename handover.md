@@ -1,6 +1,6 @@
 # Itqan Studio Website — Handover
 
-## 2026-10-11: /book now runs on the CRM (CRM v3 rebuild, workstream W). NOT deployed: waits on Ibrahim's go
+## 2026-10-11: /book now runs on the CRM (CRM v3 rebuild, workstream W). Deploying 11 Oct evening (Ibrahim's go)
 
 Branch `feat/crm-booking-link` (worktree `itqan-website-crm-link`), local commits only, nothing pushed.
 Contract: `itqan-crm-v3/docs/v3/REBUILD-SPEC.md` section 8. Tracked work:
@@ -109,6 +109,61 @@ Contract: `itqan-crm-v3/docs/v3/REBUILD-SPEC.md` section 8. Tracked work:
 - The pattern built here (public booking page on the client's site, signed server-to-server calls,
   bookings landing as contacts in the client's own CRM, a mock for local testing) is a reusable module
   for client sites that run their own CRM.
+
+## 2026-10-11 — The old brand removed everywhere: portal, pages, assets, signatures, templates
+
+Ibrahim: "brand.itqanstudio.com still has the old brand. Fix that immediately and make sure that
+everything else is fixed as well." **Tracked work:** `agent-work/20261011162045_brand_portal_v3.md`,
+branch `feat/v3-brand-portal`.
+
+### What was done
+- **Brand portal** (/brand and brand.itqanstudio.com): own `(brand)` root layout, v3 shell
+  (`src/components/portal/`), all 20 pages rewritten for v3 with the same URLs, data in
+  `src/data/brand-spec.ts` (contrast ratios measured). The symbol has 54 modules, not the 56 the kit
+  said (README and vault corrected).
+- **Assets:** new v3 source folders (logos in `itqan-design/brand-assets/itqan`, stickers and the
+  signature kit in `Context/Brand/brand-kits/itqan-studio/`, built by `brand-kits/itqan-v3-build/`;
+  old files archived next to them, nothing deleted), synced with `npm run brand:sync`. Old asset URLs
+  (signature images, stickers, /images/brand logos, the old brand pack) redirect (307) to v3.
+- **Pages:** feedback, support, thank-you and magnet moved into `(en)` and restyled; the `(legacy)`
+  layout, PostHog, the cookie banner, Tailwind and 33 old components are gone. Cookie and privacy
+  policies match reality. `/api/contact` (no caller left) removed.
+- **public/llms.txt** rewritten for the AI studio; **public/bimi/logo.svg** is the v3 symbol.
+- **Email signatures, live now (not tied to the deploy):** the S3 images behind already-installed
+  Gmail signatures (`itqan-brand-assets-480437358661/sig/itqan/*`) were replaced with v3 versions at
+  the old sizes (originals in `archive/sig-itqan-v2-2026-10-11/`), and the one-click install pages
+  (`sig/install/itqan-ibrahim.html`, `itqan-bisma.html`) are v3. Shareefico's page untouched.
+- **Outside this repo:** proposal shell and SOW/doc builders (`founder-rebuild`), `BRAND-ASSETS.md`,
+  itqan-office (commit 34a4ddd, not pushed), Penpot scripts (not run), content-engine Itqan mockup
+  spec, a v3 one-pager (`restart/ITQAN-ONE-PAGER-2026-10.md`).
+- **Review fixes (commit b9f2c14):** portal path helper in `src/components/portal/path.ts` with
+  tests; support aside sticks again (`.pg` uses `overflow-x: clip`); magnet capture bar shows its
+  error; `itqan-mark.png` redirects to the square app icon; the unused pre-v3 Organization graph
+  ("design and AI agency", old tagline) deleted from `src/lib/seo.ts` (the live graph is
+  `src/lib/v3/seo.ts`); Terms scope now describes the AI studio; `public/favicon.ico` is v3 (it used
+  to 404, so browsers kept the old cached icon).
+- **Reviews:** security review, no critical/high/medium; code review approve, all mediums fixed.
+- **Checks:** tsc clean, 77 unit + 63 script tests pass, `next build` green. No ESLint config in this
+  repo (`next lint` only offers to set one up).
+- itqan-brand README 54-module fix committed and pushed (8317b93).
+
+### Prod box incident, 11 Oct ~16:30 to 17:09 UTC (not caused by this branch)
+The CRM portal (`portal.itqanstudio.com`, Coolify app l54vb5ni1n8pw4klia6xvxbu) deployed from another
+session and its `next build` ran 40 minutes with swap full; load average hit 235, the kernel
+OOM-killed Penpot's Java backend in a loop, and the website container restarted once. It cleared on
+its own when the build finished. The box (16 GB, ~20 stacks incl. four Supabase sets and Penpot) has
+no headroom for a Next build: two deploys at once will wedge it. Deploy one app at a time and check
+`uptime` over SSM first.
+
+### Left, and why
+- CRM: the parallel CRM v3 rebuild owns it (`itqan-crm-v3`). Booking and admin in this repo: the
+  `feat/crm-booking-link` branch owns them; it will conflict lightly in `next.config.mjs`,
+  `Claude.md`, `handover.md` and the privacy page.
+- `itqan-agents/office.py` still loads Manrope/Playfair: that repo has someone's uncommitted edits.
+- Penpot: `itqan-design/scripts/penpot-provision.py` then `penpot-moodboards.py` would publish the
+  v3 library; not run against the live server yet.
+- Gmail signatures: Ibrahim and Bisma re-paste from the install pages for the v3 layout; the old
+  installed ones already show v3 images.
 
 ## 2026-10-08 — Brand v3 site built, booking platform + admin, shipping to production
 
