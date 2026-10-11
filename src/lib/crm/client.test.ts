@@ -7,7 +7,7 @@ import {
   interpret,
   isCrmDown,
   isOutcomeUnknown,
-  isPrivateHost,
+  isLoopbackHost,
   CRM_BOOKING_TIMEOUT_MS,
   CRM_TIMEOUT_MS,
   DEFAULT_CRM_ORIGIN,
@@ -90,40 +90,43 @@ describe('crmOrigin', () => {
     expect(crmOrigin({ CRM_API_ORIGIN: 'not a url' })).toBeNull();
     expect(crmOrigin({ CRM_API_ORIGIN: 'https://user:pass@x.example' })).toBeNull();
   });
-  it('allows plain http only on loopback or the private network', () => {
-    expect(crmOrigin({ CRM_API_ORIGIN: 'http://itqan-crm:3000' })).toBe('http://itqan-crm:3000');
+  it('allows plain http only on loopback: the machine itself, never the network', () => {
     expect(crmOrigin({ CRM_API_ORIGIN: 'http://127.0.0.1:3999' })).toBe('http://127.0.0.1:3999');
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://127.10.20.30:3999' })).toBe('http://127.10.20.30:3999');
     expect(crmOrigin({ CRM_API_ORIGIN: 'http://[::1]:3999' })).toBe('http://[::1]:3999');
-    expect(crmOrigin({ CRM_API_ORIGIN: 'http://10.0.1.5:3000' })).toBe('http://10.0.1.5:3000');
-    expect(crmOrigin({ CRM_API_ORIGIN: 'http://172.20.0.4:3000' })).toBe('http://172.20.0.4:3000');
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://LocalHost:3999' })).toBe('http://localhost:3999');
+    // A private network is still a network: booking details there go over https (W4).
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://itqan-crm:3000' })).toBeNull();
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://10.0.1.5:3000' })).toBeNull();
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://172.20.0.4:3000' })).toBeNull();
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://192.168.1.20:3000' })).toBeNull();
     expect(crmOrigin({ CRM_API_ORIGIN: 'http://portal.itqanstudio.com' })).toBeNull();
     expect(crmOrigin({ CRM_API_ORIGIN: 'http://52.212.71.212:3000' })).toBeNull();
-    expect(crmOrigin({ CRM_API_ORIGIN: 'http://172.32.0.1' })).toBeNull();
+    // https is fine to any of them.
+    expect(crmOrigin({ CRM_API_ORIGIN: 'https://itqan-crm:3000' })).toBe('https://itqan-crm:3000');
+    expect(crmOrigin({ CRM_API_ORIGIN: 'https://10.0.1.5' })).toBe('https://10.0.1.5');
   });
-  it('compares IP literals exactly, so a DNS name that starts like a private address needs https (SW-2)', () => {
-    expect(crmOrigin({ CRM_API_ORIGIN: 'http://10.evil.example.com' })).toBeNull();
+  it('compares loopback literals exactly, so a DNS name that starts like one needs https (SW-2)', () => {
     expect(crmOrigin({ CRM_API_ORIGIN: 'http://127.0.0.1.nip.io:3000' })).toBeNull();
-    expect(crmOrigin({ CRM_API_ORIGIN: 'http://192.168.attacker.net' })).toBeNull();
-    expect(crmOrigin({ CRM_API_ORIGIN: 'http://172.16.example.org' })).toBeNull();
-    expect(crmOrigin({ CRM_API_ORIGIN: 'https://10.evil.example.com' })).toBe('https://10.evil.example.com');
-    expect(crmOrigin({ CRM_API_ORIGIN: 'http://192.168.1.20:3000' })).toBe('http://192.168.1.20:3000');
-    expect(crmOrigin({ CRM_API_ORIGIN: 'http://172.31.255.255' })).toBe('http://172.31.255.255');
-    expect(crmOrigin({ CRM_API_ORIGIN: 'http://172.15.0.1' })).toBeNull();
-    expect(crmOrigin({ CRM_API_ORIGIN: 'http://10.0.0.256' })).toBeNull();
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://localhost.evil.example:3000' })).toBeNull();
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://evil-localhost:3000' })).toBeNull();
+    expect(crmOrigin({ CRM_API_ORIGIN: 'http://[::ffff:10.0.0.1]:3000' })).toBeNull();
+    expect(crmOrigin({ CRM_API_ORIGIN: 'https://127.0.0.1.nip.io' })).toBe('https://127.0.0.1.nip.io');
   });
-  it('reads only a whole dotted quad as an address when given a raw host name', () => {
-    expect(isPrivateHost('10.0.0.1')).toBe(true);
-    expect(isPrivateHost('127.10.20.30')).toBe(true);
-    expect(isPrivateHost('[::1]')).toBe(true);
-    expect(isPrivateHost('LOCALHOST')).toBe(true);
-    expect(isPrivateHost('itqan-crm')).toBe(true);
-    expect(isPrivateHost('10.0.0')).toBe(false);
-    expect(isPrivateHost('10.0.0.1.')).toBe(false);
-    expect(isPrivateHost('010.0.0.1')).toBe(false);
-    expect(isPrivateHost('10.0.0.999')).toBe(false);
-    expect(isPrivateHost('10.evil.example.com')).toBe(false);
-    // An all-digit host is an IPv4 address in number form (134744072 is 8.8.8.8), not a service name.
-    expect(isPrivateHost('134744072')).toBe(false);
+  it('reads only localhost, ::1 or a whole 127.x.x.x quad as loopback when given a raw host name', () => {
+    expect(isLoopbackHost('127.0.0.1')).toBe(true);
+    expect(isLoopbackHost('127.10.20.30')).toBe(true);
+    expect(isLoopbackHost('[::1]')).toBe(true);
+    expect(isLoopbackHost('::1')).toBe(true);
+    expect(isLoopbackHost('LOCALHOST')).toBe(true);
+    expect(isLoopbackHost('itqan-crm')).toBe(false);
+    expect(isLoopbackHost('10.0.0.1')).toBe(false);
+    expect(isLoopbackHost('127.0.0')).toBe(false);
+    expect(isLoopbackHost('127.0.0.1.')).toBe(false);
+    expect(isLoopbackHost('0127.0.0.1')).toBe(false);
+    expect(isLoopbackHost('127.0.0.999')).toBe(false);
+    expect(isLoopbackHost('127.evil.example.com')).toBe(false);
+    expect(isLoopbackHost('2130706433')).toBe(false);
   });
 });
 

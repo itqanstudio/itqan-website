@@ -34,7 +34,7 @@ function fail(message) {
 
 function crmOrigin() {
   const origin = exportOrigin(process.env.CRM_API_ORIGIN || DEFAULT_ORIGIN);
-  return origin ?? fail('CRM_API_ORIGIN must be an https origin (plain http only for localhost or a private address).');
+  return origin ?? fail('CRM_API_ORIGIN must be an https origin (plain http only for localhost, 127.x.x.x or ::1).');
 }
 
 async function post(origin, secret, body) {

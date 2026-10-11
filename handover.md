@@ -61,9 +61,9 @@ Contract: `itqan-crm-v3/docs/v3/REBUILD-SPEC.md` section 8. Tracked work:
 ### Review fixes (11 Oct, SW-1 to SW-4; local commits ab3c4a4, c016203, 3cb529f, 744989b)
 - SW-1: POST bookings waits 15 s (see the open item below); timeout or unreadable success answer is
   `unconfirmed`, not `paused`.
-- SW-2: plain http to the CRM only for a whole private IPv4 literal, `localhost`, `::1` or a
-  single-label name with a letter; `10.evil.example.com` and `127.0.0.1.nip.io` need https. Same rule
-  in `scripts/lib/crm-export.mjs`.
+- SW-2 (narrowed by W4, v3.1 review): plain http to the CRM only for loopback (`localhost`, `::1` or
+  a whole `127.x.x.x` literal); a private address or a Docker service name such as `itqan-crm` now
+  needs https, and `127.0.0.1.nip.io` stays refused. Same rule in `scripts/lib/crm-export.mjs`.
 - SW-3: `/api/book` returns `ics`, the exact guest calendar file the confirmation email attaches (host
   as organizer, full text, video link); "Add to calendar" downloads that.
 - SW-4: `ipHash` is HMAC-SHA256 keyed by `ITQAN_BOOKING_SECRET` (label `itqan-booking-ip:`), not a

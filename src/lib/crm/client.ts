@@ -93,24 +93,18 @@ function ipv4Octets(host: string): readonly number[] | null {
 }
 
 /**
- * Hosts where plain http stays on the machine or the private network: loopback,
- * a single-label name (a Docker service such as "itqan-crm") or an RFC 1918
- * address. IP literals are compared whole; any other dotted name is a DNS name
- * and needs https. Booking details never cross the internet unencrypted.
+ * Hosts where plain http never leaves the machine: localhost, ::1 or a whole
+ * 127.x.x.x literal. Anything else, a private address or a Docker service name
+ * included, is a network the booking details would cross unencrypted, so it
+ * needs https. IP literals are compared whole; a dotted name is a DNS name.
  */
-export function isPrivateHost(hostname: string): boolean {
+export function isLoopbackHost(hostname: string): boolean {
   const host = hostname.replace(/^\[|\]$/g, '').toLowerCase();
   if (host === 'localhost' || host === '::1') return true;
-  const ip = ipv4Octets(host);
-  if (ip) {
-    const [a, b] = ip;
-    return a === 127 || a === 10 || (a === 192 && b === 168) || (a === 172 && b >= 16 && b <= 31);
-  }
-  // At least one letter: an all-digit host is an IPv4 address in number form, not a service name.
-  return /^[a-z0-9-]*[a-z][a-z0-9-]*$/.test(host);
+  return ipv4Octets(host)?.[0] === 127;
 }
 
-/** CRM_API_ORIGIN (https, or http on a private host) or the production portal; null when the setting is unusable. */
+/** CRM_API_ORIGIN (https, or http on loopback) or the production portal; null when the setting is unusable. */
 export function crmOrigin(env: Record<string, string | undefined> = process.env): string | null {
   const raw = env.CRM_API_ORIGIN?.trim();
   if (!raw) return DEFAULT_CRM_ORIGIN;
@@ -118,7 +112,7 @@ export function crmOrigin(env: Record<string, string | undefined> = process.env)
     const url = new URL(raw);
     if (url.username || url.password) return null;
     if (url.protocol === 'https:') return url.origin;
-    return url.protocol === 'http:' && isPrivateHost(url.hostname) ? url.origin : null;
+    return url.protocol === 'http:' && isLoopbackHost(url.hostname) ? url.origin : null;
   } catch {
     return null;
   }

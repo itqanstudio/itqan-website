@@ -21,25 +21,20 @@ function ipv4Octets(host) {
 }
 
 /**
- * Loopback, a single-label Docker service name or an RFC 1918 address, with IP
- * literals compared whole (same rule as isPrivateHost in src/lib/crm/client.ts).
+ * Localhost, ::1 or a whole 127.x.x.x literal: http there never leaves the
+ * machine (same rule as isLoopbackHost in src/lib/crm/client.ts).
  * @param {string} hostname
  * @returns {boolean}
  */
-function isPrivateHost(hostname) {
+function isLoopbackHost(hostname) {
   const host = hostname.replace(/^\[|\]$/g, '').toLowerCase();
   if (host === 'localhost' || host === '::1') return true;
-  const ip = ipv4Octets(host);
-  if (ip) {
-    const [a, b] = ip;
-    return a === 127 || a === 10 || (a === 192 && b === 168) || (a === 172 && b >= 16 && b <= 31);
-  }
-  return /^[a-z0-9-]*[a-z][a-z0-9-]*$/.test(host);
+  return ipv4Octets(host)?.[0] === 127;
 }
 
 /**
- * The CRM origin to post to: https, or plain http only on a private host (see
- * isPrivateHost; same rule as crmOrigin in src/lib/crm/client.ts). Null when unusable.
+ * The CRM origin to post to: https, or plain http only on loopback (see
+ * isLoopbackHost; same rule as crmOrigin in src/lib/crm/client.ts). Null when unusable.
  * @param {string | undefined} raw
  * @returns {string | null}
  */
@@ -48,7 +43,7 @@ export function exportOrigin(raw) {
     const url = new URL((raw || 'https://portal.itqanstudio.com').trim());
     if (url.username || url.password) return null;
     if (url.protocol === 'https:') return url.origin;
-    return url.protocol === 'http:' && isPrivateHost(url.hostname) ? url.origin : null;
+    return url.protocol === 'http:' && isLoopbackHost(url.hostname) ? url.origin : null;
   } catch {
     return null;
   }

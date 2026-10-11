@@ -136,28 +136,29 @@ describe('scripts/lib/crm-export.mjs', () => {
     expect(run.stderr).not.toContain('no answer');
   });
 
-  it('posts over https, or plain http only to a local or private host', () => {
+  it('posts over https, or plain http only to loopback', () => {
     expect(exportOrigin(undefined)).toBe('https://portal.itqanstudio.com');
     expect(exportOrigin('http://localhost:3999')).toBe('http://localhost:3999');
-    expect(exportOrigin('http://itqan-crm:3000')).toBe('http://itqan-crm:3000');
+    expect(exportOrigin('http://itqan-crm:3000')).toBeNull();
+    expect(exportOrigin('https://itqan-crm:3000')).toBe('https://itqan-crm:3000');
     expect(exportOrigin('http://portal.itqanstudio.com')).toBeNull();
     expect(exportOrigin('https://u:p@portal.itqanstudio.com')).toBeNull();
     expect(exportOrigin('nonsense')).toBeNull();
   });
 
-  it('compares IP literals exactly, like crmOrigin in the site (SW-2)', () => {
+  it('compares loopback literals exactly, like crmOrigin in the site (SW-2, W4)', () => {
     const cases: Array<[string, string | null]> = [
       ['http://10.evil.example.com', null],
       ['http://127.0.0.1.nip.io:3000', null],
-      ['http://192.168.attacker.net', null],
-      ['http://172.16.example.org', null],
+      ['http://localhost.evil.example', null],
       ['http://10.0.0.256', null],
-      ['http://172.15.0.1', null],
       ['http://52.212.71.212:3000', null],
-      ['http://10.0.1.5:3000', 'http://10.0.1.5:3000'],
-      ['http://192.168.1.20', 'http://192.168.1.20'],
-      ['http://172.31.0.4:3000', 'http://172.31.0.4:3000'],
+      ['http://10.0.1.5:3000', null],
+      ['http://192.168.1.20', null],
+      ['http://172.31.0.4:3000', null],
+      ['http://itqan-crm:3000', null],
       ['http://127.0.0.1:3999', 'http://127.0.0.1:3999'],
+      ['http://127.8.9.10', 'http://127.8.9.10'],
       ['http://[::1]:3999', 'http://[::1]:3999'],
       ['https://10.evil.example.com', 'https://10.evil.example.com'],
     ];
