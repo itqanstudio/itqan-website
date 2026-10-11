@@ -6,8 +6,8 @@ import '@/styles/v3/book.css';
 
 /**
  * The page behind the cancel link in the confirmation email. The booking lives
- * in the CRM, which has no "look up by token" call, so the page asks first and
- * shows the booked time once the cancel went through.
+ * in the CRM, which has no "look up by token" call, so the page asks first (with
+ * an optional reason) and shows the booked time once the cancel went through.
  */
 export function CancelPage({ lang, token }: { lang: Lang; token: string }) {
   const copy = bookingCopy[lang];

@@ -63,6 +63,13 @@ export interface BookingCopy {
     metaTitle: string;
     title: string;
     ask: string;
+    /** The optional reason box: its label, the line under it, the character count ({n} used). */
+    reasonLabel: string;
+    reasonHint: string;
+    reasonCount: string;
+    reasonTooLong: string;
+    /** The quiet way out: back to the site with the booking kept. */
+    keep: string;
     button: string;
     working: string;
     doneTitle: string;
@@ -160,6 +167,11 @@ export const bookingCopy: Record<Lang, BookingCopy> = {
       metaTitle: 'Cancel a briefing',
       title: 'Cancel your briefing?',
       ask: 'This cancels the briefing booked with this link and frees the time for someone else.',
+      reasonLabel: 'Reason (optional)',
+      reasonHint: 'Only the Itqan team sees it.',
+      reasonCount: '{n} of 500 characters',
+      reasonTooLong: 'Keep the reason to 500 characters.',
+      keep: 'Keep my booking',
       button: 'Cancel the briefing',
       working: 'Cancelling…',
       doneTitle: 'Cancelled.',
@@ -254,6 +266,11 @@ export const bookingCopy: Record<Lang, BookingCopy> = {
       metaTitle: 'إلغاء جلسة تعريفية',
       title: 'هل تريد إلغاء جلستك التعريفية؟',
       ask: 'يلغي هذا الجلسة المحجوزة بهذا الرابط، ويصبح موعدها متاحاً لغيرك.',
+      reasonLabel: 'سبب الإلغاء (اختياري)',
+      reasonHint: 'لا يطّلع عليه إلا فريق إتقان.',
+      reasonCount: '{n} من 500 حرف',
+      reasonTooLong: 'يجب ألا يتجاوز السبب 500 حرف.',
+      keep: 'احتفظ بحجزي',
       button: 'ألغِ الجلسة',
       working: 'جارٍ الإلغاء…',
       doneTitle: 'تم الإلغاء.',

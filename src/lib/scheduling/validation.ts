@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { HOST_SLUG } from '@/lib/crm/slug';
+import { CANCEL_REASON_MAX } from './limits';
 import { isValidTimeZone } from './time';
 
 /** Single-line text: trimmed, control characters and line breaks removed. */
@@ -43,9 +44,6 @@ export const bookingRequestSchema = z.object({
   leave_empty: z.string().max(200).optional().default(''),
 });
 export type BookingRequest = z.infer<typeof bookingRequestSchema>;
-
-/** The most a cancel reason may hold, as the CRM stores it (bookings.cancel_reason). */
-export const CANCEL_REASON_MAX = 500;
 
 /** Bidi embedding, override and isolate marks: they make text read otherwise than it is stored. */
 const BIDI_CONTROLS = /[‪-‮⁦-⁩]/g;
