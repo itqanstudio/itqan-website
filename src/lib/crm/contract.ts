@@ -46,7 +46,7 @@ export interface CreateBookingRequest {
   locale: "en" | "ar";
   /** The visitor's IANA time zone. */
   timezone: string;
-  /** sha256 of the visitor IP computed by the website; never the raw IP. */
+  /** HMAC-SHA256 of the visitor IP keyed by ITQAN_BOOKING_SECRET (64 hex); never the raw IP. */
   ipHash: string;
 }
 
