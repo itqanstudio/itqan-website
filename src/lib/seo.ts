@@ -47,7 +47,7 @@ export const BUSINESS = {
   region: 'Dubai',
   country: 'AE',
   countryName: 'United Arab Emirates',
-  logo: `${SITE_URL}/images/brand/dark-logo.svg`,
+  logo: `${SITE_URL}/brand/itqan-studio/logo/itqan-symbol-dusk.png`,
   /** Real, live social profiles (must match the footer exactly for NAP consistency). */
   sameAs: [
     'https://www.instagram.com/madebyitqan/',
