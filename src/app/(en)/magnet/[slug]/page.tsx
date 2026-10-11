@@ -43,15 +43,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       robots: { index: false, follow: false },
     };
   }
+  // The page renders the *accent* word in the title as a highlight; the tab and
+  // share cards get the plain words.
+  const plainTitle = magnet.title.replace(/\*/g, "");
   return {
-    title: `${magnet.title} · Free guide`,
+    title: `${plainTitle} · Free guide`,
     description: magnet.landingTeaser
       .slice(0, 160)
       .replace(/[#*\n]+/g, " ")
       .trim(),
     alternates: { canonical: `/magnet/${slug}` },
     openGraph: {
-      title: magnet.title,
+      title: plainTitle,
       description: magnet.landingTeaser
         .slice(0, 200)
         .replace(/[#*\n]+/g, " ")

@@ -1,66 +1,47 @@
-'use client';
-
-import { useEffect, useState, type ReactNode } from 'react';
-import { Moon, Sun } from '@phosphor-icons/react';
+import type { ReactNode } from 'react';
+import { Lockup } from '@/components/v3/brand';
+import { SITE_URL } from '@/lib/v3/seo';
 
 /**
- * Page-local dark mode for the feedback form.
+ * The host-specific frame for the feedback form, brand v3.
  *
- * The site's theme is next-themes with light as the deliberate default and the only
- * toggle in the nav — which the chrome-less feedback subdomain strips, so the form's
- * `dark:` styles could never activate there. Rather than bend the global provider
- * (light-first was an explicit call), this wrapper owns theming for THIS page alone:
- * Tailwind's class strategy matches ANY `.dark` ancestor, so a `dark` class on this
- * wrapper flips every `dark:` style inside it and nothing outside it.
+ * The form is reached two ways:
+ *   itqanstudio.com/feedback      inside the normal v3 nav and footer
+ *   feedback.itqanstudio.com      a standalone page for a client holding a link
  *
- * Default follows the visitor's system preference — a client opening a one-time link
- * never hunts for a toggle — and an explicit choice is remembered under a page-scoped
- * key so it cannot fight the site-wide next-themes storage.
+ * On the subdomain the site nav and footer would be wrong: every relative link
+ * in them resolves against feedback.itqanstudio.com, and "/" there is this form.
+ * So on that host the chrome is hidden and a plain bar with the lockup links to
+ * the main site by its absolute URL.
+ *
+ * `standalone` comes from the middleware's portal flag, decided on the server
+ * from the Host header (see lib/portal-chrome.ts and lib/brand-routing.ts). It
+ * cannot be a client check: the rewrite leaves the browser URL at "/".
+ *
+ * v3 is dark only, so the page-local light and dark toggle of the old brand is gone.
  */
-const STORAGE_KEY = 'fb-theme';
+// Keep in step with the chrome SiteShell renders: `.skip` and `nav.n` in
+// components/v3/Nav.tsx, `footer.f` in components/v3/sections-company.tsx.
+const HIDE_SITE_CHROME ='.skip, nav.n, footer.f { display: none !important; }';
 
-export function FeedbackThemer({ children }: { children: ReactNode }) {
-  // null until mounted: SSR cannot know the system preference, so the first client
-  // paint decides. A brief light flash for dark-system visitors is the accepted cost
-  // of keeping this free of inline-script theming.
-  const [dark, setDark] = useState<boolean | null>(null);
+interface FeedbackThemerProps {
+  standalone: boolean;
+  children: ReactNode;
+}
 
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved === 'dark' || saved === 'light') {
-        setDark(saved === 'dark');
-        return;
-      }
-    } catch {
-      /* storage unavailable (private mode) — fall through to system */
-    }
-    setDark(window.matchMedia('(prefers-color-scheme: dark)').matches);
-  }, []);
-
-  const toggle = () => {
-    const next = !(dark ?? false);
-    setDark(next);
-    try {
-      localStorage.setItem(STORAGE_KEY, next ? 'dark' : 'light');
-    } catch {
-      /* non-fatal */
-    }
-  };
-
+export function FeedbackThemer({ standalone, children }: FeedbackThemerProps) {
+  if (!standalone) return <>{children}</>;
   return (
-    <div className={dark ? 'dark' : ''}>
-      <div className="relative">
-        <button
-          type="button"
-          onClick={toggle}
-          aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-          className="absolute right-5 top-5 z-10 rounded-full border border-black/[0.12] dark:border-[rgba(255,251,245,0.2)] bg-white/70 dark:bg-[rgba(255,251,245,0.06)] p-2.5 text-[#1a1a1a] dark:text-brand-cream backdrop-blur transition-colors"
-        >
-          {dark ? <Sun size={18} weight="bold" /> : <Moon size={18} weight="bold" />}
-        </button>
-        {children}
-      </div>
-    </div>
+    <>
+      <style>{HIDE_SITE_CHROME}</style>
+      <header className="fb-bar">
+        <div className="wrap">
+          <a className="home" href={SITE_URL} aria-label="Itqan, home page">
+            <Lockup gid="fb-sym" lang="en" />
+          </a>
+        </div>
+      </header>
+      {children}
+    </>
   );
 }
