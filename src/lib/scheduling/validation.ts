@@ -3,17 +3,31 @@ import { HOST_SLUG } from '@/lib/crm/slug';
 import { CANCEL_REASON_MAX } from './limits';
 import { isValidTimeZone } from './time';
 
-/** Single-line text: trimmed, control characters and line breaks removed. */
+/**
+ * Bidi embedding, override and isolate marks: they make text read otherwise
+ * than it is stored. Global: use it with replace only (test() would keep state).
+ */
+export const BIDI_CONTROLS = new RegExp(
+  // U+202A to U+202E and U+2066 to U+2069, built from code points so this file holds no invisible characters.
+  `[${String.fromCodePoint(0x202a)}-${String.fromCodePoint(0x202e)}${String.fromCodePoint(0x2066)}-${String.fromCodePoint(0x2069)}]`,
+  'g',
+);
+
+/**
+ * Single-line text: trimmed, control characters and line breaks removed, and
+ * bidi overrides removed (the name and company reach the founders' subjects
+ * and calendar titles).
+ */
 const line = (max: number) =>
   z
     .string()
-    .transform((s) => s.replace(/[\u0000-\u001f\u007f]+/g, ' ').trim())
+    .transform((s) => s.replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(BIDI_CONTROLS, '').trim())
     .pipe(z.string().max(max));
 
 const multiline = (max: number) =>
   z
     .string()
-    .transform((s) => s.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]+/g, '').trim())
+    .transform((s) => s.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]+/g, '').replace(BIDI_CONTROLS, '').trim())
     .pipe(z.string().max(max));
 
 const email = z
@@ -44,13 +58,6 @@ export const bookingRequestSchema = z.object({
   leave_empty: z.string().max(200).optional().default(''),
 });
 export type BookingRequest = z.infer<typeof bookingRequestSchema>;
-
-/** Bidi embedding, override and isolate marks: they make text read otherwise than it is stored. */
-const BIDI_CONTROLS = new RegExp(
-  // U+202A to U+202E and U+2066 to U+2069, built from code points so this file holds no invisible characters.
-  `[${String.fromCodePoint(0x202a)}-${String.fromCodePoint(0x202e)}${String.fromCodePoint(0x2066)}-${String.fromCodePoint(0x2069)}]`,
-  'g',
-);
 
 /**
  * The guest's reason on the cancel page, as plain text: line breaks kept (CRLF

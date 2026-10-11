@@ -26,6 +26,26 @@ describe('bookingRequestSchema', () => {
     const r = bookingRequestSchema.parse({ ...good, company: 'Evil\r\nBcc: x@y.z' });
     expect(r.company).not.toMatch(/[\r\n]/);
   });
+  it('removes bidi override and isolate marks from the name, company, role and message (they reach subjects and calendars)', () => {
+    // Built from code points, so the source file holds no invisible characters.
+    const rlo = String.fromCodePoint(0x202e);
+    const pdf = String.fromCodePoint(0x202c);
+    const lri = String.fromCodePoint(0x2066);
+    const pdi = String.fromCodePoint(0x2069);
+    const r = bookingRequestSchema.parse({
+      ...good,
+      name: `${rlo}Sara${pdf} Ahmed`,
+      company: `${lri}Example${pdi} Foods`,
+      role: `${rlo}COO`,
+      message: `Line one\n${rlo}Line two${pdf}`,
+    });
+    expect(r).toMatchObject({ name: 'Sara Ahmed', company: 'Example Foods', role: 'COO', message: 'Line one\nLine two' });
+    // Arabic text keeps its letters and its ordinary direction marks (U+200F stays).
+    const rlm = String.fromCodePoint(0x200f);
+    expect(bookingRequestSchema.parse({ ...good, name: `سارة${rlm} أحمد` }).name).toBe(`سارة${rlm} أحمد`);
+    // A name made only of marks is empty after cleaning, so it is refused.
+    expect(bookingRequestSchema.safeParse({ ...good, name: `${rlo}${pdf}${rlo}` }).success).toBe(false);
+  });
   it('rejects bad input', () => {
     expect(bookingRequestSchema.safeParse({ ...good, email: 'not-an-email' }).success).toBe(false);
     expect(bookingRequestSchema.safeParse({ ...good, timezone: 'Mars/Olympus' }).success).toBe(false);
