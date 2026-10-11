@@ -72,6 +72,19 @@ Contract: `itqan-crm-v3/docs/v3/REBUILD-SPEC.md` section 8. Tracked work:
 - Checks after the fixes: typecheck, 122 vitest tests, `npm run build` green. `npm run lint` is not
   set up in this repo (next lint asks to create a config). The browser smoke run was not repeated.
 
+### v3.1 review round 2 fixes (11 Oct, branch fix/v31-web-r2, fast-forwarded to 7d07724)
+- Founders' calendar CANCEL that failed is retried in-process at 1 and 5 minutes; a booking whose
+  cancel has started gets no later founders' REQUEST; the send memory never drops a send still
+  going; a CANCEL waits for its REQUEST send at most 32 s.
+- One guest cancel per link at a time (`key-lock.ts`), so a double submit emails the guest once.
+- Calendar text writes U+0085, U+2028 and U+2029 as spaces; the cancel page has its own sentences
+  for a rate limit and an unreadable request; the cancel body cap fits the reason's raw maximum.
+- `src/instrumentation.ts` (experimental.instrumentationHook) logs one `[startup] CRM_API_ORIGIN is
+  set but refused` line at boot when the value is refused (never the value). After a deploy the
+  Coolify log must not show it.
+- Checks: typecheck, 231 vitest tests (16 files), `next build` green. Production steps unchanged:
+  `itqan-crm-v3/docs/v31/GO-LIVE.md` and `docs/v31/scheduling.md` in the CRM repo.
+
 ### Open items
 - The CRM side (workstream C) must answer exactly the section 8 shapes; `scripts/mock-crm.mjs` is the
   reference the site was tested against.
