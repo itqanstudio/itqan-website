@@ -52,6 +52,18 @@ describe('cancelRequestSchema and time zones', () => {
     expect(cancelRequestSchema.safeParse({ token: 'short' }).success).toBe(false);
     expect(cancelRequestSchema.safeParse({ token: `${'A'.repeat(40)}/..` }).success).toBe(false);
   });
+  it('reads the optional reason as plain text, and an empty one as none', () => {
+    const token = 'A'.repeat(43);
+    expect(cancelRequestSchema.parse({ token, reason: ' Two\r\nlines\u0007 ‮done‬ ' })).toEqual({ token, reason: 'Two\nlines done' });
+    expect(cancelRequestSchema.parse({ token, reason: '  \n ' })).toEqual({ token, reason: undefined });
+    expect(cancelRequestSchema.parse({ token })).toEqual({ token });
+    expect(cancelRequestSchema.safeParse({ token, reason: 'ر'.repeat(500) }).success).toBe(true);
+    expect(cancelRequestSchema.safeParse({ token, reason: `${'x'.repeat(500)}y` }).success).toBe(false);
+    // Spaces around a full reason are trimmed before the count.
+    expect(cancelRequestSchema.safeParse({ token, reason: `  ${'x'.repeat(500)}  ` }).success).toBe(true);
+    expect(cancelRequestSchema.safeParse({ token, reason: 7 }).success).toBe(false);
+    expect(cancelRequestSchema.safeParse({ token, other: 'x' }).success).toBe(false);
+  });
   it('knows real time zones', () => {
     expect(isValidTimeZone('Europe/Stockholm')).toBe(true);
     expect(isValidTimeZone('Mars/Olympus')).toBe(false);

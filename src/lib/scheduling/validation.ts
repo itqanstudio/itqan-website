@@ -44,9 +44,31 @@ export const bookingRequestSchema = z.object({
 });
 export type BookingRequest = z.infer<typeof bookingRequestSchema>;
 
-export const cancelRequestSchema = z.object({
-  token: z.string().min(20).max(100).regex(/^[A-Za-z0-9_-]+$/),
-});
+/** The most a cancel reason may hold, as the CRM stores it (bookings.cancel_reason). */
+export const CANCEL_REASON_MAX = 500;
+
+/** Bidi embedding, override and isolate marks: they make text read otherwise than it is stored. */
+const BIDI_CONTROLS = /[‪-‮⁦-⁩]/g;
+
+/**
+ * The guest's reason on the cancel page, as plain text: line breaks kept (CRLF
+ * and CR become LF), other control characters and bidi overrides removed,
+ * trimmed, at most CANCEL_REASON_MAX characters. Empty means they gave none.
+ */
+const cancelReason = z
+  .string()
+  .max(CANCEL_REASON_MAX * 4)
+  .transform((s) => s.replace(/\r\n?/g, '\n').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]+/g, '').replace(BIDI_CONTROLS, '').trim())
+  .pipe(z.string().max(CANCEL_REASON_MAX))
+  .transform((s) => (s === '' ? undefined : s));
+
+/** What the cancel page posts to /api/book/cancel: the link's token and an optional reason. */
+export const cancelRequestSchema = z
+  .object({
+    token: z.string().min(20).max(100).regex(/^[A-Za-z0-9_-]+$/),
+    reason: cancelReason.optional(),
+  })
+  .strict();
 
 /** The first readable message from a failed parse, for a 400 response. */
 export function firstIssue(error: z.ZodError): string {

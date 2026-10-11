@@ -35,7 +35,14 @@ const booking: BookingForEmail = {
   locale: 'en',
   guestTimezone: 'Asia/Dubai',
   host: { slug: 'ibrahim', name: 'Ibrahim Shareef', email: 'ibrahim@itqanstudio.com', meetingUrl: null },
+  team: [
+    { name: 'Ibrahim Shareef', email: 'ibrahim@itqanstudio.com', isHost: true },
+    { name: 'Bisma Aslam', email: 'bisma@itqanstudio.com', isHost: false },
+  ],
 };
+
+/** The printed emails to one address. */
+const to = (address: string) => printed.filter((m) => m.includes(`to=${address} `));
 
 const form = {
   start: booking.start,
@@ -157,7 +164,7 @@ describe('POST /api/book', () => {
     expect(statuses).toEqual([409, 409, 409, 429]);
   });
 
-  it('books through the CRM, emails guest and host, and answers with the host name', async () => {
+  it('books through the CRM, emails the guest and invites both founders, and answers with the host name', async () => {
     crm(201, { ok: true, data: { booking, cancelToken: 'tok_abcdefghijklmnopqrstuvwxyz' } });
     const res = await postBook(bookRequest({ ...form, with: 'ibrahim' }));
     expect(res.status).toBe(201);
@@ -171,8 +178,32 @@ describe('POST /api/book', () => {
     expect(sent).not.toHaveProperty('leave_empty');
     const header = (crmCalls[0].init.headers as Record<string, string>)['x-itqan-signature'];
     expect(verifySignature({ secret: SECRET, header, method: 'POST', pathWithQuery: '/api/integrations/website/bookings', body: String(crmCalls[0].init.body) }).ok).toBe(true);
-    expect(printed.some((m) => m.includes('to=sara@example.com'))).toBe(true);
-    expect(printed.some((m) => m.includes('to=ibrahim@itqanstudio.com'))).toBe(true);
+    expect(to('sara@example.com')).toHaveLength(1);
+    expect(to('sara@example.com')[0]).toContain('ics=PUBLISH');
+    expect(to('ibrahim@itqanstudio.com')).toHaveLength(1);
+    expect(to('ibrahim@itqanstudio.com')[0]).toContain('ics=REQUEST');
+    expect(to('ibrahim@itqanstudio.com')[0]).toContain('You host it.');
+    expect(to('bisma@itqanstudio.com')).toHaveLength(1);
+    expect(to('bisma@itqanstudio.com')[0]).toContain('ics=REQUEST');
+    expect(to('bisma@itqanstudio.com')[0]).toContain('Ibrahim Shareef hosts it.');
+  });
+
+  it('invites the host alone when the CRM is from before the team field', async () => {
+    const { team: _team, ...older } = booking;
+    crm(201, { ok: true, data: { booking: older, cancelToken: 'tok_abcdefghijklmnopqrstuvwxyz' } });
+    const res = await postBook(bookRequest({ ...form, email: 'older-crm@example.com' }));
+    expect(res.status).toBe(201);
+    expect(to('ibrahim@itqanstudio.com')).toHaveLength(1);
+    expect(to('bisma@itqanstudio.com')).toHaveLength(0);
+  });
+
+  it('keeps the booking when a founder on the team does not pass the checks, and invites the rest', async () => {
+    const team = [...booking.team, { name: 'Bad\r\nBcc: x@y.z', email: 'bad@itqanstudio.com', isHost: false }, { name: 'No email', email: 'nope', isHost: false }];
+    crm(201, { ok: true, data: { booking: { ...booking, team }, cancelToken: 'tok_abcdefghijklmnopqrstuvwxyz' } });
+    const res = await postBook(bookRequest({ ...form, email: 'odd-team@example.com' }));
+    expect(res.status).toBe(201);
+    expect(to('bisma@itqanstudio.com')).toHaveLength(1);
+    expect(to('bad@itqanstudio.com')).toHaveLength(0);
   });
 
   it('hands the widget the same calendar file the guest email attaches: full text, host as organizer (SW-3)', async () => {
@@ -181,7 +212,8 @@ describe('POST /api/book', () => {
     const res = await postBook(bookRequest({ ...form, email: 'ics@example.com' }));
     const { ics } = ((await res.json()) as { data: { ics: string } }).data;
     const withoutStamp = (s: string) => s.replace(/^DTSTAMP:.*$/m, '');
-    expect(withoutStamp(ics)).toBe(withoutStamp(bookingIcs(withLink, 'PUBLISH', 'guest')));
+    expect(withoutStamp(ics)).toBe(withoutStamp(bookingIcs(withLink, 'PUBLISH')));
+    expect(ics).not.toContain('ATTENDEE');
     expect(ics).toContain(`UID:${booking.id}@itqanstudio.com`);
     expect(ics).toContain('SEQUENCE:0');
     expect(ics).toContain('ORGANIZER;CN="Ibrahim Shareef":mailto:ibrahim@itqanstudio.com');
@@ -316,8 +348,14 @@ describe('POST /api/book', () => {
 });
 
 describe('POST /api/book/cancel', () => {
-  const cancel = (token: string, origin = ORIGIN) =>
-    postCancel(request('http://localhost/api/book/cancel', { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify({ token }) }));
+  const cancel = (token: string, origin = ORIGIN, extra: Record<string, unknown> = {}) =>
+    postCancel(
+      request('http://localhost/api/book/cancel', {
+        method: 'POST',
+        headers: { origin, 'content-type': 'application/json' },
+        body: JSON.stringify({ token, ...extra }),
+      }),
+    );
 
   /** The CRM by path: the cancel answer, then the notice-sent record. */
   function crmCancel(cancelData: unknown, recorded = true): void {
@@ -331,20 +369,60 @@ describe('POST /api/book/cancel', () => {
     );
   }
 
-  it('cancels in the CRM, emails both sides, then records the send', async () => {
+  it('cancels in the CRM, emails the guest, sends both founders the calendar cancel, then records the send', async () => {
     crmCancel({ changed: true, booking, noticeOwed: true });
     const res = await cancel('A'.repeat(43));
     expect(await res.json()).toEqual({ ok: true, data: { changed: true, start: booking.start, timezone: 'Asia/Dubai' } });
     expect(JSON.parse(String(crmCalls[0].init.body))).toEqual({ token: 'A'.repeat(43) });
-    expect(printed).toHaveLength(2);
+    expect(printed).toHaveLength(3);
+    expect(to('sara@example.com')[0]).toContain('You cancelled your briefing on');
+    for (const founder of ['ibrahim@itqanstudio.com', 'bisma@itqanstudio.com']) {
+      expect(to(founder)).toHaveLength(1);
+      expect(to(founder)[0]).toContain('[briefing cancelled by guest]');
+      expect(to(founder)[0]).toContain('ics=CANCEL');
+    }
     expect(crmCalls[1].url).toBe('http://localhost:3999/api/integrations/website/bookings/notice-sent');
     expect(JSON.parse(String(crmCalls[1].init.body))).toEqual({ token: 'A'.repeat(43) });
+  });
+
+  it("passes the guest's reason to the CRM and to the founders, as plain text", async () => {
+    crmCancel({ changed: true, booking, noticeOwed: true });
+    const res = await cancel('A'.repeat(43), ORIGIN, { reason: '  We found another supplier.\r\nThank you.‮  ' });
+    expect(res.status).toBe(200);
+    expect(JSON.parse(String(crmCalls[0].init.body))).toEqual({ token: 'A'.repeat(43), reason: 'We found another supplier.\nThank you.' });
+    expect(to('bisma@itqanstudio.com')[0]).toContain('Their reason:\nWe found another supplier.\nThank you.');
+    // The guest's own email never repeats what they typed.
+    expect(to('sara@example.com')[0]).not.toContain('supplier');
+  });
+
+  it('sends no reason when the box was left empty or holds only spaces', async () => {
+    crmCancel({ changed: true, booking, noticeOwed: true });
+    await cancel('A'.repeat(43), ORIGIN, { reason: ' \n\t ' });
+    expect(JSON.parse(String(crmCalls[0].init.body))).toEqual({ token: 'A'.repeat(43) });
+    expect(to('bisma@itqanstudio.com')[0]).not.toContain('Their reason');
+  });
+
+  it('refuses a reason over 500 characters or an unknown field without calling the CRM, and takes 500 Arabic letters', async () => {
+    crmCancel({ changed: true, booking, noticeOwed: true });
+    expect((await cancel('A'.repeat(43), ORIGIN, { reason: 'x'.repeat(501) })).status).toBe(400);
+    expect((await cancel('A'.repeat(43), ORIGIN, { reason: 42 })).status).toBe(400);
+    expect((await cancel('A'.repeat(43), ORIGIN, { extra: true })).status).toBe(400);
+    expect(crmCalls).toHaveLength(0);
+    expect((await cancel('A'.repeat(43), ORIGIN, { reason: 'ب'.repeat(500) })).status).toBe(200);
+    expect(JSON.parse(String(crmCalls[0].init.body)).reason).toHaveLength(500);
+  });
+
+  it('records the send when only the guest email went, never because of the founders', async () => {
+    crmCancel({ changed: true, booking: { ...booking, team: [] }, noticeOwed: true });
+    await cancel('A'.repeat(43));
+    expect(printed).toHaveLength(1);
+    expect(crmCalls.map((c) => c.url.split('/').pop())).toEqual(['cancel', 'notice-sent']);
   });
 
   it('a retry after a lost answer still sends the owed emails (panel run 4)', async () => {
     crmCancel({ changed: false, booking, noticeOwed: true });
     expect(((await (await cancel('A'.repeat(43))).json()) as { data: { changed: boolean } }).data.changed).toBe(false);
-    expect(printed).toHaveLength(2);
+    expect(printed).toHaveLength(3);
     expect(crmCalls).toHaveLength(2);
   });
 
@@ -366,7 +444,7 @@ describe('POST /api/book/cancel', () => {
     );
     const res = await cancel('A'.repeat(43));
     expect(res.status).toBe(200);
-    expect(printed).toHaveLength(2);
+    expect(printed).toHaveLength(3);
     expect(console.error).toHaveBeenCalledWith('[book/cancel] could not record the sent notice for booking', booking.id, 'server');
   });
 
@@ -397,20 +475,29 @@ describe('POST /api/crm/notify', () => {
   const notify = (body: string, header?: string) =>
     postNotify(request(`http://localhost${path}`, { method: 'POST', headers: { 'content-type': 'application/json', ...(header ? { 'x-itqan-signature': header } : {}) }, body }));
 
-  it('emails the guest when the signature is good and notifyGuest is true', async () => {
+  it('emails the guest when the signature is good and notifyGuest is true, and sends both founders the calendar cancel', async () => {
     const body = payload(true);
     const res = await notify(body, signatureHeader(SECRET, 'POST', path, body));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true, data: { emailed: true } });
-    expect(printed).toHaveLength(1);
-    expect(printed[0]).toContain('to=sara@example.com');
-    expect(printed[0]).toContain('We had to cancel your briefing on');
+    expect(printed).toHaveLength(3);
+    expect(to('sara@example.com')[0]).toContain('We had to cancel your briefing on');
+    expect(to('ibrahim@itqanstudio.com')[0]).toContain('[briefing cancelled]');
+    expect(to('bisma@itqanstudio.com')[0]).toContain('ics=CANCEL');
   });
 
-  it('sends nothing when notifyGuest is false', async () => {
+  it('with notifyGuest false sends the guest nothing, and still sends the founders the calendar cancel', async () => {
     const body = payload(false);
     expect(await (await notify(body, signatureHeader(SECRET, 'POST', path, body))).json()).toEqual({ ok: true, data: { emailed: false } });
-    expect(printed).toHaveLength(0);
+    expect(to('sara@example.com')).toHaveLength(0);
+    expect(to('ibrahim@itqanstudio.com')).toHaveLength(1);
+    expect(to('bisma@itqanstudio.com')).toHaveLength(1);
+  });
+
+  it('answers emailed from the guest email alone: a founder email that fails changes nothing', async () => {
+    const body = JSON.stringify({ type: 'booking.cancelled', by: 'host', notifyGuest: true, booking: { ...booking, team: [] } });
+    expect(await (await notify(body, signatureHeader(SECRET, 'POST', path, body))).json()).toEqual({ ok: true, data: { emailed: true } });
+    expect(printed).toHaveLength(1);
   });
 
   it('refuses a missing, wrong, stale or replayed signature', async () => {
@@ -422,7 +509,8 @@ describe('POST /api/crm/notify', () => {
     const good = signatureHeader(SECRET, 'POST', path, body);
     expect((await notify(body, good)).status).toBe(200);
     expect((await notify(body, good)).status).toBe(401);
-    expect(printed).toHaveLength(1);
+    // One accepted call: the guest's email and the two founders' cancels.
+    expect(printed).toHaveLength(3);
   });
 
   it('fails closed without the secret, and checks the body after the signature', async () => {

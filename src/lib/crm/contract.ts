@@ -70,6 +70,12 @@ export interface BookingForEmail {
   locale: "en" | "ar";
   guestTimezone: string;
   host: { slug: string; name: string; email: string; meetingUrl: string | null };
+  /**
+   * Every active founder (their booking_hosts row, taking bookings or not), the
+   * host marked isHost. The website sends each one the calendar invite (REQUEST)
+   * and, on any cancel, its CANCEL.
+   */
+  team: Array<{ name: string; email: string; isHost: boolean }>;
 }
 
 export interface CreateBookingData {
@@ -80,6 +86,8 @@ export interface CreateBookingData {
 
 export interface CancelBookingRequest {
   token: string;
+  /** The guest's reason: plain text, trimmed, 1 to 500 characters. Left out when they gave none. */
+  reason?: string;
 }
 
 export interface CancelBookingData {

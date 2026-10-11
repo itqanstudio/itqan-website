@@ -196,6 +196,18 @@ describe('answers', () => {
     expect(await cancelCrmBooking('x'.repeat(43))).toMatchObject({ ok: false, error: 'past', status: 409 });
   });
 
+  it("sends the guest's reason only when there is one", async () => {
+    respond(404, { ok: false, error: 'not_found' });
+    await cancelCrmBooking('x'.repeat(43), 'Plans changed.');
+    await cancelCrmBooking('x'.repeat(43));
+    await cancelCrmBooking('x'.repeat(43), '');
+    expect(calls.map((c) => JSON.parse(String(c.init.body)))).toEqual([
+      { token: 'x'.repeat(43), reason: 'Plans changed.' },
+      { token: 'x'.repeat(43) },
+      { token: 'x'.repeat(43) },
+    ]);
+  });
+
   it('treats 5xx, 401, HTML pages and wrong shapes as the CRM being down', async () => {
     respond(503, { ok: false, error: 'unavailable' });
     const down = await fetchSlots();

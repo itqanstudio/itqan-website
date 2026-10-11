@@ -36,6 +36,10 @@ const booking: BookingForEmail = {
   locale: 'ar',
   guestTimezone: 'Asia/Riyadh',
   host: { slug: 'ibrahim', name: 'Ibrahim Shareef', email: 'ibrahim@itqanstudio.com', meetingUrl: null },
+  team: [
+    { name: 'Ibrahim Shareef', email: 'ibrahim@itqanstudio.com', isHost: true },
+    { name: 'Bisma Aslam', email: 'bisma@itqanstudio.com', isHost: false },
+  ],
 };
 
 describe('parseHostSlug', () => {
@@ -108,6 +112,27 @@ describe('schemas', () => {
       { ...booking, host: { ...booking.host, email: 'not an email' } },
     ];
     bad.forEach((b) => expect(bookingForEmailSchema.safeParse(b).success).toBe(false));
+  });
+  it('reads the founders: a missing list means the host alone, a bad entry is left out, an address counts once', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { team: _team, ...older } = booking;
+    const fromOlder = bookingForEmailSchema.safeParse(older);
+    expect(fromOlder.success && fromOlder.data.team).toEqual([{ name: 'Ibrahim Shareef', email: 'ibrahim@itqanstudio.com', isHost: true }]);
+    const mixed = bookingForEmailSchema.safeParse({
+      ...booking,
+      team: [
+        ...booking.team,
+        { name: 'Ibrahim again', email: 'IBRAHIM@itqanstudio.com', isHost: false },
+        { name: 'Evil\r\nBcc: x@y.z', email: 'evil@example.com', isHost: false },
+        { name: 'No flag', email: 'noflag@example.com' },
+        'not an object',
+      ],
+    });
+    expect(mixed.success && mixed.data.team).toEqual(booking.team);
+    expect(bookingForEmailSchema.safeParse({ ...booking, team: [] }).success).toBe(true);
+    expect(bookingForEmailSchema.safeParse({ ...booking, team: 'all' }).success).toBe(false);
+    expect(bookingForEmailSchema.safeParse({ ...booking, team: Array.from({ length: 21 }, () => booking.team[0]) }).success).toBe(false);
+    vi.restoreAllMocks();
   });
   it('checks the notify request exactly', () => {
     expect(notifyRequestSchema.safeParse({ type: 'booking.cancelled', by: 'host', notifyGuest: true, booking }).success).toBe(true);

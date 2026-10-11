@@ -3,6 +3,7 @@ import {
   NOT_BOOKED,
   SIGNATURE_HEADER,
   type CancelBookingData,
+  type CancelBookingRequest,
   type CreateBookingData,
   type CreateBookingRequest,
   type GuestNoticeSentData,
@@ -154,8 +155,11 @@ function isErrorCode(value: unknown): value is IntegrationErrorCode {
   return typeof value === 'string' && (ERROR_CODES as readonly string[]).includes(value);
 }
 
+/** Checks an answer's data and gives the contract's type (the input may differ, e.g. a field an older CRM leaves out). */
+type AnswerSchema<T> = z.ZodType<T, z.ZodTypeDef, unknown>;
+
 /** Maps a CRM answer to a result: the envelope is `{ ok, data?, error?, message? }`. */
-export function interpret<T>(status: number, bodyText: string, schema: z.ZodType<T>): CrmResult<T> {
+export function interpret<T>(status: number, bodyText: string, schema: AnswerSchema<T>): CrmResult<T> {
   let body: unknown;
   try {
     body = JSON.parse(bodyText);
@@ -192,7 +196,7 @@ function reasonOf(err: unknown): string {
   return code && CONNECT_CODES.has(code) ? NOT_SENT : err.message.slice(0, 200);
 }
 
-async function call<T>(method: 'GET' | 'POST', path: string, payload: unknown, schema: z.ZodType<T>, opts: CallOptions = {}): Promise<CrmResult<T>> {
+async function call<T>(method: 'GET' | 'POST', path: string, payload: unknown, schema: AnswerSchema<T>, opts: CallOptions = {}): Promise<CrmResult<T>> {
   const secret = readSecret();
   if (!secret) {
     console.error('[crm] ITQAN_BOOKING_SECRET is missing or shorter than 32 characters; refusing to call the CRM');
@@ -248,8 +252,10 @@ export function createCrmBooking(request: CreateBookingRequest, opts?: CallOptio
   return call('POST', `${WEBSITE_API}/bookings`, request, createBookingDataSchema, { timeoutMs: opts?.timeoutMs ?? CRM_BOOKING_TIMEOUT_MS });
 }
 
-export function cancelCrmBooking(token: string, opts?: CallOptions): Promise<CrmResult<CancelBookingData>> {
-  return call('POST', `${WEBSITE_API}/bookings/cancel`, { token }, cancelBookingDataSchema, opts);
+/** The guest's reason goes only when they gave one (the CRM wants 1 to 500 characters or nothing). */
+export function cancelCrmBooking(token: string, reason?: string, opts?: CallOptions): Promise<CrmResult<CancelBookingData>> {
+  const request: CancelBookingRequest = reason ? { token, reason } : { token };
+  return call('POST', `${WEBSITE_API}/bookings/cancel`, request, cancelBookingDataSchema, opts);
 }
 
 /** After a guest cancel's emails went out: the CRM stops reporting them as owed. */

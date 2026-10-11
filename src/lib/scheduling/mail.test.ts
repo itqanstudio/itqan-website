@@ -1,15 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BookingForEmail } from '@/lib/crm/contract';
-import {
-  bookingIcs,
-  callMinutes,
-  meetingLink,
-  sendGuestCancellation,
-  sendGuestCancelledNotices,
-  sendGuestConfirmation,
-  sendHostNotice,
-  sendMail,
-} from './mail';
+import { bookingIcs, callMinutes, meetingLink, sendGuestCancellation, sendGuestConfirmation, sendMail } from './mail';
 
 const booking: BookingForEmail = {
   id: 'b3c1d2e4-0000-4000-8000-000000000001',
@@ -25,6 +16,10 @@ const booking: BookingForEmail = {
   locale: 'en',
   guestTimezone: 'Europe/Stockholm',
   host: { slug: 'bisma', name: 'Bisma Aslam', email: 'bisma@itqanstudio.com', meetingUrl: null },
+  team: [
+    { name: 'Ibrahim Shareef', email: 'ibrahim@itqanstudio.com', isHost: false },
+    { name: 'Bisma Aslam', email: 'bisma@itqanstudio.com', isHost: true },
+  ],
 };
 
 let printed: string[] = [];
@@ -46,9 +41,11 @@ afterEach(() => {
 });
 
 describe('sendMail', () => {
-  it('prints instead of sending in development without SMTP', async () => {
+  it('prints instead of sending in development without SMTP, naming the calendar method', async () => {
     expect(await sendMail({ to: 'a@b.c', subject: 'Hi', text: 'Body' })).toEqual({ sent: true });
     expect(printed[0]).toContain('subject=Hi');
+    await sendMail({ to: 'a@b.c', subject: 'Invite', text: 'Body', ics: { method: 'REQUEST', content: 'x' } });
+    expect(printed[1]).toContain('subject=Invite ics=REQUEST');
   });
   it('fails loudly, never silently, in production without SMTP', async () => {
     vi.stubEnv('NODE_ENV', 'production');
@@ -63,6 +60,7 @@ describe('guest confirmation', () => {
     await sendGuestConfirmation(booking, 'tok_abcdefghijklmnopqrstuvwxyz');
     const mail = printed[0];
     expect(mail).toContain('to=guest@example.com');
+    expect(mail).toContain('ics=PUBLISH');
     expect(mail).toContain('Your 45-minute briefing with Itqan is booked.');
     expect(mail).toContain('08:00 (Europe/Stockholm)');
     expect(mail).toContain('With: Bisma Aslam');
@@ -88,38 +86,23 @@ describe('guest confirmation', () => {
   });
 });
 
-describe('host notice', () => {
-  it('goes to the host, not a studio inbox, with everything the guest typed', async () => {
-    await sendHostNotice(booking);
-    const mail = printed[0];
-    expect(mail).toContain('to=bisma@itqanstudio.com');
-    expect(mail).toContain('subject=[briefing] Example Foods · Click http://phish.example now');
-    expect(mail).toContain('New briefing with Bisma Aslam, 45 minutes.');
-    expect(mail).toContain('10:00 (Asia/Dubai)');
-    expect(mail).toContain('08:00 (Europe/Stockholm)');
-    expect(mail).toContain('Catering requests');
-    expect(mail).toContain(`https://portal.itqanstudio.com/calendar?booking=${booking.id}`);
-  });
-});
-
-describe('cancellations', () => {
-  it('a guest cancel tells both sides', async () => {
-    const sent = await sendGuestCancelledNotices(booking);
-    expect(sent).toEqual({ guest: { sent: true }, host: { sent: true } });
-    expect(printed).toHaveLength(2);
-    expect(printed.join('\n')).toContain('You cancelled your briefing on');
-    expect(printed.join('\n')).toContain('to=bisma@itqanstudio.com subject=[briefing cancelled by guest]');
-  });
-  it('a host cancel tells the guest in static copy', async () => {
+describe('guest cancellation', () => {
+  it('a host cancel tells the guest in static copy, with the calendar CANCEL', async () => {
     await sendGuestCancellation(booking, 'host');
     expect(printed).toHaveLength(1);
+    expect(printed[0]).toContain('to=guest@example.com');
+    expect(printed[0]).toContain('ics=CANCEL');
     expect(printed[0]).toContain('We had to cancel your briefing on');
     expect(printed[0]).toContain('https://itqanstudio.com/book');
     expect(printed[0]).not.toContain('phish');
   });
+  it('a guest cancel says they cancelled it', async () => {
+    await sendGuestCancellation(booking, 'guest');
+    expect(printed[0]).toContain('You cancelled your briefing on');
+  });
 });
 
-describe('calendar files and helpers', () => {
+describe('the guest calendar file and helpers', () => {
   it('derives the call length from start and end', () => {
     expect(callMinutes(booking)).toBe(45);
     expect(callMinutes({ ...booking, end: booking.start })).toBe(1);
@@ -129,17 +112,19 @@ describe('calendar files and helpers', () => {
     expect(meetingLink({ ...booking, host: { ...booking.host, meetingUrl: 'javascript:alert(1)' } })).toBeUndefined();
     const withLink = { ...booking, host: { ...booking.host, meetingUrl: 'https://meet.google.com/abc-defg-hij' } };
     expect(meetingLink(withLink)).toBe('https://meet.google.com/abc-defg-hij');
-    expect(bookingIcs(withLink, 'PUBLISH', 'guest')).toContain('LOCATION:https://meet.google.com/abc-defg-hij');
+    expect(bookingIcs(withLink, 'PUBLISH')).toContain('LOCATION:https://meet.google.com/abc-defg-hij');
   });
-  it('makes the host the organizer, and keeps the company out of the guest invite', () => {
+  it('stays as it was: PUBLISH, the host as organizer, no attendees and nothing the visitor typed', () => {
     const evil = { ...booking, company: 'Pay now at http://phish.example' };
-    const guest = bookingIcs(evil, 'PUBLISH', 'guest');
+    const guest = bookingIcs(evil, 'PUBLISH');
+    expect(guest).toContain('METHOD:PUBLISH');
     expect(guest).not.toContain('phish');
+    expect(guest).not.toContain('ATTENDEE');
     expect(guest).toContain('ORGANIZER;CN="Bisma Aslam":mailto:bisma@itqanstudio.com');
-    expect(bookingIcs(evil, 'PUBLISH', 'host')).toContain('phish');
+    expect(guest).toContain('SUMMARY:Your Itqan briefing');
   });
-  it('builds a cancel invite with the booking UID', () => {
-    const ics = bookingIcs(booking, 'CANCEL', 'guest');
+  it('builds a cancel with the booking UID', () => {
+    const ics = bookingIcs(booking, 'CANCEL');
     expect(ics).toContain(`UID:${booking.id}@itqanstudio.com`);
     expect(ics).toContain('METHOD:CANCEL');
     expect(ics).toContain('SEQUENCE:1');

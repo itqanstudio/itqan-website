@@ -120,6 +120,8 @@ function forEmail(b) {
     locale: b.locale,
     guestTimezone: b.timezone,
     host: { slug: host.slug, name: host.name, email: host.email, meetingUrl: host.meetingUrl },
+    // Like the CRM: every founder hears about every booking, the host marked.
+    team: HOSTS.map((h) => ({ name: h.name, email: h.email, isHost: h.slug === host.slug })),
   };
 }
 
@@ -174,7 +176,8 @@ function cancelBooking(body, now) {
   if (Date.parse(b.start) <= now) return [409, { ok: false, error: 'past' }];
   b.status = 'cancelled';
   b.cancelledBy = 'guest';
-  console.log(`mock-crm: guest cancelled ${b.id}`);
+  b.cancelReason = typeof body.reason === 'string' ? body.reason : null;
+  console.log(`mock-crm: guest cancelled ${b.id}${b.cancelReason ? ' with a reason' : ''}`);
   return cancelAnswer(b, true);
 }
 

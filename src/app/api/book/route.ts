@@ -5,13 +5,14 @@ import { createCrmBooking, isCrmDown, isOutcomeUnknown, type CrmFailure } from '
 import { forgetSlots } from '@/lib/crm/slots-cache';
 import type { CreateBookingRequest } from '@/lib/crm/contract';
 import { bookingRequestSchema, firstIssue } from '@/lib/scheduling/validation';
-import { bookingIcs, sendGuestConfirmation, sendHostNotice } from '@/lib/scheduling/mail';
+import { finishInBackground, sendFounderInvites } from '@/lib/scheduling/founders-mail';
+import { bookingIcs, sendGuestConfirmation } from '@/lib/scheduling/mail';
 import { clientIp, ipKey, isAllowedOrigin, json, readJson } from '@/lib/scheduling/http';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-/** Per IP and per email: each booking sends two real emails. */
+/** Per IP and per email: each booking sends real emails (the guest's, and one invite per founder). */
 const IP_MAX = 5;
 const EMAIL_MAX = 3;
 const WINDOW_MS = 10 * 60 * 1000;
@@ -67,9 +68,10 @@ function failureAnswer(result: CrmFailure, request: CreateBookingRequest): Retur
  * Public and unauthenticated, so it keeps its origin check, per-IP and
  * per-email rate limits, a 16 KB streamed body cap, a honeypot and schema
  * validation. Then the CRM books it (its database refuses double bookings and
- * picks the host) and this site sends the guest and host emails. When the CRM's
- * answer does not arrive in time or cannot be read, the answer is "unconfirmed"
- * (the booking may exist), never "paused".
+ * picks the host) and this site sends the guest's confirmation and a calendar
+ * invite to each founder (best effort: a founder's email never changes the
+ * answer). When the CRM's answer does not arrive in time or cannot be read, the
+ * answer is "unconfirmed" (the booking may exist), never "paused".
  */
 export async function POST(req: NextRequest) {
   if (!isAllowedOrigin(req.headers.get('origin'))) return json(403, { ok: false, error: 'Bad origin' });
@@ -126,11 +128,8 @@ export async function POST(req: NextRequest) {
 
   const { booking, cancelToken } = result.data;
   // The booking exists now: an email that throws (not just fails) must never turn this into an error.
-  const [guest, host] = await Promise.all([
-    sentOrNot(sendGuestConfirmation(booking, cancelToken), 'guest confirmation'),
-    sentOrNot(sendHostNotice(booking), 'host notice'),
-  ]);
-  if (!host.sent) console.error('[book] host notice not sent for booking', booking.id);
+  finishInBackground('book', booking.id, sendFounderInvites(booking));
+  const guest = await sentOrNot(sendGuestConfirmation(booking, cancelToken), 'guest confirmation');
   if (!guest.sent) console.error('[book] guest confirmation not sent for booking', booking.id);
 
   return json<Created>(201, {
@@ -141,7 +140,7 @@ export async function POST(req: NextRequest) {
       end: booking.end,
       hostName: localHostName(booking.host, input.locale),
       emailed: guest.sent,
-      ics: bookingIcs(booking, 'PUBLISH', 'guest'),
+      ics: bookingIcs(booking, 'PUBLISH'),
     },
   });
 }

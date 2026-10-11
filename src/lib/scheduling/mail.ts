@@ -1,22 +1,18 @@
 import nodemailer from 'nodemailer';
 import { bookingCopy, fill, formatWhen, localHostName } from '@/content/v3/booking';
 import type { BookingForEmail } from '@/lib/crm/contract';
-import { buildIcs } from './ics';
+import { buildIcs, type IcsMethod } from './ics';
 
 /** Short, because the booking response waits for the confirmation email. */
 const SMTP_TIMEOUT_MS = 8_000;
 const SITE_URL = 'https://itqanstudio.com';
-/** Where hosts manage bookings. A fixed public URL, never CRM_API_ORIGIN (which can be an internal address). */
-const PORTAL_URL = 'https://portal.itqanstudio.com';
-/** The founders work from Dubai and Gothenburg; the host email shows both. */
-const HOST_ZONES = ['Asia/Dubai', 'Europe/Stockholm'] as const;
 
-interface Mail {
+export interface Mail {
   to: string;
   subject: string;
   text: string;
   replyTo?: string;
-  ics?: { method: 'PUBLISH' | 'CANCEL'; content: string };
+  ics?: { method: IcsMethod; content: string };
 }
 
 export type MailResult = { sent: true } | { sent: false; reason: 'not_configured' | 'failed' };
@@ -53,7 +49,8 @@ export async function sendMail(mail: Mail): Promise<MailResult> {
   const conf = smtp();
   if (!conf) {
     if (process.env.NODE_ENV === 'development') {
-      console.info(`[mail:dev] to=${mail.to} subject=${mail.subject}\n${mail.text}`);
+      const ics = mail.ics ? ` ics=${mail.ics.method}` : '';
+      console.info(`[mail:dev] to=${mail.to} subject=${mail.subject}${ics}\n${mail.text}`);
       return { sent: true };
     }
     console.error('[mail] SES SMTP settings are missing; email not sent:', mail.subject);
@@ -89,19 +86,20 @@ export function meetingLink(b: BookingForEmail): string | undefined {
 }
 
 /**
- * The calendar file. The guest's copy carries only static copy and the host's
- * details, never a field the visitor typed (their address is unverified); the
- * host's copy names the company so the event reads well in their calendar.
+ * The guest's calendar file (PUBLISH, and the CANCEL that removes it). It
+ * carries only static copy and the host's details, never a field the visitor
+ * typed (their address is unverified). The founders get their own invite
+ * (founders-mail.ts) with the same UID.
  */
-export function bookingIcs(b: BookingForEmail, method: 'PUBLISH' | 'CANCEL', audience: 'guest' | 'host'): string {
+export function bookingIcs(b: BookingForEmail, method: 'PUBLISH' | 'CANCEL'): string {
   const t = bookingCopy[b.locale].email;
-  const host = audience === 'guest' ? localHostName(b.host, b.locale) : b.host.name;
+  const host = localHostName(b.host, b.locale);
   const link = meetingLink(b);
   return buildIcs({
     uid: `${b.id}@itqanstudio.com`,
     start: new Date(b.start),
     end: new Date(b.end),
-    summary: audience === 'host' ? `Itqan briefing · ${b.company}` : t.subject,
+    summary: t.subject,
     description: [fill(t.confirmed, { n: callMinutes(b) }), link ? `${t.link}: ${link}` : fill(t.linkPending, { host })].join('\n'),
     location: link,
     organizerEmail: b.host.email,
@@ -141,40 +139,7 @@ export async function sendGuestConfirmation(b: BookingForEmail, cancelToken: str
     '',
     fill(t.signoff, { host }),
   ].join('\n');
-  return sendMail({ to: b.guestEmail, replyTo: b.host.email, subject: t.subject, text, ics: { method: 'PUBLISH', content: bookingIcs(b, 'PUBLISH', 'guest') } });
-}
-
-function hostTimes(b: BookingForEmail): string[] {
-  return HOST_ZONES.map((zone) => `Time: ${formatWhen(b.start, zone, 'en')}`);
-}
-
-/** Everything the guest typed, to the host who takes the call. Reply goes to the guest. */
-export async function sendHostNotice(b: BookingForEmail): Promise<MailResult> {
-  const text = [
-    `New briefing with ${b.host.name}, ${callMinutes(b)} minutes.`,
-    ...hostTimes(b),
-    `Guest time: ${formatWhen(b.start, b.guestTimezone, 'en')}`,
-    '',
-    `Name: ${b.guestName}`,
-    `Email: ${b.guestEmail}`,
-    `Company: ${b.company}`,
-    `Role: ${b.role || '-'}`,
-    `Industry: ${b.industry}`,
-    `Topic: ${b.topic}`,
-    `Language: ${b.locale}`,
-    '',
-    'First job for an agent:',
-    b.message || '-',
-    '',
-    `Open in the CRM: ${PORTAL_URL}/calendar?booking=${encodeURIComponent(b.id)}`,
-  ].join('\n');
-  return sendMail({
-    to: b.host.email,
-    replyTo: b.guestEmail,
-    subject: `[briefing] ${b.company} · ${b.guestName}`,
-    text,
-    ics: { method: 'PUBLISH', content: bookingIcs(b, 'PUBLISH', 'host') },
-  });
+  return sendMail({ to: b.guestEmail, replyTo: b.host.email, subject: t.subject, text, ics: { method: 'PUBLISH', content: bookingIcs(b, 'PUBLISH') } });
 }
 
 /** Static copy only, with the rebook link. `by` says who cancelled. */
@@ -197,22 +162,6 @@ export async function sendGuestCancellation(b: BookingForEmail, by: 'guest' | 'h
     replyTo: b.host.email,
     subject: t.cancelSubject,
     text,
-    ics: { method: 'CANCEL', content: bookingIcs(b, 'CANCEL', 'guest') },
+    ics: { method: 'CANCEL', content: bookingIcs(b, 'CANCEL') },
   });
-}
-
-export async function sendHostCancellation(b: BookingForEmail): Promise<MailResult> {
-  return sendMail({
-    to: b.host.email,
-    replyTo: b.guestEmail,
-    subject: `[briefing cancelled by guest] ${b.company} · ${b.guestName}`,
-    text: [`Cancelled by the guest:`, ...hostTimes(b), `${b.guestName} <${b.guestEmail}>, ${b.company}`].join('\n'),
-    ics: { method: 'CANCEL', content: bookingIcs(b, 'CANCEL', 'host') },
-  });
-}
-
-/** A guest cancelled from their link: both sides hear about it. */
-export async function sendGuestCancelledNotices(b: BookingForEmail): Promise<{ guest: MailResult; host: MailResult }> {
-  const [guest, host] = await Promise.all([sendGuestCancellation(b, 'guest'), sendHostCancellation(b)]);
-  return { guest, host };
 }

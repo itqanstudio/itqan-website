@@ -29,7 +29,39 @@ const meetingUrl = z
   .refine((v) => v.startsWith('https://') && noBreaks(v), 'Meeting links must be https')
   .nullable();
 
-export const bookingForEmailSchema: z.ZodType<BookingForEmail> = z
+type Team = BookingForEmail['team'];
+type Host = BookingForEmail['host'];
+
+const teamMemberSchema = z.object({
+  name: text(1, 80).refine(noBreaks),
+  email,
+  isHost: z.boolean(),
+});
+
+/**
+ * The founders who get the calendar invite and its cancel. A CRM from before
+ * the team field sends none: the host alone then hears, as before it existed. A
+ * founder whose row does not pass the checks is left out (and logged) rather
+ * than failing the booking it rides on, and an address is listed once.
+ */
+function founders(entries: readonly unknown[] | undefined, host: Host): Team {
+  if (entries === undefined) return [{ name: host.name, email: host.email, isHost: true }];
+  const seen = new Set<string>();
+  return entries.flatMap((entry) => {
+    const parsed = teamMemberSchema.safeParse(entry);
+    if (!parsed.success) {
+      console.error('[crm] a founder on the booking did not pass the checks and gets no calendar email');
+      return [];
+    }
+    const key = parsed.data.email.toLowerCase();
+    if (seen.has(key)) return [];
+    seen.add(key);
+    return [parsed.data];
+  });
+}
+
+/** Typed against the contract's output; the input is anything the CRM sent (see founders()). */
+export const bookingForEmailSchema: z.ZodType<BookingForEmail, z.ZodTypeDef, unknown> = z
   .object({
     // Used in the invite UID, so a plain id only.
     id: z.string().regex(/^[A-Za-z0-9-]{1,100}$/),
@@ -50,8 +82,10 @@ export const bookingForEmailSchema: z.ZodType<BookingForEmail> = z
       email,
       meetingUrl,
     }),
+    team: z.array(z.unknown()).max(20).optional(),
   })
-  .refine((b) => Date.parse(b.end) > Date.parse(b.start), 'A booking must end after it starts');
+  .refine((b) => Date.parse(b.end) > Date.parse(b.start), 'A booking must end after it starts')
+  .transform((b) => ({ ...b, team: founders(b.team, b.host) }));
 
 export const slotsDataSchema: z.ZodType<SlotsData> = z.object({
   slotMinutes: z.number().int().min(5).max(240),
@@ -60,12 +94,12 @@ export const slotsDataSchema: z.ZodType<SlotsData> = z.object({
   slots: z.array(z.object({ start: utcIso, hosts: z.array(slug).max(50) })).max(20_000),
 });
 
-export const createBookingDataSchema: z.ZodType<CreateBookingData> = z.object({
+export const createBookingDataSchema: z.ZodType<CreateBookingData, z.ZodTypeDef, unknown> = z.object({
   booking: bookingForEmailSchema,
   cancelToken: z.string().regex(/^[A-Za-z0-9_-]{20,100}$/),
 });
 
-export const cancelBookingDataSchema: z.ZodType<CancelBookingData> = z.object({
+export const cancelBookingDataSchema: z.ZodType<CancelBookingData, z.ZodTypeDef, unknown> = z.object({
   changed: z.boolean(),
   booking: bookingForEmailSchema.optional(),
   noticeOwed: z.boolean(),
@@ -75,7 +109,7 @@ export const guestNoticeSentDataSchema: z.ZodType<GuestNoticeSentData> = z.objec
   recorded: z.boolean(),
 });
 
-export const notifyRequestSchema: z.ZodType<NotifyRequest> = z.object({
+export const notifyRequestSchema: z.ZodType<NotifyRequest, z.ZodTypeDef, unknown> = z.object({
   type: z.literal('booking.cancelled'),
   by: z.literal('host'),
   notifyGuest: z.boolean(),
