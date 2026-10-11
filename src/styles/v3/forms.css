@@ -4,7 +4,8 @@
  * book.css so every form on the site reads as one system. Logical properties
  * throughout. Reduced motion is handled once, in site.css.
  */
-.pg { position: relative; overflow: hidden; padding-block: clamp(40px, 6vw, 88px) clamp(64px, 9vw, 120px); border-bottom: 1px solid var(--line); }
+/* overflow-x: clip, not hidden: hidden would make .pg a scroll container and stop the aside from sticking. */
+.pg { position: relative; overflow-x: clip; padding-block: clamp(40px, 6vw, 88px) clamp(64px, 9vw, 120px); border-bottom: 1px solid var(--line); }
 .pg::before { content: ''; position: absolute; inset: 0; background: var(--glow); pointer-events: none; }
 .pg .wrap { position: relative; }
 .pg .wrap.narrow { max-width: 760px; }

@@ -34,6 +34,8 @@ interface CaptureState {
   status: Status;
   downloadUrl: string | null;
   onSubmit: (e: FormEvent) => void;
+  /** Shown in whichever form was used, so a failed submit from the sticky bar is never silent. */
+  errorMsg: string;
 }
 
 export function MagnetLanding({ magnet }: { magnet: LeadMagnet }) {
@@ -81,7 +83,7 @@ export function MagnetLanding({ magnet }: { magnet: LeadMagnet }) {
     }
   }
 
-  const capture: CaptureState = { email, setEmail, status, downloadUrl, onSubmit: handleSubmit };
+  const capture: CaptureState = { email, setEmail, status, downloadUrl, onSubmit: handleSubmit, errorMsg };
 
   return (
     <div className="mg">
@@ -90,12 +92,11 @@ export function MagnetLanding({ magnet }: { magnet: LeadMagnet }) {
       <section className="mg-hero" aria-labelledby="mg-title">
         <div className="wrap">
           <p className="k">
-            <b>■</b> Itqan Studio · Free blueprint
+            <b>■</b> Itqan · Free guide
           </p>
           <h1 id="mg-title">{renderTitleWithAccent(magnet.title)}</h1>
           <p className="lead">
-            {magnet.landingTeaser ||
-              "From invisible to inevitable in 90 days. The blueprint we hand every founder before we quote them."}
+            {magnet.landingTeaser || "A short guide from Itqan, sent to your inbox as a PDF."}
           </p>
           <a className="mg-cue" href="#mg-inside">
             Read <span aria-hidden="true">↓</span>
@@ -119,15 +120,14 @@ export function MagnetLanding({ magnet }: { magnet: LeadMagnet }) {
         <div className="wrap">
           <div className="head" data-reveal>
             <p className="k">
-              <b>■</b> The document
+              <b>■</b> Who it is for
             </p>
             <h2 id="mg-inside-title">
-              Two questions <span className="g">most</span> founders skip.
+              Written for the people who <span className="g">run the operation.</span>
             </h2>
           </div>
           <div className="mg-panels" data-reveal>
-            <Panel num="01" tag="Inside" {...INSIDE_PANEL_DEFAULTS} />
-            <Panel num="02" tag="Audience" {...AUDIENCE_PANEL_DEFAULTS} />
+            <Panel num="01" tag="Audience" {...AUDIENCE_PANEL_DEFAULTS} />
           </div>
         </div>
       </section>
@@ -136,17 +136,15 @@ export function MagnetLanding({ magnet }: { magnet: LeadMagnet }) {
         <div className="wrap mg-feat">
           <div className="txt" data-reveal>
             <p className="k">
-              <b>■</b> Reference foundation
+              <b>■</b> Work
             </p>
             <h2 id="mg-feat-title">
-              A real Itqan <span className="g">brand foundation</span>, redacted.
+              Built by the team <span className="g">behind this guide.</span>
             </h2>
-            <p>
-              We&apos;ve stripped the names and replaced the proprietary positioning, but the
-              structure, exercises, and decision logs are intact. Use it as the template. Use it as
-              the proof. It&apos;s the artifact behind every engagement.
+            <p>{featuredProject.body}</p>
+            <p className="lab">
+              <a href={featuredProject.href}>Read the {featuredProject.label} case</a>
             </p>
-            <p className="lab">Featured: {featuredProject.label}.</p>
           </div>
           <div className="mg-shot" data-reveal>
             <Image src={featuredProject.src} alt={featuredProject.alt} fill sizes="(max-width: 900px) 100vw, 55vw" />
@@ -165,7 +163,7 @@ export function MagnetLanding({ magnet }: { magnet: LeadMagnet }) {
   );
 }
 
-function CaptureBar({ email, setEmail, status, downloadUrl, onSubmit }: CaptureState) {
+function CaptureBar({ email, setEmail, status, downloadUrl, onSubmit, errorMsg }: CaptureState) {
   let action: ReactNode;
   if (status !== "success") {
     action = (
@@ -180,8 +178,13 @@ function CaptureBar({ email, setEmail, status, downloadUrl, onSubmit }: CaptureS
           onChange={(e) => setEmail(e.target.value)}
         />
         <button type="submit" className="btn pri" disabled={status === "submitting"}>
-          {status === "submitting" ? "Sending" : "Get the blueprint"}
+          {status === "submitting" ? "Sending" : "Get the guide"}
         </button>
+        {status === "error" && errorMsg && (
+          <p className="mg-bar-err" role="alert">
+            {errorMsg}
+          </p>
+        )}
       </form>
     );
   } else if (downloadUrl) {
@@ -196,7 +199,7 @@ function CaptureBar({ email, setEmail, status, downloadUrl, onSubmit }: CaptureS
   return (
     <div className="mg-bar">
       <div className="wrap">
-        <span className="pulse">Itqan Studio</span>
+        <span className="pulse">Itqan</span>
         {action}
       </div>
     </div>
@@ -217,7 +220,7 @@ function FinalCapture({ email, setEmail, firstName, setFirstName, status, downlo
           <Symbol gid="mg-cta-sym" />
         </span>
         <h2 id="mg-get-title">
-          Get the <span className="g">blueprint.</span>
+          Get the <span className="g">guide.</span>
         </h2>
         <p className="lead">
           Drop your email and first name. The PDF lands within a minute, plus a five-day note series
@@ -244,7 +247,7 @@ function FinalCapture({ email, setEmail, firstName, setFirstName, status, downlo
               onChange={(e) => setEmail(e.target.value)}
             />
             <button type="submit" className="btn pri" disabled={status === "submitting"}>
-              {status === "submitting" ? "Sending" : "Send the blueprint"} <Arrow />
+              {status === "submitting" ? "Sending" : "Send me the guide"} <Arrow />
             </button>
             {status === "error" && (
               <p className="err" role="alert">
@@ -312,85 +315,51 @@ function Panel({ num, tag, title, items }: PanelProps) {
   );
 }
 
-// ─── Static per-brand defaults for the Inside + Audience panels ────────────
-// Future: drive these per-magnet from Notion fields. For now these two panels
-// carry the Itqan "what's in / who for" anchor across all magnets.
-
-const INSIDE_PANEL_DEFAULTS = {
-  title: "What the blueprint contains",
-  items: [
-    "The 7-section foundation document with prompts and examples",
-    "The earned-secret exercise we run in every kickoff",
-    "Positioning frameworks: one-liner, ICP, before-after-bridge",
-    "The decision matrix: when to brand, when to wait, when to walk",
-    "Two reference foundations: a recruitment platform and a health-tech app",
-  ],
-} as const;
+// ─── Static Audience panel ─────────────────────────────────────────────────
+// Brand v3 (11 Oct 2026): the buyers Itqan writes for. The old "what the
+// blueprint contains" panel described the retired brand-foundation offer and
+// is gone; a guide's own content comes from its Notion teaser.
 
 const AUDIENCE_PANEL_DEFAULTS = {
   title: "Who this is for",
   items: [
-    "GCC founders preparing a Series A raise",
-    "Operators building a category-defining product in F&B, retail, fashion, or wellness",
-    "Founders who refuse to start with a logo",
-    "Anyone who's been burned by a freelance brand engagement that produced moodboards and nothing else",
-    "The team that wants the strategist in the room, not the deck",
+    "Operations, supply chain and IT leaders in manufacturing",
+    "Store operations and customer service leaders in retail",
+    "Owners and operators of food and beverage groups",
+    "Teams whose work lives in a shared inbox and one person's head",
   ],
 } as const;
 
-// ─── Per-magnet featured project image system ──────────────────────────────
-// Each Itqan magnet gets a different featured client mockup so the magnets
-// don't all look like the same hero. Mapping is keyed off topic slug, with
-// a fallback for unknown slugs.
+// ─── Featured work ─────────────────────────────────────────────────────────
+// The two products the site features (src/content/v3/en.ts), alternated by
+// slug so neighbouring guides do not show the same picture.
 
 interface FeaturedProject {
   src: string;
   alt: string;
   label: string;
+  href: string;
+  body: string;
 }
 
+const MILLOW: FeaturedProject = {
+  src: "/v3/img/millow-cover.jpg",
+  alt: "The Millow website: oat-protein meatballs under a spotlight",
+  label: "Millow",
+  href: "/work/millow",
+  body: "Millow ferments Swedish oats and mycelium into protein. We are the design partner on their two-language website: 56 tracked design rounds, and 113 browser tests behind every weekly release.",
+};
 const NEXILINK: FeaturedProject = {
-  src: "/images/portfolio/nexilink/cover.png",
-  alt: "Nexilink, recruitment platform foundation",
-  label: "Nexilink (recruitment platform), anonymized",
-};
-const OUD_CLOSET: FeaturedProject = {
-  src: "/images/portfolio/oud-closet/cover.png",
-  alt: "Oud Closet, modest fashion foundation",
-  label: "Oud Closet (modest fashion), anonymized",
-};
-const MEDACS: FeaturedProject = {
-  src: "/images/portfolio/medacs/cover.png",
-  alt: "Medacs, health-tech foundation",
-  label: "Medacs (health-tech), anonymized",
-};
-const SHAREEFICO: FeaturedProject = {
-  src: "/images/portfolio/shareefico/cover.png",
-  alt: "Shareefico Studio, creator tooling foundation",
-  label: "Shareefico Studio (creator tooling), anonymized",
-};
-
-const FEATURED_PROJECT_MAP: Record<string, FeaturedProject> = {
-  "founder-os-diagnostic": NEXILINK,
-  "weekly-company-revival-teardown": OUD_CLOSET,
-  "soul-skeleton-heartbeat-diagnostic": MEDACS,
-  "90-day-founder-os-stack": SHAREEFICO,
-  // Legacy v1 topic slugs (Brand Foundation Sprint era): keep working until
-  // the old magnets get regenerated under v2.1.
-  "brand-foundation-roadmap": NEXILINK,
-  "weekly-re-brand-teardown": OUD_CLOSET,
-  "brand-vs-logo-diagnostic": MEDACS,
-  "gcc-founders-brand-stack": SHAREEFICO,
+  src: "/v3/img/nexilink-cover.jpg",
+  alt: "A hand holding a printed Nexilink brochure",
+  label: "Nexilink",
+  href: "/work/nexilink",
+  body: "Nexilink gives Swedish municipalities onboarding and training software for new staff. We helped build it: brand, research and product design in three weeks, and first place at the 2024 investor competition.",
 };
 
 function pickFeaturedProject(slug: string): FeaturedProject {
-  return (
-    FEATURED_PROJECT_MAP[slug] ?? {
-      src: "/images/founder-render.png",
-      alt: "Itqan studio reference",
-      label: "Itqan reference foundation",
-    }
-  );
+  const hash = slug.split("").reduce((acc, c) => (acc + c.charCodeAt(0)) | 0, 0);
+  return Math.abs(hash) % 2 === 0 ? MILLOW : NEXILINK;
 }
 
 // ─── Per-slug testimonial rotation ─────────────────────────────────────────
@@ -399,11 +368,12 @@ function pickFeaturedProject(slug: string): FeaturedProject {
 // the real testimonials we have.
 
 function pickTestimonial(slug: string): Testimonial {
+  // A real, published quote (the site's Nexilink case), never a placeholder that could ship.
   if (!testimonials.length) {
     return {
-      quote: "[INSERT: real testimonial from Notion or LinkedIn]",
-      name: "[INSERT: name]",
-      company: "[INSERT: company]",
+      quote: "Itqan is a partner we trust for both speed and quality.",
+      name: "Abdi Mohamud",
+      company: "Nexilink",
     };
   }
   const hash = slug.split("").reduce((acc, c) => (acc + c.charCodeAt(0)) | 0, 0);

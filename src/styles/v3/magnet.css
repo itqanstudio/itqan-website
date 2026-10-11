@@ -8,7 +8,8 @@
 .mg-bar { position: sticky; top: 68px; z-index: 30; background: rgba(11, 10, 13, 0.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
 .mg-bar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; padding-block: 12px; }
 .mg-bar .pulse { white-space: nowrap; }
-.mg-bar form { display: flex; gap: 8px; flex: 1 1 360px; max-width: 460px; }
+.mg-bar-err { flex-basis: 100%; margin: 0; font-size: 13px; color: var(--err); }
+.mg-bar form { display: flex; flex-wrap: wrap; gap: 8px; flex: 1 1 360px; max-width: 460px; }
 .mg-bar input { flex: 1; min-width: 0; }
 .mg-bar .btn { padding: 10px 16px; font-size: 14px; white-space: nowrap; }
 .mg-bar .sent { color: var(--ok); font-size: 14px; font-weight: 500; }

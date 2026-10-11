@@ -31,7 +31,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...['/privacy', '/terms', '/cookies'].map((p) => ({ url: `${SITE_URL}${p}`, lastModified, changeFrequency: 'yearly' as const, priority: 0.2 })),
     { url: `${SITE_URL}/support`, lastModified, changeFrequency: 'yearly', priority: 0.3 },
     /*
-     * Brand portal (legacy pages, still served at /brand and brand.itqanstudio.com).
+     * Brand portal, served at /brand and at brand.itqanstudio.com.
      * Derived from PORTAL_PAGES, the same tree the portal sidebar renders from.
      */
     ...PORTAL_PAGES.map((p) => ({

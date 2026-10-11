@@ -47,7 +47,9 @@ export default function LogoPage() {
             <span className="pt-lockup" style={{ color: 'var(--bone)' }}>
               <Lockup gid="lg-5" lang="ar" />
             </span>
-            <figcaption>Arabic lockup · symbol on the right</figcaption>
+            <figcaption lang="en" dir="ltr">
+              Arabic lockup · symbol on the right
+            </figcaption>
           </figure>
           <figure className="pt-stage ink">
             <span className="pt-sym" style={{ width: 'clamp(70px, 10vw, 110px)' }}>

@@ -38,7 +38,6 @@ const nextConfig = {
        * instead of breaking. Temporary (307), so the targets can still change.
        */
       ...[
-        ['itqan-mark.png', 'v3-lockup.png'],
         ['itqan-wordmark.png', 'v3-lockup.png'],
         ['itqan-wordmark-chip.png', 'v3-lockup.png'],
         ['itqan-wordmark-cream.png', 'v3-lockup.png'],
@@ -66,6 +65,12 @@ const nextConfig = {
         destination: `/brand/itqan-studio/signature/${to}`,
         permanent: false,
       })),
+      // The old mark was square, so it maps to the square app icon, not the wide lockup.
+      {
+        source: '/brand/itqan-studio/signature/itqan-mark.png',
+        destination: '/brand/itqan-studio/logo/itqan-app-icon-1024.png',
+        permanent: false,
+      },
       { source: '/brand/itqan-studio/sticker/:file((?!itqan-sticker-)[^/]+)', destination: '/brand/assets/stickers', permanent: false },
       ...[
         ['dark-logo.svg', 'itqan-lockup-ink-2.svg'],

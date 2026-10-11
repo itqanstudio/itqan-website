@@ -2,45 +2,53 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { PORTAL_NAV, PORTAL_PAGES } from '@/data/brand-portal';
-
-/**
- * The portal root is reached two ways: itqanstudio.com/brand, and the root of
- * brand.itqanstudio.com, which middleware rewrites to /brand without changing
- * the browser URL. Treat both as the overview page.
- */
-export function currentPortalPath(pathname: string | null): string {
-  if (!pathname || pathname === '/') return '/brand';
-  return pathname.replace(/\/$/, '');
-}
+import { currentPortalPath } from './path';
 
 export function SideNav() {
   const path = currentPortalPath(usePathname());
   const [open, setOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Closing returns focus to the toggle, so keyboard users are not dropped onto a hidden link.
+  const close = useCallback(() => {
+    setOpen(false);
+    buttonRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     setOpen(false);
   }, [path]);
 
   useEffect(() => {
-    if (!open) return;
+    const main = document.getElementById('main');
+    if (!open) {
+      main?.removeAttribute('inert');
+      return;
+    }
+    // The page under the overlay is out of reach while the menu is open.
+    main?.setAttribute('inert', '');
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') close();
     };
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open]);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      main?.removeAttribute('inert');
+    };
+  }, [open, close]);
 
   const link = (href: string, label: string) => (
-    <Link href={href} aria-current={href === path ? 'page' : undefined}>
+    // Tapping the page you are on does not change the path, so close here too.
+    <Link href={href} aria-current={href === path ? 'page' : undefined} onClick={() => setOpen(false)}>
       {label}
     </Link>
   );
 
   return (
     <>
-      <button type="button" className="pt-menu" aria-expanded={open} aria-controls="pt-side" onClick={() => setOpen((v) => !v)}>
+      <button ref={buttonRef} type="button" className="pt-menu" aria-expanded={open} aria-controls="pt-side" onClick={() => setOpen((v) => !v)}>
         {open ? 'Close' : 'Menu'}
       </button>
       <nav id="pt-side" className="pt-side" data-open={open} aria-label="Brand portal">

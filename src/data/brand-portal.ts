@@ -84,7 +84,7 @@ export const PORTAL_NAV: PortalCategory[] = [
     label: 'Expression',
     items: [
       { href: '/brand/composition', label: 'Composition', summary: 'Dark grounds, cell-ruled grids and one highlight per view.' },
-      { href: '/brand/imagery', label: 'Imagery', summary: 'Rose gel light, pixel bokeh, and the twenty pixel icons.' },
+      { href: '/brand/imagery', label: 'Imagery', summary: 'Rose gel light, pixel bokeh, and the pixel icon set.' },
       { href: '/brand/motion', label: 'Motion', summary: 'How things move, and the specs that keep it consistent.' },
       {
         href: '/brand/voice',

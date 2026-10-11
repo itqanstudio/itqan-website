@@ -8,7 +8,6 @@
     "start": "next start -p 3001",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "verify:design": "node scripts/verify-apple-design.mjs",
     "brand:sync": "node scripts/sync-brand-assets.mjs",
     "brand:bundles": "node scripts/build-brand-bundles.mjs",
     "prebuild": "node scripts/build-brand-bundles.mjs",

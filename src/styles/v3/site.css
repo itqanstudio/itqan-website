@@ -2,7 +2,7 @@
  * Brand v3 site styles. Dark-first, 1240 measure, cell-ruled sections.
  * Logical properties throughout, so the Arabic layout mirrors without a second
  * stylesheet. The symbol never mirrors (see .lock, .sym).
- * Loaded only by the (en) and ar root layouts; the legacy pages keep their own CSS.
+ * Loaded by every root layout: (en), ar, (brand) and (admin).
  */
 :root {
   color-scheme: dark;

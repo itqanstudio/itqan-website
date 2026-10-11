@@ -1,24 +1,35 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-/** Copies a string and says so; falls back to selecting the text when the clipboard is blocked. */
-export function CopyButton({ text, label = 'Copy' }: { text: string; label?: string }) {
+interface CopyButtonProps {
+  text: string;
+  label?: string;
+  /** What is being copied, for screen readers: "Copy the boilerplate". */
+  what?: string;
+}
+
+/** Copies a string and says so. When the clipboard is blocked, it asks the reader to select the text. */
+export function CopyButton({ text, label = 'Copy', what }: CopyButtonProps) {
   const [state, setState] = useState<'idle' | 'done' | 'failed'>('idle');
+  const timer = useRef<number | undefined>(undefined);
+
+  useEffect(() => () => window.clearTimeout(timer.current), []);
 
   const copy = async () => {
+    window.clearTimeout(timer.current);
     try {
       await navigator.clipboard.writeText(text);
       setState('done');
     } catch {
       setState('failed');
     }
-    window.setTimeout(() => setState('idle'), 1800);
+    timer.current = window.setTimeout(() => setState('idle'), 1800);
   };
 
   return (
-    <button type="button" className="pt-copybtn" onClick={() => void copy()} aria-live="polite">
-      {state === 'done' ? 'Copied' : state === 'failed' ? 'Select and copy' : label}
+    <button type="button" className="pt-copybtn" onClick={() => void copy()} aria-label={what ? `${label} ${what}` : undefined}>
+      <span aria-live="polite">{state === 'done' ? 'Copied' : state === 'failed' ? 'Copy blocked, select the text' : label}</span>
     </button>
   );
 }

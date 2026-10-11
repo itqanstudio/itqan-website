@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 /** The checkmark draws itself once, in CSS; reduced motion shows it complete. */
 function Check() {
   return (
-    <svg className="ty-check"viewBox="0 0 56 56" aria-hidden="true" focusable="false">
+    <svg className="ty-check" viewBox="0 0 56 56" aria-hidden="true" focusable="false">
       <circle cx="28" cy="28" r="26" />
       <path d="M17 28.5L24.5 36L39 21" />
     </svg>

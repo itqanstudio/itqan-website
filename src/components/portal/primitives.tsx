@@ -17,7 +17,7 @@ export function PageHead({ kicker, title, lead }: { kicker: string; title: React
 
 export function Section({ title, children, id }: { title: string; children: ReactNode; id?: string }) {
   return (
-    <section className="pt-sec" id={id} aria-label={title}>
+    <section className="pt-sec" id={id}>
       <h2>{title}</h2>
       {children}
     </section>
@@ -72,14 +72,14 @@ export function CopyBlock({ item }: { item: CopyItem }) {
           <b>{item.label}</b>
           <span>{item.meta}</span>
         </div>
-        <CopyButton text={item.text} />
+        <CopyButton text={item.text} what={item.label.toLowerCase()} />
       </div>
       <p lang={arabic ? 'ar' : undefined}>{item.text}</p>
     </div>
   );
 }
 
-const fmtBytes = (b: number) => (b > 1024 * 1024 ? `${(b / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
+export const fmtBytes = (b: number): string => (b > 1024 * 1024 ? `${(b / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
 
 /** Marks drawn in ink need a light tile to be seen; the filename says which. */
 function wantsLightTile(a: BrandAsset): boolean {

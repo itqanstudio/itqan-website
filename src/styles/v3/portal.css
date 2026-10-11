@@ -60,7 +60,9 @@
 .pt-stage > * { position: relative; }
 .pt-stage figcaption, .pt-cap { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
 .pt-stage figcaption { position: absolute; inset-inline-start: 14px; bottom: 12px; }
-.pt-stage.bone figcaption, .pt-stage.rose figcaption, .pt-stage.dusk figcaption { color: rgba(11, 10, 13, 0.6); }
+/* Full ink on light and rose grounds: 0.6 ink measured 3.1:1 on rose, below the 4.5:1 this portal asks for. */
+.pt-stage.bone figcaption, .pt-stage.rose figcaption, .pt-stage.dusk figcaption { color: var(--ink); }
+.pt-side { overscroll-behavior: contain; }
 .pt-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
 .pt-lockup { display: inline-flex; align-items: flex-end; gap: 0.3em; font-size: clamp(30px, 3.6vw, 56px); }
 .pt-lockup .sym { width: 0.8em; line-height: 0; }

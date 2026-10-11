@@ -78,10 +78,8 @@ export function UmamiAnalytics() {
         script.src = config.scriptUrl;
         script.defer = true;
         script.setAttribute('data-website-id', config.websiteId);
-        // Umami tracks SPA route changes on its own via the History API, which
-        // is what next-view-transitions navigation uses — so no manual
-        // pageview call is needed here (unlike the PostHog provider, which
-        // captures route changes explicitly).
+        // Umami tracks client-side route changes on its own through the
+        // History API, so no manual pageview call is needed here.
         document.head.appendChild(script);
       })
       .catch(() => {
