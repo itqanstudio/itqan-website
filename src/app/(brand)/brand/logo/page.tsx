@@ -15,7 +15,7 @@ export default function LogoPage() {
       <PageHead
         kicker="Identity"
         title={<Rich value={['A letter, a signal, ', 'one pixel.']} />}
-        lead="The Itqan logo has two parts: the symbol, a 10 by 12 grid of 56 pixel modules that forms the i of itqan, and the lowercase wordmark itqan with a square rose dot on its i. Together they make the lockup."
+        lead="The Itqan logo has two parts: the symbol, 54 pixel modules on a 10 by 12 grid that forms the i of itqan, and the lowercase wordmark itqan with a square rose dot on its i. Together they make the lockup."
       />
       <Section title="The lockups">
         <div className="pt-split">

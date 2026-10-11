@@ -1,27 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny-ps" viewBox="0 0 512 512" width="512" height="512">
-  <title>Itqan Studio</title>
-  <desc>Logo for Itqan Studio</desc>
-  <rect x="0" y="0" width="512" height="512" fill="#2f1c2c" />
-  <g transform="translate(86.000 93.085) scale(0.449397)">
-    <g>
-      <g>
-        <g>
-          <path d="M756.57,672.36h-51.86C678.28,324.33,387.53,50.16,32.73,50.16V.02c.53-.02,1.05-.02,1.59-.02,382.5,0,695.73,296.61,722.25,672.36Z" fill="#cca4c2" />
-          <path d="M643.81,724.1h-337.16c0-17.69-1.68-34.99-4.9-51.73-24.18-125.67-134.71-220.61-267.43-220.61h-1.59v-44.32c.53-.02,1.05-.02,1.59-.02,157.26,0,287.77,114.67,312.46,264.95h146.16c-20.86-187.71-153.93-341.55-330.61-392.96-9.62-2.8-19.36-5.29-29.23-7.47-22.86-5.06-46.35-8.42-70.35-9.94-9.86-.64-19.81-.97-29.83-.97h-.19v-51.73c266.85,0,486.29,203.04,512.23,463.07h47.75C566.61,386.03,325.86,161.76,32.73,161.76v-48.74c320.06,0,582.67,246.07,608.92,559.35,1.44,17.05,2.16,34.3,2.16,51.73Z" fill="#cca4c2" />
-          <path d="M261.45,724.1H32.73v-51.73h168.68c-22.75-71.56-89.65-123.45-168.68-123.68v-51.72c.52-.02,1.05-.02,1.59-.02,107.64,0,197.79,74.89,221.2,175.41,3.88,16.62,5.92,33.93,5.92,51.73Z" fill="#cca4c2" />
-          <path d="M133.1,271.94c-5.46,39.39-33.35,71.62-70.35,83.38v-93.32c24,1.52,47.49,4.88,70.35,9.94Z" fill="#cca4c2" />
-          <path d="M163.92,258.95c0,6.96-.54,13.8-1.59,20.46-8.28,52.8-48.1,95.12-99.58,107.11-9.58,2.24-19.57,3.42-29.83,3.42v-131.9h29.83v97.28c37-11.76,64.89-43.99,70.35-83.38.63-4.54.97-9.18.98-13.9h29.83c.01.29.01.6.01.91Z" fill="#cca4c2" />
-        </g>
-        <g>
-          <path d="M32.92,235.16H0v-24.14c15.41.03,28.47,10.18,32.92,24.14Z" fill="#cca4c2" />
-          <path d="M32.92,259.3H0v-24.14c15.41.03,28.47,10.18,32.92,24.14Z" fill="#cca4c2" />
-          <path d="M65.66,622.6h-32.92v-24.14c15.41.03,28.47,10.18,32.92,24.14Z" fill="#cca4c2" />
-          <path d="M705.31,725.04h51.26s0-37.59,0-37.59c-24,.05-44.33,15.85-51.26,37.59Z" fill="#cca4c2" />
-          <path d="M32.92,137.16H0v-24.14c15.41.03,28.47,10.18,32.92,24.14Z" fill="#cca4c2" />
-          <path d="M32.92,161.3H0v-24.14c15.41.03,28.47,10.18,32.92,24.14Z" fill="#cca4c2" />
-        </g>
-      </g>
-    </g>
-  </g>
+  <title>Itqan</title>
+  <desc>The Itqan symbol, brand v3: the signal i in the dusk colours on ink, flat colours per module for BIMI.</desc>
+  <rect x="0" y="0" width="512" height="512" fill="#0B0A0D"/>
+  <rect x="136" y="112" width="24" height="24" fill="#EF3A78"/>
+  <rect x="136" y="160" width="24" height="24" fill="#F14A69"/>
+  <rect x="136" y="184" width="24" height="24" fill="#F2575D"/>
+  <rect x="160" y="184" width="24" height="24" fill="#F2555E"/>
+  <rect x="184" y="184" width="24" height="24" fill="#F25261"/>
+  <rect x="208" y="184" width="24" height="24" fill="#F14E65"/>
+  <rect x="136" y="208" width="24" height="24" fill="#F46451"/>
+  <rect x="160" y="208" width="24" height="24" fill="#F46252"/>
+  <rect x="184" y="208" width="24" height="24" fill="#F35F56"/>
+  <rect x="208" y="208" width="24" height="24" fill="#F35A5A"/>
+  <rect x="232" y="208" width="24" height="24" fill="#F25460"/>
+  <rect x="256" y="208" width="24" height="24" fill="#F14D67"/>
+  <rect x="136" y="232" width="24" height="24" fill="#F57352"/>
+  <rect x="208" y="232" width="24" height="24" fill="#F4664F"/>
+  <rect x="232" y="232" width="24" height="24" fill="#F35F56"/>
+  <rect x="256" y="232" width="24" height="24" fill="#F2575D"/>
+  <rect x="280" y="232" width="24" height="24" fill="#F14E65"/>
+  <rect x="136" y="256" width="24" height="24" fill="#F68356"/>
+  <rect x="160" y="256" width="24" height="24" fill="#F68055"/>
+  <rect x="256" y="256" width="24" height="24" fill="#F36154"/>
+  <rect x="280" y="256" width="24" height="24" fill="#F2575D"/>
+  <rect x="304" y="256" width="24" height="24" fill="#F14D67"/>
+  <rect x="136" y="280" width="24" height="24" fill="#F79259"/>
+  <rect x="160" y="280" width="24" height="24" fill="#F78F58"/>
+  <rect x="184" y="280" width="24" height="24" fill="#F78857"/>
+  <rect x="208" y="280" width="24" height="24" fill="#F68055"/>
+  <rect x="280" y="280" width="24" height="24" fill="#F35F56"/>
+  <rect x="304" y="280" width="24" height="24" fill="#F25460"/>
+  <rect x="136" y="304" width="24" height="24" fill="#F8A163"/>
+  <rect x="184" y="304" width="24" height="24" fill="#F8965A"/>
+  <rect x="208" y="304" width="24" height="24" fill="#F78C58"/>
+  <rect x="232" y="304" width="24" height="24" fill="#F68055"/>
+  <rect x="280" y="304" width="24" height="24" fill="#F4664F"/>
+  <rect x="304" y="304" width="24" height="24" fill="#F35A5A"/>
+  <rect x="328" y="304" width="24" height="24" fill="#F14E65"/>
+  <rect x="136" y="328" width="24" height="24" fill="#F7AF75"/>
+  <rect x="208" y="328" width="24" height="24" fill="#F8965A"/>
+  <rect x="232" y="328" width="24" height="24" fill="#F78857"/>
+  <rect x="304" y="328" width="24" height="24" fill="#F35F56"/>
+  <rect x="328" y="328" width="24" height="24" fill="#F25261"/>
+  <rect x="136" y="352" width="24" height="24" fill="#F6BD85"/>
+  <rect x="160" y="352" width="24" height="24" fill="#F7B57C"/>
+  <rect x="232" y="352" width="24" height="24" fill="#F78F58"/>
+  <rect x="256" y="352" width="24" height="24" fill="#F68055"/>
+  <rect x="304" y="352" width="24" height="24" fill="#F46252"/>
+  <rect x="328" y="352" width="24" height="24" fill="#F2555E"/>
+  <rect x="136" y="376" width="24" height="24" fill="#F6C995"/>
+  <rect x="160" y="376" width="24" height="24" fill="#F6BD85"/>
+  <rect x="184" y="376" width="24" height="24" fill="#F7AF75"/>
+  <rect x="232" y="376" width="24" height="24" fill="#F79259"/>
+  <rect x="256" y="376" width="24" height="24" fill="#F68356"/>
+  <rect x="304" y="376" width="24" height="24" fill="#F46451"/>
+  <rect x="328" y="376" width="24" height="24" fill="#F2575D"/>
+  <rect x="352" y="376" width="24" height="24" fill="#F14A69"/>
 </svg>

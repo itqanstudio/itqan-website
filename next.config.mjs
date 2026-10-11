@@ -26,6 +26,12 @@ const nextConfig = {
       { source: '/work', destination: '/#work', permanent: true },
       // Only Millow and Nexilink have case pages now; every other old case lands on the work section.
       { source: '/work/:slug((?!millow$|nexilink$)[^/]+)', destination: '/#work', permanent: true },
+      // Brand v3 in the portal (11 Oct 2026): the old static brand pack now points at the v3 pack built at prebuild.
+      {
+        source: '/brands/downloads/itqan-studio-brand-pack.zip',
+        destination: '/brand/bundles/itqan-studio-brand-pack.zip',
+        permanent: false,
+      },
     ];
   },
 

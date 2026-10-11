@@ -38,7 +38,7 @@ export default function ClearSpacePage() {
       <PageHead
         kicker="Identity · Logo"
         title="Clear space and sizing"
-        lead="Everything about the symbol is measured in modules: one module is one tenth of the symbol’s width. The grid is 10 modules wide and 12 high, with 56 modules filled."
+        lead="Everything about the symbol is measured in modules: one module is one tenth of the symbol’s width. The grid is 10 modules wide and 12 high, with 54 modules filled."
       />
       <Section title="Construction">
         <figure className="pt-stage ink">

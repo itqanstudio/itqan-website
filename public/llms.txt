@@ -1,44 +1,42 @@
-# Itqan Studio
+# Itqan
 
-> Itqan Studio is a Dubai-based design and AI agency. It is one partner for a founder's whole growth stack: brand identity and creative direction, websites that convert, content and social media marketing, SEO, AI visibility (generative engine optimization / GEO), web hosting and infrastructure, and agentic AI automation. Everything is designed, built and run by the same senior team. "Itqan" (إتقان) is Arabic for mastery/excellence. Itqan Studio was co-founded by Ibrahim Shareef (CEO) and Bisma Aslam (Head of Design).
-
-Itqan Studio (legal name: Itqan Studio FZ LLC) operates from Dubai, United Arab Emirates, and serves clients in the UAE and Sweden. The studio works in English, Swedish and Arabic. Its positioning: one senior team owns every piece that turns traffic into buyers, instead of splitting the work across disconnected agencies. Contact: info@itqanstudio.com.
+> Itqan is an AI studio for manufacturing, retail and food and beverage. It builds AI agents for operations, supply chain and customer teams, and runs them inside each client's own cloud account (AWS, Microsoft Azure or Google Cloud), with the data kept in the client's region and a person approving anything an agent sends. Line: "We build the AI your business runs on, and we stay to run it." Itqan (إتقان) is Arabic for work done properly. Legal entity: Itqan Studio FZ-LLC, Ras Al Khaimah, United Arab Emirates. The founders work from Dubai and Gothenburg, in Arabic, English and Swedish.
 
 ## Team
-- Ibrahim Shareef — CEO & Co-founder. Personal site: https://shareefi.co (he also hosts The Barakah Blueprint podcast).
-- Bisma Aslam — Head of Design & Co-founder.
+- Ibrahim Shareef: founder and CEO; engineering, agents and delivery. Dubai. Personal site: https://shareefi.co
+- Bisma Aslam: co-founder; design, brand and how the agents write. Gothenburg.
 
-## What Itqan Studio does (services)
-- Brand Identity & Strategy: brand strategy, naming, positioning, creative direction, and full visual identity systems.
-- Web Design & Development: fast, clear websites built to convert; design and full-stack engineering shipped as one system.
-- Content & Social Media Marketing: a content engine that plans, produces and posts every week in the client's voice, across channels.
-- SEO: the structure, content and technical signals that help the right buyers find a brand in search.
-- AI Visibility (GEO): work to get a brand named when buyers ask ChatGPT, Claude and Gemini who to hire — built for and tracked, not guaranteed.
-- Web Hosting & Infrastructure: hosting and running what the team builds, kept live, stable and maintained after launch.
-- AI & Agentic Automation: agentic automation engines for lead capture, content, and reporting — run with a human in control.
+## What Itqan builds
+- Agents and workflows: agents that read the inbox, draft the order, answer the store and file the report, with a person approving what goes out.
+- Search over your documents: procedures, specs, contracts and past orders, answered in plain language with a link to the page.
+- Private models: open-weight models tuned on the client's records and hosted in the client's region, for when a general model is not good enough or not allowed.
+- Running it: weekly test runs, model upgrades, a monthly cost ceiling and a written note on the fifth of each month.
 
-Note on honesty: Itqan does not promise a specific search ranking or a guaranteed AI-engine citation. It builds for both and tracks results.
+## Security
+- Deployed in the client's own cloud account; the client holds the keys, the code and the logs.
+- Processing in the UAE or the EU when the model allows it; when it does not, the client is told in writing before work starts.
+- Only providers and settings that keep client content out of model training.
+- Single sign-on and roles, a full audit trail, and a person approving anything that leaves the company.
+- Every agent is tested for prompt injection and data leaks before launch and every week after.
+- Agents say they are AI when a customer talks to them (EU AI Act Article 50, from 2 August 2026).
+- Itqan does not claim an ISO or SOC 2 certification.
+
+## How an engagement runs
+1. Briefing: 30 minutes, free, booked at https://itqanstudio.com/book
+2. AI Map: one week, $750. The three jobs an agent should take first, the hours each returns, the data each needs and the risks.
+3. Pilot: three weeks, one agent on one workflow in the client's cloud, at a fixed price set in the map.
+4. Run: monthly, 30 days notice. Code, prompts, test sets and the cloud account belong to the client; on exit everything is handed over within 30 days with no exit fee.
 
 ## Key pages
-- [Home](https://itqanstudio.com/): overview of the studio and the one-partner offer — everything that turns traffic into buyers.
-- [Services](https://itqanstudio.com/services): the full offer — brand, web, content and social, SEO, AI visibility (GEO), hosting and automation. How an engagement runs: a free intro call, a fixed-price $750 Session that ends in a written map, a build quoted from that map, then Care or Partner after go-live.
-- [Work](https://itqanstudio.com/work): portfolio of brand, web, product, and automation projects.
-- [About](https://itqanstudio.com/about): the team, mission, and values behind Itqan Studio.
-- [Contact](https://itqanstudio.com/contact): book a free intro call or send a message.
-
-## Selected case studies
-- [Millow](https://itqanstudio.com/work/millow): design partner for Sweden's fermented oat-protein platform (millow.co) — design system, motion language, Food Service rebuild, bilingual, 113 e2e tests green per release.
-- [Lemon Garden](https://itqanstudio.com/work/lemon-garden): booking platform and staff console for a seven-restaurant brunch chain in Sweden, live in production within a week (boka.lemongarden.se).
-- [Mutqin](https://itqanstudio.com/work/mutqin): Itqan's own live AI startup companion — brand, character, and full-stack product (mutqin.xyz).
-- [Nexilink](https://itqanstudio.com/work/nexilink): brand + investor-ready product UX delivered in 3 weeks; the client placed first at a 2024 investor competition.
-- [Shareefico](https://itqanstudio.com/work/shareefico): personal brand + custom CMS + content-automation engine, shipped in under 30 days; two brands now publish 4+ pieces per week from one CMS (shareefi.co).
-- [Project You](https://itqanstudio.com/work/project-you): a calm, faith-rooted life-OS SaaS with a verse-by-verse Qur'an companion (projectyou.app).
-- [Oud Closet](https://itqanstudio.com/work/oud-closet): luxury modest-fashion brand identity + custom Shopify storefront, shipped in 2 weeks (oudcloset.se).
-- [Medacs](https://itqanstudio.com/work/medacs): multi-stakeholder healthcare platform UX, validated and dev-ready in 2 weeks.
-- [Itqan Studio CRM](https://itqanstudio.com/work/itqan-crm): the studio's own operations platform, built in 6 weeks; replaced 5 tools and cut Friday P&L reconciliation from 8 hours to 15 minutes, with UAE-compliant e-invoicing.
+- [Home, English](https://itqanstudio.com/)
+- [Home, Arabic](https://itqanstudio.com/ar)
+- [Book a briefing](https://itqanstudio.com/book)
+- [Millow case study](https://itqanstudio.com/work/millow): design partner on the two-language website of Millow AB, a Gothenburg food producer that ferments oats and mycelium into protein; 56 tracked design rounds, 113 browser tests and 575 unit tests behind weekly releases since July 2026.
+- [Nexilink case study](https://itqanstudio.com/work/nexilink): Itqan helped build Nexilink, onboarding and training software for Swedish welfare services; brand, research and product design in three weeks against an 8 to 16 week norm, first place at the 2024 investor competition.
+- [Brand portal](https://itqanstudio.com/brand): the Itqan brand system and downloadable logos.
+- [Privacy policy](https://itqanstudio.com/privacy)
 
 ## Contact
-- Email: info@itqanstudio.com
-- Location: Dubai, United Arab Emirates
+- Email: ibrahim@itqanstudio.com
 - Instagram: https://www.instagram.com/madebyitqan/
 - LinkedIn: https://www.linkedin.com/company/110338926/
