@@ -13,7 +13,7 @@ export default function CookiesPage() {
     <LegalPageLayout title="Cookie Policy" lastUpdated="11 October 2026">
       <p>
         This Cookie Policy explains how <strong>Itqan Studio FZ-LLC</strong> uses cookies and similar technologies on
-        itqanstudio.com and brand.itqanstudio.com. Read it with our <a href="/privacy">Privacy Policy</a>.
+        itqanstudio.com, brand.itqanstudio.com and feedback.itqanstudio.com. Read it with our <a href="/privacy">Privacy Policy</a>.
       </p>
 
       <h2>1. What cookies are</h2>

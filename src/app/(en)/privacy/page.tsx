@@ -13,7 +13,7 @@ export const metadata: Metadata = pageMetadata({
 
 export default function PrivacyPage() {
   return (
-    <LegalPageLayout title="Privacy Policy" lastUpdated="8 October 2026">
+    <LegalPageLayout title="Privacy Policy" lastUpdated="11 October 2026">
       <p>
         This Privacy Policy explains how <strong>Itqan Studio FZ LLC</strong> (&ldquo;Itqan Studio,&rdquo; &ldquo;we,&rdquo; &ldquo;us&rdquo;), a UAE Free Zone
         entity, collects, uses, and protects personal information when you visit
@@ -37,9 +37,10 @@ export default function PrivacyPage() {
           any note you add, so we can hold the call and send you the details.
         </li>
         <li>
-          <strong>Information collected automatically.</strong> IP address, browser
-          type, device identifiers, referring pages, and general usage analytics
-          collected through cookies and similar technologies.
+          <strong>Information collected automatically.</strong> Page views, referring
+          pages and browser type, counted by our self-hosted Umami analytics without
+          cookies or anything stored on your device, and IP addresses in our server
+          logs and rate limits.
         </li>
         <li>
           <strong>Information from third parties.</strong> Data from authentication or
@@ -83,8 +84,12 @@ export default function PrivacyPage() {
           delivery.
         </li>
         <li>
-          <strong>Analytics</strong>: aggregated, non-identifying usage
-          measurement (see our <a href="/cookies">Cookie Policy</a>).
+          <strong>Umami (self-hosted)</strong>: cookieless, aggregated page-view
+          counts (see our <a href="/cookies">Cookie Policy</a>).
+        </li>
+        <li>
+          <strong>Itqan portal (self-hosted)</strong>: support requests sent from the
+          support page are stored in our client portal at portal.itqanstudio.com.
         </li>
       </ul>
 
