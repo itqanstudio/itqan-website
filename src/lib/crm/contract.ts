@@ -79,6 +79,22 @@ export interface CancelBookingRequest {
 export interface CancelBookingData {
   changed: boolean;
   booking?: BookingForEmail;
+  /**
+   * True while a guest cancel's emails (guest and host) are not confirmed sent.
+   * The website sends them, then calls POST bookings/notice-sent. A retry after a
+   * lost answer therefore still sends them, and a confirmed send is never repeated.
+   */
+  noticeOwed: boolean;
+}
+
+/** Website -> CRM after a guest cancel's emails went out: POST bookings/notice-sent */
+export interface GuestNoticeSentRequest {
+  token: string;
+}
+
+export interface GuestNoticeSentData {
+  /** False when an earlier call already recorded it. */
+  recorded: boolean;
 }
 
 export interface LegacyBooking {

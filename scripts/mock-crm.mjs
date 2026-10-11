@@ -14,6 +14,7 @@
  *   GET  /api/integrations/website/slots[?with=<slug>]
  *   POST /api/integrations/website/bookings
  *   POST /api/integrations/website/bookings/cancel
+ *   POST /api/integrations/website/bookings/notice-sent
  *   POST /api/integrations/website/import
  * Test controls (unsigned, local only):
  *   GET  /__mock/state                 bookings and the last cancel token
@@ -156,14 +157,33 @@ function createBooking(body, now) {
   return [201, { ok: true, data: { booking: forEmail(booking), cancelToken: token } }];
 }
 
+function byToken(body) {
+  return body && typeof body.token === 'string' ? bookings.find((x) => x.tokenHash === sha(body.token)) : undefined;
+}
+
+/** Like the CRM: a guest cancel's emails stay owed until the site records them (noticeSent). */
+function cancelAnswer(b, changed) {
+  const noticeOwed = b.cancelledBy === 'guest' && !b.noticeSent;
+  return [200, { ok: true, data: { changed, booking: forEmail(b), noticeOwed } }];
+}
+
 function cancelBooking(body, now) {
-  const b = body && typeof body.token === 'string' ? bookings.find((x) => x.tokenHash === sha(body.token)) : undefined;
+  const b = byToken(body);
   if (!b) return [404, { ok: false, error: 'not_found' }];
-  if (b.status === 'cancelled') return [200, { ok: true, data: { changed: false, booking: forEmail(b) } }];
+  if (b.status === 'cancelled') return cancelAnswer(b, false);
   if (Date.parse(b.start) <= now) return [409, { ok: false, error: 'past' }];
   b.status = 'cancelled';
+  b.cancelledBy = 'guest';
   console.log(`mock-crm: guest cancelled ${b.id}`);
-  return [200, { ok: true, data: { changed: true, booking: forEmail(b) } }];
+  return cancelAnswer(b, true);
+}
+
+function noticeSent(body) {
+  const b = byToken(body);
+  if (!b) return [404, { ok: false, error: 'not_found' }];
+  const recorded = b.status === 'cancelled' && b.cancelledBy === 'guest' && !b.noticeSent;
+  if (recorded) b.noticeSent = true;
+  return [200, { ok: true, data: { recorded } }];
 }
 
 function importLegacy(body) {
@@ -185,6 +205,7 @@ async function hostCancel(body) {
   const b = bookings.find((x) => x.id === body?.id);
   if (!b) return [404, { ok: false, error: 'not_found' }];
   b.status = 'cancelled';
+  b.cancelledBy = 'host';
   const payload = JSON.stringify({ type: 'booking.cancelled', by: 'host', notifyGuest: body.notifyGuest !== false, booking: forEmail(b) });
   const res = await fetch(`${WEBSITE_ORIGIN}/api/crm/notify`, {
     method: 'POST',
@@ -214,6 +235,7 @@ async function signed(req, res, url, raw) {
   if (route === 'GET /api/integrations/website/slots') return send(res, 200, { ok: true, data: slotsFor(url.searchParams.get('with') || undefined, now) });
   if (route === 'POST /api/integrations/website/bookings') return send(res, ...createBooking(body, now));
   if (route === 'POST /api/integrations/website/bookings/cancel') return send(res, ...cancelBooking(body, now));
+  if (route === 'POST /api/integrations/website/bookings/notice-sent') return send(res, ...noticeSent(body));
   if (route === 'POST /api/integrations/website/import') return send(res, ...importLegacy(body));
   return send(res, 404, { ok: false, error: 'not_found' });
 }

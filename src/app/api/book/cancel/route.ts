@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { rateLimit } from '@/lib/rate-limit';
-import { cancelCrmBooking, isCrmDown } from '@/lib/crm/client';
+import { cancelCrmBooking, isCrmDown, recordCancelNotice } from '@/lib/crm/client';
 import { forgetSlots } from '@/lib/crm/slots-cache';
 import { cancelRequestSchema } from '@/lib/scheduling/validation';
 import { sendGuestCancelledNotices } from '@/lib/scheduling/mail';
@@ -14,6 +14,12 @@ interface Cancelled {
   /** The booked time and the guest's zone, so the page can say which call was cancelled. */
   start?: string;
   timezone?: string;
+}
+
+/** Tells the CRM the guest's email went; a failure only means a later retry may send it again. */
+async function recordSent(token: string, bookingId: string): Promise<void> {
+  const recorded = await recordCancelNotice(token);
+  if (!recorded.ok) console.error('[book/cancel] could not record the sent notice for booking', bookingId, recorded.error);
 }
 
 /** POST /api/book/cancel: the guest cancels with the secret link from their email. */
@@ -38,13 +44,16 @@ export async function POST(req: NextRequest) {
     return json(404, { ok: false, error: 'not_found' });
   }
 
-  const { changed, booking } = result.data;
+  const { changed, booking, noticeOwed } = result.data;
   if (changed) forgetSlots();
-  if (changed && booking) {
+  // Owed, not just changed: a retry after a lost answer still sends the emails, and
+  // once this site records them the CRM stops asking, so they never go twice.
+  if (noticeOwed && booking) {
     const sent = await sendGuestCancelledNotices(booking);
     if (!sent.host.sent) console.error('[book/cancel] host notice not sent for booking', booking.id);
     if (!sent.guest.sent) console.error('[book/cancel] guest notice not sent for booking', booking.id);
-  } else if (changed) {
+    else await recordSent(parsed.data.token, booking.id);
+  } else if (noticeOwed) {
     console.error('[book/cancel] the CRM cancelled a booking but sent no details; no emails went out');
   }
   return json<Cancelled>(200, {

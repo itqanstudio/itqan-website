@@ -294,18 +294,55 @@ describe('POST /api/book/cancel', () => {
   const cancel = (token: string, origin = ORIGIN) =>
     postCancel(request('http://localhost/api/book/cancel', { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify({ token }) }));
 
-  it('cancels in the CRM and emails both sides', async () => {
-    crm(200, { ok: true, data: { changed: true, booking } });
+  /** The CRM by path: the cancel answer, then the notice-sent record. */
+  function crmCancel(cancelData: unknown, recorded = true): void {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init: RequestInit) => {
+        crmCalls.push({ url, init });
+        const data = url.endsWith('/bookings/notice-sent') ? { recorded } : cancelData;
+        return new Response(JSON.stringify({ ok: true, data }), { status: 200 });
+      }),
+    );
+  }
+
+  it('cancels in the CRM, emails both sides, then records the send', async () => {
+    crmCancel({ changed: true, booking, noticeOwed: true });
     const res = await cancel('A'.repeat(43));
     expect(await res.json()).toEqual({ ok: true, data: { changed: true, start: booking.start, timezone: 'Asia/Dubai' } });
     expect(JSON.parse(String(crmCalls[0].init.body))).toEqual({ token: 'A'.repeat(43) });
     expect(printed).toHaveLength(2);
+    expect(crmCalls[1].url).toBe('http://localhost:3999/api/integrations/website/bookings/notice-sent');
+    expect(JSON.parse(String(crmCalls[1].init.body))).toEqual({ token: 'A'.repeat(43) });
   });
 
-  it('sends nothing when it was already cancelled', async () => {
-    crm(200, { ok: true, data: { changed: false, booking } });
+  it('a retry after a lost answer still sends the owed emails (panel run 4)', async () => {
+    crmCancel({ changed: false, booking, noticeOwed: true });
+    expect(((await (await cancel('A'.repeat(43))).json()) as { data: { changed: boolean } }).data.changed).toBe(false);
+    expect(printed).toHaveLength(2);
+    expect(crmCalls).toHaveLength(2);
+  });
+
+  it('sends nothing once the emails are recorded, or for a host cancel', async () => {
+    crmCancel({ changed: false, booking, noticeOwed: false });
     expect(((await (await cancel('A'.repeat(43))).json()) as { data: { changed: boolean } }).data.changed).toBe(false);
     expect(printed).toHaveLength(0);
+    expect(crmCalls).toHaveLength(1);
+  });
+
+  it('keeps the guest answer when the record call fails (a later retry may send again)', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init: RequestInit) => {
+        crmCalls.push({ url, init });
+        if (url.endsWith('/bookings/notice-sent')) return new Response('{"ok":false,"error":"server"}', { status: 500 });
+        return new Response(JSON.stringify({ ok: true, data: { changed: true, booking, noticeOwed: true } }), { status: 200 });
+      }),
+    );
+    const res = await cancel('A'.repeat(43));
+    expect(res.status).toBe(200);
+    expect(printed).toHaveLength(2);
+    expect(console.error).toHaveBeenCalledWith('[book/cancel] could not record the sent notice for booking', booking.id, 'server');
   });
 
   it('maps not found, past and down, and refuses a bad origin or token', async () => {

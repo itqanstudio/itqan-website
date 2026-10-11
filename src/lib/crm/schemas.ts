@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { isValidTimeZone } from '@/lib/scheduling/time';
-import type { BookingForEmail, CancelBookingData, CreateBookingData, NotifyRequest, SlotsData } from './contract';
+import type { BookingForEmail, CancelBookingData, CreateBookingData, GuestNoticeSentData, NotifyRequest, SlotsData } from './contract';
 import { HOST_SLUG } from './slug';
 
 /*
@@ -68,6 +68,11 @@ export const createBookingDataSchema: z.ZodType<CreateBookingData> = z.object({
 export const cancelBookingDataSchema: z.ZodType<CancelBookingData> = z.object({
   changed: z.boolean(),
   booking: bookingForEmailSchema.optional(),
+  noticeOwed: z.boolean(),
+});
+
+export const guestNoticeSentDataSchema: z.ZodType<GuestNoticeSentData> = z.object({
+  recorded: z.boolean(),
 });
 
 export const notifyRequestSchema: z.ZodType<NotifyRequest> = z.object({

@@ -4,12 +4,13 @@ import {
   type CancelBookingData,
   type CreateBookingData,
   type CreateBookingRequest,
+  type GuestNoticeSentData,
   type IntegrationErrorCode,
   type IntegrationResult,
   type SlotsData,
 } from './contract';
 import { readSecret, signatureHeader } from './hmac';
-import { cancelBookingDataSchema, createBookingDataSchema, slotsDataSchema } from './schemas';
+import { cancelBookingDataSchema, createBookingDataSchema, guestNoticeSentDataSchema, slotsDataSchema } from './schemas';
 
 /*
  * Signed server-to-server calls to the CRM (REBUILD-SPEC section 8). Every call
@@ -245,4 +246,9 @@ export function createCrmBooking(request: CreateBookingRequest, opts?: CallOptio
 
 export function cancelCrmBooking(token: string, opts?: CallOptions): Promise<CrmResult<CancelBookingData>> {
   return call('POST', `${WEBSITE_API}/bookings/cancel`, { token }, cancelBookingDataSchema, opts);
+}
+
+/** After a guest cancel's emails went out: the CRM stops reporting them as owed. */
+export function recordCancelNotice(token: string, opts?: CallOptions): Promise<CrmResult<GuestNoticeSentData>> {
+  return call('POST', `${WEBSITE_API}/bookings/notice-sent`, { token }, guestNoticeSentDataSchema, opts);
 }
