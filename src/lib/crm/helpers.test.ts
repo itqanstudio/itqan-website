@@ -67,9 +67,16 @@ describe('firstUse', () => {
     expect(signatureExpiry(t)).toBe(lastAccepted + 1);
   });
 
-  it('never grows past its cap', () => {
-    for (let i = 0; i < 10_005; i += 1) firstUse(i.toString(16).padStart(64, '0'), 2_000_000_000, 0);
+  it('never grows past its cap, and never forgets a live signature to make room (panel round 2)', () => {
+    const key = (i: number) => i.toString(16).padStart(64, '0');
+    for (let i = 0; i < 10_000; i += 1) expect(firstUse(key(i), 2_000_000_000, 0)).toBe(true);
+    // Full of live signatures: a new one is refused, and the first is still remembered.
+    expect(firstUse(key(10_000), 2_000_000_000, 0)).toBe(false);
+    expect(firstUse(key(0), 2_000_000_000, 0)).toBe(false);
     expect(replayMemorySize()).toBe(10_000);
+    // Once they expire, room comes back.
+    expect(firstUse(key(10_001), 2_000_000_000, signatureExpiry(2_000_000_000))).toBe(true);
+    expect(replayMemorySize()).toBe(1);
   });
 });
 

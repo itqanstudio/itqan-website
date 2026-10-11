@@ -30,6 +30,16 @@ interface Created {
   ics: string;
 }
 
+/** A send that throws counts as not sent (logged), like one that reports failure. */
+async function sentOrNot(send: Promise<{ sent: boolean }>, label: string): Promise<{ sent: boolean }> {
+  try {
+    return await send;
+  } catch (err) {
+    console.error(`[book] ${label} threw:`, err instanceof Error ? err.message : String(err));
+    return { sent: false };
+  }
+}
+
 /** What the visitor hears when the CRM did not book. */
 function failureAnswer(result: CrmFailure, request: CreateBookingRequest): ReturnType<typeof json> {
   // The CRM may have booked (it keeps going when this site stops waiting), but no email can go out
@@ -84,7 +94,8 @@ export async function POST(req: NextRequest) {
     return json(400, { ok: false, error: 'invalid' });
   }
 
-  const byEmail = rateLimit(`book:email:${input.email}`, EMAIL_MAX, WINDOW_MS);
+  // One key per mailbox, however the address is typed (Ada@X.com and ada@x.com are the same inbox).
+  const byEmail = rateLimit(`book:email:${input.email.trim().toLowerCase()}`, EMAIL_MAX, WINDOW_MS);
   if (!byEmail.allowed) return json(429, { ok: false, error: 'rate' }, { 'Retry-After': String(byEmail.retryAfterSeconds) });
 
   // Keyed by the shared secret; without it nothing can be signed either, so booking is paused.
@@ -114,7 +125,11 @@ export async function POST(req: NextRequest) {
   if (!result.ok) return failureAnswer(result, request);
 
   const { booking, cancelToken } = result.data;
-  const [guest, host] = await Promise.all([sendGuestConfirmation(booking, cancelToken), sendHostNotice(booking)]);
+  // The booking exists now: an email that throws (not just fails) must never turn this into an error.
+  const [guest, host] = await Promise.all([
+    sentOrNot(sendGuestConfirmation(booking, cancelToken), 'guest confirmation'),
+    sentOrNot(sendHostNotice(booking), 'host notice'),
+  ]);
   if (!host.sent) console.error('[book] host notice not sent for booking', booking.id);
   if (!guest.sent) console.error('[book] guest confirmation not sent for booking', booking.id);
 

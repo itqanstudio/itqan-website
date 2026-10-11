@@ -62,16 +62,17 @@ const CONNECT_CODES = new Set(['ECONNREFUSED', 'ENOTFOUND', 'EAI_AGAIN', 'ENETUN
 /**
  * True when the request may have reached the CRM but this site cannot tell
  * whether it acted: no answer before the timeout, a connection that dropped
- * after the request went out, or a success status with a body that could not
- * be read. For a booking that means it may exist, so the visitor is told to
- * check before trying again instead of "paused". Only a connection that never
- * opened proves nothing was sent. Check this before isCrmDown, which is also
- * true for these.
+ * after the request went out, a success status with a body that could not be
+ * read, or a server error (the CRM can fail after its database committed the
+ * booking, and a gateway can time out after passing the request on). For a
+ * booking that means it may exist, so the visitor is told to check before
+ * trying again instead of "paused". Only a connection that never opened proves
+ * nothing was sent. Check this before isCrmDown, which is also true for these.
  */
 export function isOutcomeUnknown(f: CrmFailure): boolean {
   if (f.message === 'timeout') return true;
   if (f.error !== 'server') return false;
-  if (f.status >= 200 && f.status < 300) return true;
+  if ((f.status >= 200 && f.status < 300) || f.status >= 500) return true;
   return f.status === 0 && f.message !== NOT_SENT && f.message !== 'bad_origin';
 }
 

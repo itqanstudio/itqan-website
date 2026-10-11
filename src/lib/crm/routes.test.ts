@@ -146,6 +146,17 @@ describe('GET /api/book/slots', () => {
 });
 
 describe('POST /api/book', () => {
+  it('counts one mailbox once against the email limit, however it is typed (panel round 2)', async () => {
+    crm(409, { ok: false, error: 'unavailable' });
+    const spellings = ['Case@Example.com', 'case@example.com', ' CASE@example.COM', 'case@EXAMPLE.com'];
+    const statuses: number[] = [];
+    for (const email of spellings) {
+      // A fresh client IP each time, so only the email limit (3 per 10 minutes) can stop the fourth.
+      statuses.push((await postBook(bookRequest({ ...form, email }, { origin: ORIGIN, 'x-forwarded-for': nextIp() }))).status);
+    }
+    expect(statuses).toEqual([409, 409, 409, 429]);
+  });
+
   it('books through the CRM, emails guest and host, and answers with the host name', async () => {
     crm(201, { ok: true, data: { booking, cancelToken: 'tok_abcdefghijklmnopqrstuvwxyz' } });
     const res = await postBook(bookRequest({ ...form, with: 'ibrahim' }));
@@ -274,6 +285,13 @@ describe('POST /api/book', () => {
     expect(printed).toHaveLength(0);
   });
 
+  it('a CRM server error after the request went out is unconfirmed, and the cached times are dropped (panel round 2)', async () => {
+    crm(500, { ok: false, error: 'server' });
+    const res = await postBook(bookRequest({ ...form, email: 'server-error@example.com' }));
+    expect(res.status).toBe(502);
+    expect(await res.json()).toEqual({ ok: false, error: 'unconfirmed' });
+  });
+
   it('a refused connection (nothing reached the CRM) is still paused', async () => {
     const refused = Object.assign(new TypeError('fetch failed'), { cause: Object.assign(new Error('connect'), { code: 'ECONNREFUSED' }) });
     vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(refused)));
@@ -343,6 +361,13 @@ describe('POST /api/book/cancel', () => {
     expect(res.status).toBe(200);
     expect(printed).toHaveLength(2);
     expect(console.error).toHaveBeenCalledWith('[book/cancel] could not record the sent notice for booking', booking.id, 'server');
+  });
+
+  it('maps a CRM rate limit to 429, not to "link not found" (panel round 2)', async () => {
+    crm(429, { ok: false, error: 'limit' });
+    const res = await cancel('A'.repeat(43));
+    expect(res.status).toBe(429);
+    expect(await res.json()).toEqual({ ok: false, error: 'rate' });
   });
 
   it('maps not found, past and down, and refuses a bad origin or token', async () => {

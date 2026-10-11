@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { rateLimit } from '@/lib/rate-limit';
-import { cancelCrmBooking, isCrmDown, recordCancelNotice } from '@/lib/crm/client';
+import { cancelCrmBooking, isCrmDown, isOutcomeUnknown, recordCancelNotice } from '@/lib/crm/client';
 import { forgetSlots } from '@/lib/crm/slots-cache';
 import { cancelRequestSchema } from '@/lib/scheduling/validation';
 import { sendGuestCancelledNotices } from '@/lib/scheduling/mail';
@@ -39,8 +39,11 @@ export async function POST(req: NextRequest) {
 
   const result = await cancelCrmBooking(parsed.data.token);
   if (!result.ok) {
+    // The CRM may have cancelled (cancelling again is safe and sends any owed emails): drop the cached times.
+    if (isOutcomeUnknown(result)) forgetSlots();
     if (isCrmDown(result)) return json(503, { ok: false, error: 'paused' });
     if (result.error === 'past') return json(409, { ok: false, error: 'past' });
+    if (result.error === 'limit') return json(429, { ok: false, error: 'rate' });
     return json(404, { ok: false, error: 'not_found' });
   }
 

@@ -27,22 +27,24 @@ function sweep(now: number): void {
     .forEach(([key]) => seen.delete(key));
 }
 
-/** Keeps the map at its cap: expired entries first, then the oldest remembered ones. */
-function makeRoom(now: number): void {
-  if (seen.size < MAX_KEYS) return;
+/** Room for one more signature: expired ones are swept first; live ones are never dropped. */
+function hasRoom(now: number): boolean {
+  if (seen.size < MAX_KEYS) return true;
   sweep(now);
-  const excess = seen.size - MAX_KEYS + 1;
-  if (excess > 0) Array.from(seen.keys()).slice(0, excess).forEach((key) => seen.delete(key));
+  return seen.size < MAX_KEYS;
 }
 
 /**
  * True the first time a signature is presented inside its window, false after.
- * `t` is the verified timestamp from the signature header, in seconds.
+ * `t` is the verified timestamp from the signature header, in seconds. When the
+ * memory is full of signatures still inside their windows, a new one is refused
+ * rather than forgetting a live one (which would let it be replayed). Filling it
+ * takes 10,000 valid signatures inside ten minutes, which only the CRM can make.
  */
 export function firstUse(v1: string, t: number, now: number = Date.now()): boolean {
   const expires = seen.get(v1);
   if (expires !== undefined && expires > now) return false;
-  makeRoom(now);
+  if (!hasRoom(now)) return false;
   seen.set(v1, signatureExpiry(t));
   return true;
 }

@@ -271,7 +271,12 @@ describe('answers', () => {
     expect(isOutcomeUnknown({ ok: false, error: 'server', status: 0, message: 'unreachable' })).toBe(false);
     expect(isOutcomeUnknown({ ok: false, error: 'server', status: 0, message: 'bad_origin' })).toBe(false);
     expect(isOutcomeUnknown({ ok: false, error: 'unauthorized', status: 0, message: 'no_secret' })).toBe(false);
-    expect(isOutcomeUnknown({ ok: false, error: 'server', status: 503 })).toBe(false);
+    // A server error after the request went out may follow a committed booking (panel round 2).
+    expect(isOutcomeUnknown({ ok: false, error: 'server', status: 503 })).toBe(true);
+    expect(isOutcomeUnknown({ ok: false, error: 'server', status: 500, message: 'unexpected_answer' })).toBe(true);
+    // The CRM refusing the signature, or a 4xx business answer, means nothing was booked.
+    expect(isOutcomeUnknown({ ok: false, error: 'unauthorized', status: 401 })).toBe(false);
+    expect(isOutcomeUnknown({ ok: false, error: 'server', status: 404, message: 'not_json' })).toBe(false);
     expect(isOutcomeUnknown({ ok: false, error: 'unavailable', status: 409 })).toBe(false);
     expect(isOutcomeUnknown({ ok: false, error: 'limit', status: 200 })).toBe(false);
   });
