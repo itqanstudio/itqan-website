@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { HOST_SLUG } from '@/lib/crm/slug';
-import { CANCEL_REASON_MAX } from './limits';
+import { CANCEL_REASON_MAX, CANCEL_REASON_RAW_MAX, CANCEL_TOKEN_MAX } from './limits';
 import { isValidTimeZone } from './time';
 
 /**
@@ -66,7 +66,7 @@ export type BookingRequest = z.infer<typeof bookingRequestSchema>;
  */
 const cancelReason = z
   .string()
-  .max(CANCEL_REASON_MAX * 4)
+  .max(CANCEL_REASON_RAW_MAX)
   .transform((s) => s.replace(/\r\n?/g, '\n').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]+/g, '').replace(BIDI_CONTROLS, '').trim())
   .pipe(z.string().max(CANCEL_REASON_MAX))
   .transform((s) => (s === '' ? undefined : s));
@@ -74,7 +74,7 @@ const cancelReason = z
 /** What the cancel page posts to /api/book/cancel: the link's token and an optional reason. */
 export const cancelRequestSchema = z
   .object({
-    token: z.string().min(20).max(100).regex(/^[A-Za-z0-9_-]+$/),
+    token: z.string().min(20).max(CANCEL_TOKEN_MAX).regex(/^[A-Za-z0-9_-]+$/),
     reason: cancelReason.optional(),
   })
   .strict();

@@ -5,15 +5,13 @@ import { cancelCrmBooking, isCrmDown, isOutcomeUnknown, recordCancelNotice, type
 import type { BookingForEmail, CancelBookingData } from '@/lib/crm/contract';
 import { forgetSlots } from '@/lib/crm/slots-cache';
 import { finishInBackground, sendFounderCancellations } from '@/lib/scheduling/founders-mail';
+import { CANCEL_BODY_MAX_BYTES } from '@/lib/scheduling/limits';
 import { cancelRequestSchema } from '@/lib/scheduling/validation';
 import { sendGuestCancellation, type MailResult } from '@/lib/scheduling/mail';
 import { clientIp, isAllowedOrigin, json, readJson } from '@/lib/scheduling/http';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-/** Room for a 500-character reason in any script (up to 4 bytes a character) plus the token. */
-const BODY_LIMIT_BYTES = 4096;
 
 interface Cancelled {
   changed: boolean;
@@ -85,7 +83,8 @@ export async function POST(req: NextRequest) {
 
   let raw: unknown;
   try {
-    raw = await readJson(req, BODY_LIMIT_BYTES);
+    // Sized to the schema's raw maximum: a long reason is answered reason_too_long, not unreadable.
+    raw = await readJson(req, CANCEL_BODY_MAX_BYTES);
   } catch {
     // Not the reason's fault: the page says the request did not arrive whole.
     return json(400, { ok: false, error: 'unreadable' });

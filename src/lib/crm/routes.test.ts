@@ -6,6 +6,7 @@ import { POST as postBook } from '@/app/api/book/route';
 import { POST as postCancel } from '@/app/api/book/cancel/route';
 import { POST as postNotify } from '@/app/api/crm/notify/route';
 import { clearFounderMemory } from '@/lib/scheduling/founders-mail';
+import { CANCEL_BODY_MAX_BYTES, CANCEL_REASON_RAW_MAX } from '@/lib/scheduling/limits';
 import { bookingIcs } from '@/lib/scheduling/mail';
 import type { BookingForEmail } from './contract';
 import { signatureHeader, verifySignature } from './hmac';
@@ -502,6 +503,24 @@ describe('POST /api/book/cancel', () => {
     expect(await wayTooLong.json()).toEqual({ ok: false, error: 'reason_too_long' });
     const malformed = await cancel('A'.repeat(43), ORIGIN, { reason: 42 });
     expect(await malformed.json()).toEqual({ ok: false, error: 'invalid' });
+    expect(crmCalls).toHaveLength(0);
+  });
+
+  it('answers reason_too_long for any reason up to the raw maximum, in any script or JSON spelling (review r2)', async () => {
+    crmCancel({ changed: true, booking, noticeOwed: true });
+    const raw = (body: string) =>
+      postCancel(request('http://localhost/api/book/cancel', { method: 'POST', headers: { origin: ORIGIN, 'content-type': 'application/json' }, body }));
+    // Three bytes a character: 4,500 bytes, over the old 4 KB cap.
+    expect(await (await cancel('A'.repeat(43), ORIGIN, { reason: '中'.repeat(1_500) })).json()).toEqual({ ok: false, error: 'reason_too_long' });
+    // The raw maximum, every character written as a JSON escape (six bytes each).
+    const escaped = `{"token":"${'A'.repeat(43)}","reason":"${'\\u4e2d'.repeat(CANCEL_REASON_RAW_MAX)}"}`;
+    expect(new TextEncoder().encode(escaped).length).toBeLessThanOrEqual(CANCEL_BODY_MAX_BYTES);
+    expect(await (await raw(escaped)).json()).toEqual({ ok: false, error: 'reason_too_long' });
+    // Past the cap, nothing is read: the request did not arrive whole.
+    const prefix = `{"token":"${'A'.repeat(43)}","reason":"`;
+    const over = `${prefix}${'x'.repeat(CANCEL_BODY_MAX_BYTES + 1 - prefix.length - 2)}"}`;
+    expect(new TextEncoder().encode(over).length).toBe(CANCEL_BODY_MAX_BYTES + 1);
+    expect(await (await raw(over)).json()).toEqual({ ok: false, error: 'unreadable' });
     expect(crmCalls).toHaveLength(0);
   });
 

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CANCEL_REASON_MAX } from '@/lib/scheduling/limits';
+import { CANCEL_REASON_MAX, CANCEL_REASON_RAW_MAX } from '@/lib/scheduling/limits';
 import { isValidTimeZone } from '@/lib/scheduling/time';
 import { BIDI_CONTROLS } from '@/lib/scheduling/validation';
 import type { BookingForEmail, CancelBookingData, CreateBookingData, GuestNoticeSentData, NotifyRequest, SlotsData } from './contract';
@@ -65,8 +65,8 @@ function founders(entries: readonly unknown[] | undefined, host: Host): Team {
   return seen.has(hostKey) ? listed : [{ name: host.name, email: host.email, isHost: true }, ...listed];
 }
 
-/** The most raw text a stored reason may carry before it is cleaned (up to 4 bytes a character). */
-const STORED_REASON_RAW_MAX = CANCEL_REASON_MAX * 4;
+/** The most raw text a stored reason may carry before it is cleaned: the cancel page's own raw limit. */
+const STORED_REASON_RAW_MAX = CANCEL_REASON_RAW_MAX;
 const CONTROL_KEEP_NEWLINES = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]+/g;
 
 /**
