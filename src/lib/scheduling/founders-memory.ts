@@ -17,6 +17,8 @@ export const FOUNDER_MEMORY_MAX = 2_000;
 const going = new Map<string, number>();
 /** Sends that went: key -> when the claim was taken. Bounded, oldest first. */
 const went = new Map<string, number>();
+/** Bookings this process has started cancelling: id -> when. Bounded, oldest first. */
+const cancelled = new Map<string, number>();
 
 function isFresh(at: number | undefined, now: number): boolean {
   return at !== undefined && now - at < SENT_MEMORY_MS;
@@ -54,10 +56,25 @@ export function settleSend(key: string, at: number, sent: boolean): void {
   if (sent) remember(went, key, at);
 }
 
+/**
+ * Notes that a cancel for this booking has started (review r2). A booking id
+ * never comes back once cancelled, and its invite goes right after it is
+ * booked, so 24 hours covers any invite that could still arrive late.
+ */
+export function markCancelled(bookingId: string, now: number): void {
+  remember(cancelled, bookingId, now);
+}
+
+/** True when this process started cancelling the booking within the last 24 hours. */
+export function isCancelled(bookingId: string, now: number): boolean {
+  return isFresh(cancelled.get(bookingId), now);
+}
+
 /** Test hook: forget everything. */
 export function clearSendMemory(): void {
   going.clear();
   went.clear();
+  cancelled.clear();
 }
 
 /** Test hook: how many sends are remembered, going or gone. */

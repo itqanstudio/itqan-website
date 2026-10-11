@@ -41,6 +41,7 @@ beforeEach(() => {
   sendMail.mockReset();
   vi.stubEnv('CONTACT_FROM_EMAIL', 'bookings@itqanstudio.com');
   vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 });
 
 afterEach(() => {
@@ -94,6 +95,33 @@ describe('a cancel never overtakes its invite', () => {
     const cancels = sendFounderCancellations(booking, { by: 'host' });
     expect(sendMail).toHaveBeenCalledTimes(2);
     await cancels;
+  });
+});
+
+describe('a booking this process has started cancelling (review r2)', () => {
+  const other = 'b3c1d2e4-0000-4000-8000-000000000002';
+
+  it('gets no founders invite afterwards, so no calendar keeps the cancelled briefing', async () => {
+    sendMail.mockResolvedValue({ sent: true });
+    const cancels = sendFounderCancellations(booking, { by: 'guest' });
+    expect(await sendFounderInvites(booking)).toEqual([]);
+    await cancels;
+    expect(methods()).toEqual(['CANCEL ibrahim@itqanstudio.com', 'CANCEL bisma@itqanstudio.com']);
+    expect(console.warn).toHaveBeenCalledWith(expect.stringMatching(/already cancelled/), booking.id);
+    // Another booking is still invited.
+    expect(await sendFounderInvites({ ...booking, id: other })).toHaveLength(2);
+  });
+
+  it('blocks the invite even when the cancel itself could not send', async () => {
+    vi.stubEnv('CONTACT_FROM_EMAIL', '');
+    expect(await sendFounderCancellations(booking, { by: 'host' })).toEqual([
+      { sent: false, reason: 'not_configured' },
+      { sent: false, reason: 'not_configured' },
+    ]);
+    vi.stubEnv('CONTACT_FROM_EMAIL', 'bookings@itqanstudio.com');
+    sendMail.mockResolvedValue({ sent: true });
+    expect(await sendFounderInvites(booking)).toEqual([]);
+    expect(sendMail).not.toHaveBeenCalled();
   });
 });
 

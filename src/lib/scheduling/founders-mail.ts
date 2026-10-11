@@ -1,6 +1,6 @@
 import { formatWhen } from '@/content/v3/booking';
 import type { BookingForEmail } from '@/lib/crm/contract';
-import { claimSend, clearSendMemory, sendMemorySize, settleSend } from './founders-memory';
+import { claimSend, clearSendMemory, isCancelled, markCancelled, sendMemorySize, settleSend } from './founders-memory';
 import { buildIcs, type IcsAttendee, type IcsMethod } from './ics';
 import { callMinutes, meetingLink, sendMail, type MailResult } from './mail';
 import { BIDI_CONTROLS } from './validation';
@@ -272,8 +272,16 @@ async function sendToFounders(b: BookingForEmail, cancel?: CancelNote): Promise<
   }
 }
 
-/** A new booking: each founder gets the invitation, once. Never throws. */
+/**
+ * A new booking: each founder gets the invitation, once. Never throws. A
+ * booking this process has started cancelling gets none: a REQUEST after its
+ * CANCEL would put the cancelled briefing back on the founders' calendars.
+ */
 export function sendFounderInvites(b: BookingForEmail): Promise<MailResult[]> {
+  if (isCancelled(b.id, Date.now())) {
+    console.warn('[mail] booking already cancelled; no calendar invite to the founders for booking', b.id);
+    return Promise.resolve([]);
+  }
   const sends = sendToFounders(b);
   // A second call for the same booking must not hide a first one that is still sending.
   const prior = pendingInvites.get(b.id);
@@ -287,9 +295,11 @@ export function sendFounderInvites(b: BookingForEmail): Promise<MailResult[]> {
 
 /**
  * Any cancel: each founder gets the CANCEL for the same event, once, and never
- * before this booking's invite send has finished (sent or not). Never throws.
+ * before this booking's invite send has finished (sent or not). From the first
+ * call on, no new invite goes for this booking. Never throws.
  */
 export function sendFounderCancellations(b: BookingForEmail, cancel: CancelNote): Promise<MailResult[]> {
+  markCancelled(b.id, Date.now());
   const invite = pendingInvites.get(b.id);
   if (!invite) return sendToFounders(b, cancel);
   const send = () => sendToFounders(b, cancel);
